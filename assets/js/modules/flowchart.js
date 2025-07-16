@@ -10,7 +10,7 @@ class FlowchartGenerator {
     /**
      * Generate flowchart from Python code
      */
-    generateFlowchart(pythonCode) {
+    async generateFlowchart(pythonCode) {
         const lines = pythonCode.split('\n').filter(line => line.trim() !== '');
         
         let mermaidCode = 'graph TD\n';
@@ -71,7 +71,7 @@ class FlowchartGenerator {
         mermaidCode += 'End[終了]\n';
         mermaidCode += `    ${previousNode} --> End\n`;
         
-        this.renderFlowchart(mermaidCode);
+        await this.renderFlowchart(mermaidCode);
     }
 
     /**
@@ -89,16 +89,26 @@ class FlowchartGenerator {
     /**
      * Render the flowchart
      */
-    renderFlowchart(mermaidCode) {
+    async renderFlowchart(mermaidCode) {
         const flowchartDiv = document.getElementById('flowchart');
-        flowchartDiv.innerHTML = '<div class="mermaid">' + mermaidCode + '</div>';
         
-        // Re-initialize mermaid for the new content
         try {
-            mermaid.init(undefined, flowchartDiv.querySelector('.mermaid'));
+            console.log('Rendering flowchart with code:', mermaidCode);
+            
+            // Clear previous content
+            flowchartDiv.innerHTML = '';
+            
+            // Create a unique ID for this diagram
+            const diagramId = 'mermaid-' + Date.now();
+            
+            // Use mermaid.render for better control
+            const { svg } = await mermaid.render(diagramId, mermaidCode);
+            flowchartDiv.innerHTML = svg;
+            
+            console.log('Flowchart rendered successfully');
         } catch (error) {
             console.error('Error rendering flowchart:', error);
-            flowchartDiv.innerHTML = '<p>フローチャート生成エラー</p>';
+            flowchartDiv.innerHTML = '<p style="color: red;">フローチャート生成エラー: ' + error.message + '</p>';
         }
     }
 

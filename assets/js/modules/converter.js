@@ -33,13 +33,27 @@ class Converter {
             // Convert the line
             const converted = this.convertLine(trimmed, currentIndent, i, lines);
             
-            // Add appropriate prefix
+            // Add appropriate prefix for indented content
             if (this.indentStack.length > 1) {
                 let prefix = '';
-                const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
-                const nextIndent = nextLine.length - nextLine.trimStart().length;
+                let isLastInBlock = false;
                 
-                if (nextIndent <= currentIndent && nextLine.trim() !== '') {
+                // Check if this is the last line in the current block
+                for (let j = i + 1; j < lines.length; j++) {
+                    const nextLine = lines[j].trim();
+                    if (nextLine === '') continue; // Skip empty lines
+                    
+                    const nextIndent = lines[j].length - lines[j].trimStart().length;
+                    if (nextIndent < currentIndent) {
+                        isLastInBlock = true;
+                        break;
+                    } else if (nextIndent >= currentIndent) {
+                        break;
+                    }
+                }
+                
+                // Use appropriate symbol
+                if (isLastInBlock || i === lines.length - 1) {
                     prefix = '⎿ '.repeat(this.indentStack.length - 1);
                 } else {
                     prefix = '｜ '.repeat(this.indentStack.length - 1);

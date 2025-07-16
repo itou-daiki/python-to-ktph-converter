@@ -19,7 +19,9 @@ class UIManager {
             indentUnit: 4,
             indentWithTabs: false,
             lineWrapping: true,
-            placeholder: 'Pythonコードを入力してください...'
+            placeholder: 'Pythonコードを入力してください...',
+            viewportMargin: 10,
+            scrollbarStyle: 'native'
         });
 
         this.commonTestEditor = CodeMirror(document.getElementById('commonTestEditor'), {
@@ -27,8 +29,16 @@ class UIManager {
             theme: 'material-darker',
             lineNumbers: true,
             lineWrapping: true,
-            placeholder: '共通テスト用プログラム表記を入力してください...'
+            placeholder: '共通テスト用プログラム表記を入力してください...',
+            viewportMargin: 10,
+            scrollbarStyle: 'native'
         });
+
+        // Refresh editors to ensure proper sizing
+        setTimeout(() => {
+            this.pythonEditor.refresh();
+            this.commonTestEditor.refresh();
+        }, 100);
     }
 
     /**
@@ -148,29 +158,48 @@ for i in range(0, kazu):
     print(i, " ", data[i])`;
 
         this.pythonEditor.setValue(examplePython);
-        if (window.converter) {
-            this.convert();
-        }
+        // Auto-convert after loading example
+        setTimeout(async () => {
+            if (window.converter) {
+                await this.convert();
+            }
+        }, 100);
     }
 
     /**
      * Convert code based on selected direction
      */
-    convert() {
+    async convert() {
         const direction = document.getElementById('conversionDirection').value;
         
-        if (direction === 'pythonToCommon') {
-            const pythonCode = this.pythonEditor.getValue();
-            const converted = window.converter.pythonToCommonTest(pythonCode);
-            this.commonTestEditor.setValue(converted);
-        } else {
-            const commonTestCode = this.commonTestEditor.getValue();
-            const converted = window.converter.commonTestToPython(commonTestCode);
-            this.pythonEditor.setValue(converted);
+        // Check if converter is available
+        if (!window.converter) {
+            console.error('Converter not initialized');
+            return;
         }
         
-        if (window.flowchartGenerator) {
-            window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+        try {
+            if (direction === 'pythonToCommon') {
+                const pythonCode = this.pythonEditor.getValue();
+                console.log('Converting Python to Common Test:', pythonCode.substring(0, 100) + '...');
+                const converted = window.converter.pythonToCommonTest(pythonCode);
+                console.log('Conversion result:', converted.substring(0, 100) + '...');
+                this.commonTestEditor.setValue(converted);
+            } else {
+                const commonTestCode = this.commonTestEditor.getValue();
+                console.log('Converting Common Test to Python:', commonTestCode.substring(0, 100) + '...');
+                const converted = window.converter.commonTestToPython(commonTestCode);
+                console.log('Conversion result:', converted.substring(0, 100) + '...');
+                this.pythonEditor.setValue(converted);
+            }
+            
+            // Generate flowchart
+            if (window.flowchartGenerator) {
+                await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+            }
+        } catch (error) {
+            console.error('Conversion error:', error);
+            document.getElementById('output').textContent = '変換エラー: ' + error.message;
         }
     }
 
@@ -217,7 +246,7 @@ for i in range(0, kazu):
     /**
      * Load code from URL
      */
-    loadFromUrl() {
+    async loadFromUrl() {
         if (window.location.hash) {
             try {
                 const compressed = window.location.hash.substring(1);
@@ -235,7 +264,7 @@ for i in range(0, kazu):
                 }
                 
                 if (window.flowchartGenerator) {
-                    window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+                    await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
                 }
             } catch (e) {
                 console.error('Failed to load from URL:', e);

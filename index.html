@@ -44,7 +44,6 @@
             <button class="run-button" onclick="runCode()">実行</button>
             <button onclick="clearAll()">クリア</button>
             <button onclick="loadExample()">サンプル読込</button>
-            <button onclick="shareCode()">共有URL生成</button>
         </div>
 
         <!-- Main Content Grid -->
@@ -87,10 +86,13 @@
 
         <!-- Share Section -->
         <div class="share-section">
-            <div class="panel-header">共有URL</div>
+            <div class="panel-header">
+                <span>共有URL</span>
+                <button class="copy-button" onclick="shareCode()">共有URL生成</button>
+            </div>
             <div class="share-url">
-                <input type="text" id="shareUrl" readonly placeholder="共有URLが表示されます">
-                <button class="copy-button" onclick="copyShareUrl()">URLをコピー</button>
+                <input type="text" id="shareUrl" readonly placeholder="共有URLをここに表示します">
+                <button class="copy-button" onclick="copyShareUrl()">📋 URLをコピー</button>
             </div>
         </div>
     </div>

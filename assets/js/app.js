@@ -11,21 +11,37 @@ let uiManager;
 /**
  * Initialize the application
  */
-window.addEventListener('load', function() {
-    // Initialize all modules
-    converter = new Converter();
-    executor = new Executor();
-    flowchartGenerator = new FlowchartGenerator();
-    uiManager = new UIManager();
+window.addEventListener('load', async function() {
+    // Show loading overlay during initialization
+    document.getElementById('loadingOverlay').style.display = 'flex';
     
-    // Initialize UI
-    uiManager.initializeEditors();
-    uiManager.setupEventListeners();
-    
-    // Load from URL if hash exists
-    uiManager.loadFromUrl();
-    
-    console.log('Application initialized successfully');
+    try {
+        // Initialize all modules
+        converter = new Converter();
+        executor = new Executor();
+        flowchartGenerator = new FlowchartGenerator();
+        uiManager = new UIManager();
+        
+        // Initialize UI
+        uiManager.initializeEditors();
+        uiManager.setupEventListeners();
+        
+        // Initialize Pyodide during startup
+        console.log('Initializing Pyodide...');
+        await executor.initPyodide();
+        console.log('Pyodide initialized successfully');
+        
+        // Load from URL if hash exists
+        await uiManager.loadFromUrl();
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize application:', error);
+        document.getElementById('output').textContent = 'アプリケーションの初期化に失敗しました: ' + error.message;
+    } finally {
+        // Hide loading overlay
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
 });
 
 /**
@@ -33,8 +49,8 @@ window.addEventListener('load', function() {
  */
 
 // Convert code based on selected direction
-function convert() {
-    uiManager.convert();
+async function convert() {
+    await uiManager.convert();
 }
 
 // Execute code
