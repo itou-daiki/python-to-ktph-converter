@@ -46,11 +46,43 @@ h1 {
     align-items: center;
 }
 
-.direction-selector select {
+.direction-selector select,
+.sample-selector select {
     padding: 8px 15px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     background: white;
     cursor: pointer;
+}
+
+.sample-selector {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sample-selector label {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.sample-selector select {
+    min-width: 150px;
+}
+
+.load-sample-button {
+    background: #9b59b6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.load-sample-button:hover {
+    background: #8e44ad;
 }

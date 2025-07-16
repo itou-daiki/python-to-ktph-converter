@@ -41,8 +41,25 @@
         align-items: center;
     }
 
-    .direction-selector {
+    .direction-selector,
+    .sample-selector {
         margin-bottom: 10px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sample-selector select {
+        min-width: 120px;
+        max-width: 200px;
+    }
+
+    .sample-selector label {
+        font-size: 13px;
+    }
+
+    .load-sample-button {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 
     h1 {
@@ -77,5 +94,15 @@
 
     .input-dialog input {
         width: 100%;
+    }
+
+    .sample-selector {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .sample-selector select {
+        width: 100%;
+        min-width: auto;
     }
 }

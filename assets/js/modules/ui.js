@@ -79,12 +79,33 @@ class UIManager {
             });
         }
 
-        // Load example button
-        const loadExampleBtn = document.querySelector('.load-example-button');
-        if (loadExampleBtn) {
-            loadExampleBtn.addEventListener('click', () => {
-                console.log('Load example button clicked');
-                this.loadExample();
+        // Load sample button
+        const loadSampleBtn = document.querySelector('.load-sample-button');
+        if (loadSampleBtn) {
+            loadSampleBtn.addEventListener('click', () => {
+                console.log('Load sample button clicked');
+                const sampleSelect = document.getElementById('sampleSelect');
+                const selectedSample = sampleSelect.value;
+                
+                if (selectedSample) {
+                    this.loadSampleCode(selectedSample);
+                    console.log('Loaded sample:', selectedSample);
+                } else {
+                    console.log('No sample selected');
+                    alert('サンプルを選択してください');
+                }
+            });
+        }
+
+        // Sample selector change event
+        const sampleSelect = document.getElementById('sampleSelect');
+        if (sampleSelect) {
+            sampleSelect.addEventListener('change', (e) => {
+                const selectedSample = e.target.value;
+                if (selectedSample) {
+                    console.log('Sample selected:', selectedSample);
+                    this.loadSampleCode(selectedSample);
+                }
             });
         }
 
@@ -197,10 +218,13 @@ class UIManager {
     }
 
     /**
-     * Load example code
+     * Get sample codes collection
      */
-    loadExample() {
-        const examplePython = `# 二分探索の例
+    getSampleCodes() {
+        return {
+            'binary-search': {
+                title: '二分探索',
+                code: `# 二分探索の例
 data = [3, 18, 29, 33, 48, 52, 62, 77, 89, 97]
 kazu = len(data)
 print("0～99の数字を入力してください")
@@ -224,10 +248,142 @@ if owari == 0:
 
 print("添字", " ", "要素")
 for i in range(0, kazu):
-    print(i, " ", data[i])`;
+    print(i, " ", data[i])`
+            },
+            'bubble-sort': {
+                title: 'バブルソート',
+                code: `# バブルソートの例
+data = [64, 34, 25, 12, 22, 11, 90]
+n = len(data)
 
-        this.pythonEditor.setValue(examplePython);
-        // Auto-convert after loading example
+print("ソート前のデータ:")
+for i in range(n):
+    print(data[i], end=" ")
+print()
+
+# バブルソート
+for i in range(n):
+    for j in range(0, n - i - 1):
+        if data[j] > data[j + 1]:
+            # 要素を交換
+            data[j], data[j + 1] = data[j + 1], data[j]
+
+print("ソート後のデータ:")
+for i in range(n):
+    print(data[i], end=" ")
+print()`
+            },
+            'linear-search': {
+                title: '線形探索',
+                code: `# 線形探索の例
+data = [2, 3, 4, 10, 40]
+print("検索する値を入力してください")
+x = int(input())
+
+# 線形探索
+found = False
+for i in range(len(data)):
+    if data[i] == x:
+        print(f"値 {x} は位置 {i} にあります")
+        found = True
+        break
+
+if not found:
+    print(f"値 {x} は見つかりませんでした")`
+            },
+            'factorial': {
+                title: '階乗計算',
+                code: `# 階乗計算の例
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    else:
+        return n * factorial(n - 1)
+
+print("階乗を計算する数を入力してください")
+num = int(input())
+
+if num < 0:
+    print("負の数の階乗は定義されません")
+else:
+    result = factorial(num)
+    print(f"{num}! = {result}")`
+            },
+            'fibonacci': {
+                title: 'フィボナッチ数列',
+                code: `# フィボナッチ数列の例
+print("フィボナッチ数列の項数を入力してください")
+n = int(input())
+
+# 最初の2項
+a, b = 0, 1
+
+print("フィボナッチ数列:")
+if n >= 1:
+    print(a, end=" ")
+if n >= 2:
+    print(b, end=" ")
+
+for i in range(2, n):
+    c = a + b
+    print(c, end=" ")
+    a, b = b, c
+
+print()`
+            },
+            'prime-check': {
+                title: '素数判定',
+                code: `# 素数判定の例
+def is_prime(n):
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    
+    i = 5
+    while i * i <= n:
+        if n % i == 0 or n % (i + 2) == 0:
+            return False
+        i += 6
+    return True
+
+print("素数かどうか調べる数を入力してください")
+num = int(input())
+
+if is_prime(num):
+    print(f"{num} は素数です")
+else:
+    print(f"{num} は素数ではありません")`
+            }
+        };
+    }
+
+    /**
+     * Load example code
+     */
+    loadExample() {
+        // デフォルトで二分探索を読み込み
+        this.loadSampleCode('binary-search');
+    }
+
+    /**
+     * Load specific sample code
+     */
+    loadSampleCode(sampleKey) {
+        const samples = this.getSampleCodes();
+        const sample = samples[sampleKey];
+        
+        if (!sample) {
+            console.error('Sample not found:', sampleKey);
+            return;
+        }
+        
+        console.log('Loading sample:', sample.title);
+        this.pythonEditor.setValue(sample.code);
+        
+        // Auto-convert after loading sample
         setTimeout(async () => {
             if (window.converter) {
                 await this.convert();

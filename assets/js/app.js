@@ -111,9 +111,14 @@ function clearOutput() {
     uiManager.clearOutput();
 }
 
-// Load example code
+// Load example code (backwards compatibility)
 function loadExample() {
     uiManager.loadExample();
+}
+
+// Load specific sample code
+function loadSampleCode(sampleKey) {
+    uiManager.loadSampleCode(sampleKey);
 }
 
 // Copy to clipboard
@@ -146,6 +151,7 @@ window.runCode = runCode;
 window.clearAll = clearAll;
 window.clearOutput = clearOutput;
 window.loadExample = loadExample;
+window.loadSampleCode = loadSampleCode;
 window.copyToClipboard = copyToClipboard;
 window.shareCode = shareCode;
 window.copyShareUrl = copyShareUrl;
