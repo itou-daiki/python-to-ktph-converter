@@ -55,19 +55,25 @@ class UIManager {
         // Convert button
         const convertBtn = document.querySelector('.convert-button');
         if (convertBtn) {
+            console.log('Convert button found, adding event listener');
             convertBtn.addEventListener('click', async () => {
-                console.log('Convert button clicked');
+                console.log('Convert button clicked via event listener');
                 await this.convert();
             });
+        } else {
+            console.error('Convert button not found!');
         }
 
         // Run button
         const runBtn = document.querySelector('.run-button');
         if (runBtn) {
+            console.log('Run button found, adding event listener');
             runBtn.addEventListener('click', async () => {
-                console.log('Run button clicked');
+                console.log('Run button clicked via event listener');
                 await window.runCode();
             });
+        } else {
+            console.error('Run button not found!');
         }
 
         // Clear button

@@ -43,7 +43,19 @@ window.addEventListener('load', async function() {
         // Load from URL if hash exists
         await uiManager.loadFromUrl();
         
+        // Make instances globally available immediately after initialization
+        window.converter = converter;
+        window.executor = executor;
+        window.flowchartGenerator = flowchartGenerator;
+        window.uiManager = uiManager;
+        
         console.log('Application initialized successfully');
+        console.log('Global variables verified:');
+        console.log('- window.converter:', !!window.converter);
+        console.log('- window.executor:', !!window.executor);
+        console.log('- window.flowchartGenerator:', !!window.flowchartGenerator);
+        console.log('- window.uiManager:', !!window.uiManager);
+        
     } catch (error) {
         console.error('Failed to initialize application:', error);
         document.getElementById('output').textContent = 'アプリケーションの初期化に失敗しました: ' + error.message;
@@ -59,45 +71,81 @@ window.addEventListener('load', async function() {
 
 // Convert code based on selected direction
 async function convert() {
-    console.log('Convert function called');
-    console.log('uiManager:', uiManager);
-    console.log('converter:', converter);
+    console.log('=== Convert function called ===');
+    console.log('uiManager exists:', !!uiManager);
+    console.log('converter exists:', !!converter);
+    console.log('uiManager.pythonEditor exists:', !!(uiManager && uiManager.pythonEditor));
+    console.log('uiManager.commonTestEditor exists:', !!(uiManager && uiManager.commonTestEditor));
     
     if (!uiManager) {
         console.error('UIManager not initialized');
+        alert('UIManager not initialized');
         return;
     }
     
     if (!converter) {
         console.error('Converter not initialized');
+        alert('Converter not initialized');
+        return;
+    }
+    
+    if (!uiManager.pythonEditor || !uiManager.commonTestEditor) {
+        console.error('Editors not initialized');
+        alert('Editors not initialized');
         return;
     }
     
     try {
+        console.log('Calling uiManager.convert()...');
         await uiManager.convert();
         console.log('Conversion completed successfully');
     } catch (error) {
         console.error('Conversion failed:', error);
+        alert('Conversion failed: ' + error.message);
     }
 }
 
 // Execute code
 async function runCode() {
+    console.log('=== Run function called ===');
     const outputDiv = document.getElementById('output');
     outputDiv.textContent = '';
     
+    console.log('executor exists:', !!executor);
+    console.log('uiManager exists:', !!uiManager);
+    
+    if (!executor) {
+        console.error('Executor not initialized');
+        alert('Executor not initialized');
+        return;
+    }
+    
+    if (!uiManager) {
+        console.error('UIManager not initialized');
+        alert('UIManager not initialized');
+        return;
+    }
+    
     try {
         const direction = document.getElementById('conversionDirection').value;
+        console.log('Execution direction:', direction);
         
         if (direction === 'pythonToCommon') {
             // Run Python code using Pyodide
-            await executor.runPythonCode(uiManager.getPythonCode());
+            const pythonCode = uiManager.getPythonCode();
+            console.log('Python code to execute:', pythonCode.substring(0, 100) + '...');
+            await executor.runPythonCode(pythonCode);
         } else {
             // Run Common Test notation using interpreter
-            await executor.executeCommonTestCode(uiManager.getCommonTestCode());
+            const commonTestCode = uiManager.getCommonTestCode();
+            console.log('Common test code to execute:', commonTestCode.substring(0, 100) + '...');
+            await executor.executeCommonTestCode(commonTestCode);
         }
+        console.log('Execution completed successfully');
     } catch (error) {
+        console.error('Execution failed:', error);
         outputDiv.textContent = 'エラー: ' + error.message;
+        alert('Execution failed: ' + error.message);
     }
 }
 
@@ -158,14 +206,28 @@ window.copyShareUrl = copyShareUrl;
 window.submitInput = submitInput;
 window.closeInputDialog = closeInputDialog;
 
-// Make instances globally available for debugging and use
-window.converter = converter;
-window.executor = executor;
-window.flowchartGenerator = flowchartGenerator;
-window.uiManager = uiManager;
+// Global variables are already set during initialization
 
-console.log('Global variables set:');
-console.log('window.converter:', window.converter);
-console.log('window.executor:', window.executor);
-console.log('window.flowchartGenerator:', window.flowchartGenerator);
-console.log('window.uiManager:', window.uiManager);
+// Test function to check if everything is working
+function testApplication() {
+    console.log('=== Application Test ===');
+    console.log('converter:', !!window.converter);
+    console.log('executor:', !!window.executor);
+    console.log('flowchartGenerator:', !!window.flowchartGenerator);
+    console.log('uiManager:', !!window.uiManager);
+    
+    if (window.uiManager) {
+        console.log('pythonEditor:', !!window.uiManager.pythonEditor);
+        console.log('commonTestEditor:', !!window.uiManager.commonTestEditor);
+    }
+    
+    const convertBtn = document.querySelector('.convert-button');
+    const runBtn = document.querySelector('.run-button');
+    console.log('Convert button found:', !!convertBtn);
+    console.log('Run button found:', !!runBtn);
+    
+    return 'Test completed - check console for details';
+}
+
+// Make test function globally available
+window.testApplication = testApplication;
