@@ -45,10 +45,84 @@ class UIManager {
      * Set up event listeners
      */
     setupEventListeners() {
+        console.log('Setting up event listeners');
+        
         // Direction selector
         document.getElementById('conversionDirection').addEventListener('change', (e) => {
             this.updatePanelLabels(e.target.value);
         });
+
+        // Convert button
+        const convertBtn = document.querySelector('.convert-button');
+        if (convertBtn) {
+            convertBtn.addEventListener('click', async () => {
+                console.log('Convert button clicked');
+                await this.convert();
+            });
+        }
+
+        // Run button
+        const runBtn = document.querySelector('.run-button');
+        if (runBtn) {
+            runBtn.addEventListener('click', async () => {
+                console.log('Run button clicked');
+                await window.runCode();
+            });
+        }
+
+        // Clear button
+        const clearBtn = document.querySelector('.clear-button');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                console.log('Clear button clicked');
+                this.clearAll();
+            });
+        }
+
+        // Load example button
+        const loadExampleBtn = document.querySelector('.load-example-button');
+        if (loadExampleBtn) {
+            loadExampleBtn.addEventListener('click', () => {
+                console.log('Load example button clicked');
+                this.loadExample();
+            });
+        }
+
+        // Share generate button
+        const shareGenerateBtn = document.querySelector('.share-generate-button');
+        if (shareGenerateBtn) {
+            shareGenerateBtn.addEventListener('click', () => {
+                console.log('Share generate button clicked');
+                this.shareCode();
+            });
+        }
+
+        // Share copy button
+        const shareCopyBtn = document.querySelector('.share-copy-button');
+        if (shareCopyBtn) {
+            shareCopyBtn.addEventListener('click', async () => {
+                console.log('Share copy button clicked');
+                await this.copyShareUrl();
+            });
+        }
+
+        // Python copy button
+        const pythonCopyBtn = document.querySelector('.python-copy-button');
+        if (pythonCopyBtn) {
+            pythonCopyBtn.addEventListener('click', async () => {
+                console.log('Python copy button clicked');
+                await this.copyToClipboard('pythonCode');
+            });
+        }
+
+        // Common test copy button
+        const commonCopyBtn = document.querySelector('.common-copy-button');
+        if (commonCopyBtn) {
+            commonCopyBtn.addEventListener('click', async () => {
+                console.log('Common test copy button clicked');
+                await this.copyToClipboard('commonTestCode');
+            });
+        }
 
         // Enter key in input dialog
         document.getElementById('userInput').addEventListener('keypress', (e) => {
@@ -57,11 +131,6 @@ class UIManager {
                     window.executor.submitInput();
                 }
             }
-        });
-
-        // Window load event for URL loading
-        window.addEventListener('load', () => {
-            this.loadFromUrl();
         });
     }
 

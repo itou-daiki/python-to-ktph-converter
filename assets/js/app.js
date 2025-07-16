@@ -17,12 +17,21 @@ window.addEventListener('load', async function() {
     
     try {
         // Initialize all modules
+        console.log('Initializing modules...');
         converter = new Converter();
+        console.log('Converter initialized:', converter);
+        
         executor = new Executor();
+        console.log('Executor initialized:', executor);
+        
         flowchartGenerator = new FlowchartGenerator();
+        console.log('FlowchartGenerator initialized:', flowchartGenerator);
+        
         uiManager = new UIManager();
+        console.log('UIManager initialized:', uiManager);
         
         // Initialize UI
+        console.log('Setting up editors and event listeners...');
         uiManager.initializeEditors();
         uiManager.setupEventListeners();
         
@@ -50,7 +59,26 @@ window.addEventListener('load', async function() {
 
 // Convert code based on selected direction
 async function convert() {
-    await uiManager.convert();
+    console.log('Convert function called');
+    console.log('uiManager:', uiManager);
+    console.log('converter:', converter);
+    
+    if (!uiManager) {
+        console.error('UIManager not initialized');
+        return;
+    }
+    
+    if (!converter) {
+        console.error('Converter not initialized');
+        return;
+    }
+    
+    try {
+        await uiManager.convert();
+        console.log('Conversion completed successfully');
+    } catch (error) {
+        console.error('Conversion failed:', error);
+    }
 }
 
 // Execute code
@@ -124,8 +152,14 @@ window.copyShareUrl = copyShareUrl;
 window.submitInput = submitInput;
 window.closeInputDialog = closeInputDialog;
 
-// Make instances globally available for debugging
+// Make instances globally available for debugging and use
 window.converter = converter;
 window.executor = executor;
 window.flowchartGenerator = flowchartGenerator;
 window.uiManager = uiManager;
+
+console.log('Global variables set:');
+console.log('window.converter:', window.converter);
+console.log('window.executor:', window.executor);
+console.log('window.flowchartGenerator:', window.flowchartGenerator);
+console.log('window.uiManager:', window.uiManager);

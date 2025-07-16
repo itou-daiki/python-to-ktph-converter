@@ -40,10 +40,10 @@
                     <option value="commonToPython">共通テスト → Python</option>
                 </select>
             </div>
-            <button class="convert-button" onclick="convert()">変換</button>
-            <button class="run-button" onclick="runCode()">実行</button>
-            <button onclick="clearAll()">クリア</button>
-            <button onclick="loadExample()">サンプル読込</button>
+            <button class="convert-button">変換</button>
+            <button class="run-button">実行</button>
+            <button class="clear-button">クリア</button>
+            <button class="load-example-button">サンプル読込</button>
         </div>
 
         <!-- Main Content Grid -->
@@ -52,7 +52,7 @@
             <div class="panel top-left">
                 <div class="panel-header">
                     <span id="leftPanelLabel">Python</span>
-                    <button class="copy-button" onclick="copyToClipboard('pythonCode')">📋</button>
+                    <button class="copy-button python-copy-button">📋</button>
                 </div>
                 <div id="pythonEditor"></div>
             </div>
@@ -61,7 +61,7 @@
             <div class="panel top-right">
                 <div class="panel-header">
                     <span id="rightPanelLabel">共通テスト用プログラム表記</span>
-                    <button class="copy-button" onclick="copyToClipboard('commonTestCode')">📋</button>
+                    <button class="copy-button common-copy-button">📋</button>
                 </div>
                 <div id="commonTestEditor"></div>
             </div>
@@ -86,13 +86,11 @@
 
         <!-- Share Section -->
         <div class="share-section">
-            <div class="panel-header">
-                <span>共有URL</span>
-                <button class="copy-button" onclick="shareCode()">共有URL生成</button>
-            </div>
+            <div class="panel-header">共有URL</div>
             <div class="share-url">
+                <button class="copy-button share-generate-button">生成</button>
                 <input type="text" id="shareUrl" readonly placeholder="共有URLをここに表示します">
-                <button class="copy-button" onclick="copyShareUrl()">📋 URLをコピー</button>
+                <button class="copy-button share-copy-button">📋 コピー</button>
             </div>
         </div>
     </div>
