@@ -11,7 +11,21 @@ class UIManager {
      * Initialize CodeMirror editors
      */
     initializeEditors() {
-        this.pythonEditor = CodeMirror(document.getElementById('pythonEditor'), {
+        console.log('Initializing editors...');
+        
+        const pythonContainer = document.getElementById('pythonEditor');
+        const commonTestContainer = document.getElementById('commonTestEditor');
+        
+        if (!pythonContainer) {
+            throw new Error('Python editor container not found');
+        }
+        
+        if (!commonTestContainer) {
+            throw new Error('Common test editor container not found');
+        }
+        
+        console.log('Creating Python editor...');
+        this.pythonEditor = CodeMirror(pythonContainer, {
             mode: 'python',
             theme: 'material-darker',
             lineNumbers: true,
@@ -23,8 +37,10 @@ class UIManager {
             viewportMargin: 10,
             scrollbarStyle: 'native'
         });
+        console.log('Python editor created:', !!this.pythonEditor);
 
-        this.commonTestEditor = CodeMirror(document.getElementById('commonTestEditor'), {
+        console.log('Creating Common Test editor...');
+        this.commonTestEditor = CodeMirror(commonTestContainer, {
             mode: 'text/plain',
             theme: 'material-darker',
             lineNumbers: true,
@@ -33,12 +49,47 @@ class UIManager {
             viewportMargin: 10,
             scrollbarStyle: 'native'
         });
+        console.log('Common Test editor created:', !!this.commonTestEditor);
 
         // Refresh editors to ensure proper sizing
         setTimeout(() => {
-            this.pythonEditor.refresh();
-            this.commonTestEditor.refresh();
+            if (this.pythonEditor) {
+                this.pythonEditor.refresh();
+                console.log('Python editor refreshed');
+            }
+            if (this.commonTestEditor) {
+                this.commonTestEditor.refresh();
+                console.log('Common test editor refreshed');
+            }
         }, 100);
+        
+        // Test editors with sample text
+        setTimeout(() => {
+            this.testEditors();
+        }, 200);
+    }
+
+    /**
+     * Test if editors are working properly
+     */
+    testEditors() {
+        console.log('Testing editors...');
+        
+        if (this.pythonEditor) {
+            this.pythonEditor.setValue('# Test Python editor');
+            const testValue = this.pythonEditor.getValue();
+            console.log('Python editor test result:', testValue);
+            this.pythonEditor.setValue('');
+        }
+        
+        if (this.commonTestEditor) {
+            this.commonTestEditor.setValue('# Test Common Test editor');
+            const testValue = this.commonTestEditor.getValue();
+            console.log('Common test editor test result:', testValue);
+            this.commonTestEditor.setValue('');
+        }
+        
+        console.log('Editor testing completed');
     }
 
     /**
@@ -401,36 +452,82 @@ else:
      * Convert code based on selected direction
      */
     async convert() {
-        const direction = document.getElementById('conversionDirection').value;
-        
-        // Check if converter is available
-        if (!window.converter) {
-            console.error('Converter not initialized');
-            return;
-        }
+        console.log('=== Convert function called ===');
         
         try {
+            const direction = document.getElementById('conversionDirection').value;
+            console.log('Direction:', direction);
+            
+            // Check if converter is available
+            if (!window.converter) {
+                throw new Error('Converter not initialized');
+            }
+            
+            // Check if editors are available
+            if (!this.pythonEditor) {
+                throw new Error('Python editor not initialized');
+            }
+            
+            if (!this.commonTestEditor) {
+                throw new Error('Common test editor not initialized');
+            }
+            
             if (direction === 'pythonToCommon') {
                 const pythonCode = this.pythonEditor.getValue();
-                console.log('Converting Python to Common Test:', pythonCode.substring(0, 100) + '...');
+                console.log('Python code length:', pythonCode.length);
+                console.log('Python code preview:', pythonCode.substring(0, 100));
+                
+                if (!pythonCode.trim()) {
+                    console.log('No Python code to convert');
+                    return;
+                }
+                
+                console.log('Calling converter.pythonToCommonTest()...');
                 const converted = window.converter.pythonToCommonTest(pythonCode);
-                console.log('Conversion result:', converted.substring(0, 100) + '...');
+                console.log('Conversion successful, result length:', converted.length);
+                console.log('Conversion result preview:', converted.substring(0, 100));
+                
                 this.commonTestEditor.setValue(converted);
+                console.log('Set converted text to common test editor');
+                
             } else {
                 const commonTestCode = this.commonTestEditor.getValue();
-                console.log('Converting Common Test to Python:', commonTestCode.substring(0, 100) + '...');
+                console.log('Common test code length:', commonTestCode.length);
+                console.log('Common test code preview:', commonTestCode.substring(0, 100));
+                
+                if (!commonTestCode.trim()) {
+                    console.log('No common test code to convert');
+                    return;
+                }
+                
+                console.log('Calling converter.commonTestToPython()...');
                 const converted = window.converter.commonTestToPython(commonTestCode);
-                console.log('Conversion result:', converted.substring(0, 100) + '...');
+                console.log('Conversion successful, result length:', converted.length);
+                console.log('Conversion result preview:', converted.substring(0, 100));
+                
                 this.pythonEditor.setValue(converted);
+                console.log('Set converted text to python editor');
             }
             
             // Generate flowchart
-            if (window.flowchartGenerator) {
-                await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+            try {
+                if (window.flowchartGenerator) {
+                    console.log('Generating flowchart...');
+                    await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+                    console.log('Flowchart generated successfully');
+                }
+            } catch (flowchartError) {
+                console.error('Flowchart generation error:', flowchartError);
+                // Don't stop conversion process for flowchart errors
             }
+            
+            console.log('=== Convert function completed successfully ===');
+            
         } catch (error) {
             console.error('Conversion error:', error);
-            document.getElementById('output').textContent = '変換エラー: ' + error.message;
+            const errorMsg = '変換エラー: ' + error.message;
+            document.getElementById('output').textContent = errorMsg;
+            alert(errorMsg);
         }
     }
 

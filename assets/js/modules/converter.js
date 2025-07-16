@@ -4,6 +4,18 @@
 class Converter {
     constructor() {
         this.indentStack = [0];
+        console.log('Converter initialized');
+    }
+
+    /**
+     * Test conversion with simple example
+     */
+    test() {
+        const testCode = 'print("Hello, World!")';
+        const result = this.pythonToCommonTest(testCode);
+        console.log('Test input:', testCode);
+        console.log('Test output:', result);
+        return result;
     }
 
     /**
