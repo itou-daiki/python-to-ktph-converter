@@ -1,0 +1,68 @@
+/* Layout Styles */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    height: calc(100vh - 200px);
+}
+
+.top-left {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.top-right {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.bottom-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.bottom-right {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* CodeMirror Styles */
+.CodeMirror {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    height: auto;
+}
+
+.CodeMirror-focused {
+    border-color: #3498db;
+}
+
+#pythonEditor .CodeMirror,
+#commonTestEditor .CodeMirror {
+    height: 100%;
+}
+
+/* Output Styles */
+#flowchart {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: auto;
+    background: #fafafa;
+}
+
+#output {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    overflow: auto;
+    background: #f8f8f8;
+    white-space: pre-wrap;
+}

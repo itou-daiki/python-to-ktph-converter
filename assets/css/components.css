@@ -1,0 +1,88 @@
+/* Button Styles */
+button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #2980b9;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+.convert-button {
+    background: #27ae60;
+}
+
+.convert-button:hover {
+    background: #229954;
+}
+
+.run-button {
+    background: #e74c3c;
+}
+
+.run-button:hover {
+    background: #c0392b;
+}
+
+.copy-button {
+    background: #95a5a6;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.copy-button:hover {
+    background: #7f8c8d;
+}
+
+/* Panel Styles */
+.panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #2c3e50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Share Section */
+.share-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.share-url {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.share-url input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}

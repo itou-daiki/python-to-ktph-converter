@@ -1,0 +1,50 @@
+# GitHub Pages Configuration
+title: "Python ⇄ 共通テスト用プログラム表記 変換ツール"
+description: "Pythonと日本の共通テスト用プログラム表記を相互に変換し、実行できるWebアプリケーション"
+author: "Python to KTPH Converter"
+url: "https://username.github.io"
+baseurl: "/python-to-ktph-converter"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .gitignore
+  - .git/
+
+# Include files that start with underscores
+include:
+  - _pages
+  - assets/
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Default layouts
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"

@@ -1,0 +1,75 @@
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        height: auto;
+    }
+    
+    .top-left { 
+        grid-column: 1; 
+        grid-row: 1; 
+    }
+    
+    .top-right { 
+        grid-column: 1; 
+        grid-row: 2; 
+    }
+    
+    .bottom-left { 
+        grid-column: 1; 
+        grid-row: 3; 
+    }
+    
+    .bottom-right { 
+        grid-column: 1; 
+        grid-row: 4; 
+    }
+    
+    .panel {
+        min-height: 300px;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .direction-selector {
+        margin-bottom: 10px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .panel {
+        padding: 15px;
+        min-height: 250px;
+    }
+
+    button {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .copy-button {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .input-dialog {
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .input-dialog input {
+        width: 100%;
+    }
+}
