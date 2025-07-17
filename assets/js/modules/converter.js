@@ -265,20 +265,20 @@ class Converter {
         }
         
         // For loop
-        const forMatch = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*(.+?)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
+        const forMatch = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*(\d+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
         if (forMatch) {
             const variable = forMatch[1];
-            const start = forMatch[2];
-            let end = forMatch[3];
-            const step = forMatch[4];
+            const start = parseInt(forMatch[2]);
+            const end = parseInt(forMatch[3]);
+            const step = parseInt(forMatch[4]);
             const direction = forMatch[5];
             
             if (direction === '増やし') {
-                end = end.replace('-1', '');
-                return `for ${variable} in range(${start}, ${end}, ${step}):`;
+                // Convert back to Python range: end value needs +1
+                return `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
             } else {
-                end = end.replace('+1', '');
-                return `for ${variable} in range(${start}, ${end}, -${step}):`;
+                // For decreasing: end value needs -1
+                return `for ${variable} in range(${start}, ${end - 1}, -${step}):`;
             }
         }
         
