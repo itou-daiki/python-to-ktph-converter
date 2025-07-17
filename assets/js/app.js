@@ -33,6 +33,7 @@ window.addEventListener('load', async function() {
         // Initialize UI
         console.log('Setting up editors and event listeners...');
         uiManager.initializeEditors();
+        await uiManager.initializeSamples();
         uiManager.setupEventListeners();
         
         // Initialize Pyodide during startup

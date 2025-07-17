@@ -5,6 +5,7 @@ class UIManager {
     constructor() {
         this.pythonEditor = null;
         this.commonTestEditor = null;
+        this.samplesConfig = null;
     }
 
     /**
@@ -90,6 +91,44 @@ class UIManager {
         }
         
         console.log('Editor testing completed');
+    }
+
+    /**
+     * Initialize sample configuration
+     */
+    async initializeSamples() {
+        try {
+            const response = await fetch('Sample/samples.json');
+            this.samplesConfig = await response.json();
+            this.populateSampleDropdown();
+        } catch (error) {
+            console.error('Failed to load samples configuration:', error);
+            // Fallback to inline samples if JSON loading fails
+            this.samplesConfig = this.getFallbackSamplesConfig();
+            this.populateSampleDropdown();
+        }
+    }
+
+    /**
+     * Populate sample dropdown from JSON config
+     */
+    populateSampleDropdown() {
+        const sampleSelect = document.getElementById('sampleSelect');
+        if (!sampleSelect || !this.samplesConfig) return;
+        
+        // Clear existing options except the first one
+        while (sampleSelect.children.length > 1) {
+            sampleSelect.removeChild(sampleSelect.lastChild);
+        }
+        
+        // Add options from configuration
+        this.samplesConfig.samples.forEach(sample => {
+            const option = document.createElement('option');
+            option.value = sample.id;
+            option.textContent = sample.title;
+            option.title = sample.description;
+            sampleSelect.appendChild(option);
+        });
     }
 
     /**
@@ -275,7 +314,53 @@ class UIManager {
     }
 
     /**
-     * Get sample codes collection
+     * Get fallback samples configuration
+     */
+    getFallbackSamplesConfig() {
+        return {
+            samples: [
+                {
+                    id: 'binary-search',
+                    title: '二分探索',
+                    file: 'binary-search.md',
+                    description: 'ソート済み配列から特定の値を効率的に検索'
+                },
+                {
+                    id: 'bubble-sort',
+                    title: 'バブルソート',
+                    file: 'bubble-sort.md',
+                    description: '隣接する要素を比較して交換を繰り返すソートアルゴリズム'
+                },
+                {
+                    id: 'linear-search',
+                    title: '線形探索',
+                    file: 'linear-search.md',
+                    description: '配列を先頭から順に検索するアルゴリズム'
+                },
+                {
+                    id: 'factorial',
+                    title: '階乗計算',
+                    file: 'factorial.md',
+                    description: '再帰を使った階乗計算'
+                },
+                {
+                    id: 'fibonacci',
+                    title: 'フィボナッチ数列',
+                    file: 'fibonacci.md',
+                    description: 'フィボナッチ数列を生成するアルゴリズム'
+                },
+                {
+                    id: 'prime-check',
+                    title: '素数判定',
+                    file: 'prime-check.md',
+                    description: '効率的な素数判定アルゴリズム'
+                }
+            ]
+        };
+    }
+
+    /**
+     * Get sample codes collection (fallback)
      */
     getSampleCodes() {
         return {
@@ -426,9 +511,51 @@ else:
     }
 
     /**
-     * Load specific sample code
+     * Load specific sample code from markdown file
      */
-    loadSampleCode(sampleKey) {
+    async loadSampleCode(sampleKey) {
+        if (!this.samplesConfig) {
+            console.error('Samples configuration not loaded');
+            return;
+        }
+        
+        const sample = this.samplesConfig.samples.find(s => s.id === sampleKey);
+        if (!sample) {
+            console.error('Sample not found:', sampleKey);
+            return;
+        }
+        
+        try {
+            console.log('Loading sample:', sample.title);
+            const response = await fetch(`Sample/${sample.file}`);
+            const markdownContent = await response.text();
+            
+            // Extract Python code from markdown
+            const codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
+            if (codeMatch && codeMatch[1]) {
+                const code = codeMatch[1];
+                this.pythonEditor.setValue(code);
+                
+                // Auto-convert after loading sample
+                setTimeout(async () => {
+                    if (window.converter) {
+                        await this.convert();
+                    }
+                }, 100);
+            } else {
+                console.error('No Python code found in markdown file');
+            }
+        } catch (error) {
+            console.error('Failed to load sample file:', error);
+            // Fallback to inline samples
+            this.loadFallbackSampleCode(sampleKey);
+        }
+    }
+
+    /**
+     * Fallback method to load samples from inline code
+     */
+    loadFallbackSampleCode(sampleKey) {
         const samples = this.getSampleCodes();
         const sample = samples[sampleKey];
         
@@ -437,7 +564,7 @@ else:
             return;
         }
         
-        console.log('Loading sample:', sample.title);
+        console.log('Loading fallback sample:', sample.title);
         this.pythonEditor.setValue(sample.code);
         
         // Auto-convert after loading sample

@@ -1,0 +1,40 @@
+{
+  "samples": [
+    {
+      "id": "binary-search",
+      "title": "二分探索",
+      "file": "binary-search.md",
+      "description": "ソート済み配列から特定の値を効率的に検索"
+    },
+    {
+      "id": "bubble-sort",
+      "title": "バブルソート",
+      "file": "bubble-sort.md",
+      "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム"
+    },
+    {
+      "id": "linear-search",
+      "title": "線形探索",
+      "file": "linear-search.md",
+      "description": "配列を先頭から順に検索するアルゴリズム"
+    },
+    {
+      "id": "factorial",
+      "title": "階乗計算",
+      "file": "factorial.md",
+      "description": "再帰を使った階乗計算"
+    },
+    {
+      "id": "fibonacci",
+      "title": "フィボナッチ数列",
+      "file": "fibonacci.md",
+      "description": "フィボナッチ数列を生成するアルゴリズム"
+    },
+    {
+      "id": "prime-check",
+      "title": "素数判定",
+      "file": "prime-check.md",
+      "description": "効率的な素数判定アルゴリズム"
+    }
+  ]
+}
