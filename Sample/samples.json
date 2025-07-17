@@ -35,6 +35,12 @@
       "title": "素数判定",
       "file": "prime-check.md",
       "description": "効率的な素数判定アルゴリズム"
+    },
+    {
+      "id": "common-test-sample",
+      "title": "共通テスト表記サンプル",
+      "file": "common-test-sample.md",
+      "description": "共通テストからPythonへの変換テスト用サンプル"
     }
   ]
 }

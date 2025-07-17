@@ -530,11 +530,32 @@ else:
             const response = await fetch(`Sample/${sample.file}`);
             const markdownContent = await response.text();
             
-            // Extract Python code from markdown
-            const codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
+            // Extract code from markdown (try Python first, then plain code blocks)
+            let codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
+            let isPythonCode = true;
+            
+            if (!codeMatch) {
+                // Try plain code block (for Common Test notation)
+                codeMatch = markdownContent.match(/```\n([\s\S]*?)\n```/);
+                isPythonCode = false;
+            }
+            
             if (codeMatch && codeMatch[1]) {
                 const code = codeMatch[1];
-                this.pythonEditor.setValue(code);
+                
+                if (isPythonCode) {
+                    // Set Python code and convert to Common Test
+                    this.pythonEditor.setValue(code);
+                    // Ensure conversion direction is set to Python → Common Test
+                    document.getElementById('conversionDirection').value = 'pythonToCommon';
+                    this.updatePanelLabels('pythonToCommon');
+                } else {
+                    // Set Common Test code and convert to Python
+                    this.commonTestEditor.setValue(code);
+                    // Ensure conversion direction is set to Common Test → Python  
+                    document.getElementById('conversionDirection').value = 'commonToPython';
+                    this.updatePanelLabels('commonToPython');
+                }
                 
                 // Auto-convert after loading sample
                 setTimeout(async () => {
@@ -543,7 +564,7 @@ else:
                     }
                 }, 100);
             } else {
-                console.error('No Python code found in markdown file');
+                console.error('No code found in markdown file');
             }
         } catch (error) {
             console.error('Failed to load sample file:', error);

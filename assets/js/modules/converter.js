@@ -19,6 +19,19 @@ class Converter {
     }
 
     /**
+     * Test reverse conversion (Common Test to Python)
+     */
+    testReverse() {
+        const testCode = `表示する("Hello, World!")
+もし x > 0 ならば:
+⎿ 表示する("Positive")`;
+        const result = this.commonTestToPython(testCode);
+        console.log('Reverse test input:', testCode);
+        console.log('Reverse test output:', result);
+        return result;
+    }
+
+    /**
      * Convert Python code to Common Test notation
      */
     pythonToCommonTest(pythonCode) {
@@ -168,10 +181,11 @@ class Converter {
         const result = [];
         let indentLevel = 0;
         
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             let trimmed = line.trim();
             
-            // Remove control symbols
+            // Remove control symbols and get actual content
             trimmed = trimmed.replace(/^[｜⎿\s]+/, '');
             
             if (trimmed === '' || trimmed.startsWith('#')) {
@@ -179,19 +193,28 @@ class Converter {
                 continue;
             }
             
-            // Decrease indent for else/elif
+            // Handle dedenting by checking the visual structure
+            const originalSymbols = line.match(/^[｜⎿\s]*/)[0];
+            const symbolDepth = (originalSymbols.match(/[｜⎿]/g) || []).length;
+            
+            // Adjust indent level based on symbol depth
+            if (symbolDepth < indentLevel && symbolDepth >= 0) {
+                indentLevel = symbolDepth;
+            }
+            
+            // Special handling for else/elif which should be at same level as if
             if (trimmed.startsWith('そうでなければ') || trimmed.startsWith('そうでなくもし')) {
-                indentLevel = Math.max(0, indentLevel - 1);
+                indentLevel = Math.max(0, indentLevel);
             }
             
             // Convert the line
-            const converted = this.convertLineToPhython(trimmed);
+            const converted = this.convertLineToPython(trimmed);
             
             // Add indentation
             result.push('    '.repeat(indentLevel) + converted);
             
             // Increase indent after colon
-            if (trimmed.endsWith(':')) {
+            if (converted.endsWith(':')) {
                 indentLevel++;
             }
         }
@@ -202,7 +225,7 @@ class Converter {
     /**
      * Convert individual line from Common Test to Python
      */
-    convertLineToPhython(line) {
+    convertLineToPython(line) {
         // Input
         if (line.includes('【外部からの入力】')) {
             return line.replace('【外部からの入力】', 'input()');
