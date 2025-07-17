@@ -27,13 +27,13 @@
     }
     
     .panel {
-        min-height: 300px;
+        min-height: 400px;
     }
 
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
-        min-height: 250px;
-        height: 300px;
+        min-height: 350px;
+        height: 400px;
     }
 
     .controls {
@@ -74,7 +74,7 @@
 
     .panel {
         padding: 15px;
-        min-height: 250px;
+        min-height: 350px;
     }
 
     button {

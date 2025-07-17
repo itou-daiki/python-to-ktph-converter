@@ -2,10 +2,10 @@
 .main-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 2fr 1fr;
     gap: 20px;
-    height: calc(100vh - 200px);
-    min-height: 600px;
+    height: calc(100vh - 180px);
+    min-height: 700px;
     overflow: hidden;
 }
 
@@ -36,8 +36,8 @@
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
-    height: auto;
-    overflow: auto;
+    height: 100%;
+    overflow: hidden;
 }
 
 .CodeMirror-focused {
@@ -49,17 +49,25 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #pythonEditor .CodeMirror,
 #commonTestEditor .CodeMirror {
     height: 100%;
-    min-height: 300px;
+    flex: 1;
+    min-height: 400px;
 }
 
 .CodeMirror-scroll {
     overflow: auto !important;
-    max-height: 100%;
+    height: 100%;
+}
+
+.CodeMirror-scrollbar-filler,
+.CodeMirror-gutter-filler {
+    background-color: white;
 }
 
 /* Output Styles */
@@ -69,6 +77,7 @@
     border-radius: 4px;
     overflow: auto;
     background: #fafafa;
+    min-height: 200px;
 }
 
 #output {
@@ -81,4 +90,5 @@
     overflow: auto;
     background: #f8f8f8;
     white-space: pre-wrap;
+    min-height: 200px;
 }

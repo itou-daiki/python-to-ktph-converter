@@ -35,8 +35,10 @@ class UIManager {
             indentWithTabs: false,
             lineWrapping: true,
             placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: 10,
-            scrollbarStyle: 'native'
+            viewportMargin: Infinity,
+            scrollbarStyle: 'native',
+            autoCloseBrackets: true,
+            autoCloseTags: true
         });
         console.log('Python editor created:', !!this.pythonEditor);
 
@@ -47,27 +49,42 @@ class UIManager {
             lineNumbers: true,
             lineWrapping: true,
             placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: 10,
-            scrollbarStyle: 'native'
+            viewportMargin: Infinity,
+            scrollbarStyle: 'native',
+            autoCloseBrackets: true
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
         // Refresh editors to ensure proper sizing
         setTimeout(() => {
-            if (this.pythonEditor) {
-                this.pythonEditor.refresh();
-                console.log('Python editor refreshed');
-            }
-            if (this.commonTestEditor) {
-                this.commonTestEditor.refresh();
-                console.log('Common test editor refreshed');
-            }
+            this.refreshEditors();
         }, 100);
+        
+        // Also refresh on window resize
+        window.addEventListener('resize', () => {
+            this.refreshEditors();
+        });
         
         // Test editors with sample text
         setTimeout(() => {
             this.testEditors();
         }, 200);
+    }
+
+    /**
+     * Refresh editors for proper sizing and scrolling
+     */
+    refreshEditors() {
+        if (this.pythonEditor) {
+            this.pythonEditor.refresh();
+            this.pythonEditor.setSize(null, '100%');
+            console.log('Python editor refreshed');
+        }
+        if (this.commonTestEditor) {
+            this.commonTestEditor.refresh();
+            this.commonTestEditor.setSize(null, '100%');
+            console.log('Common test editor refreshed');
+        }
     }
 
     /**
