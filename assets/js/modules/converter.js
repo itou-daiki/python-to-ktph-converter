@@ -145,15 +145,19 @@ class Converter {
                 const params = match[2].split(',').map(p => p.trim());
                 
                 if (params.length === 1) {
-                    return variable + ' を 0 から ' + params[0] + '-1 まで 1 ずつ増やしながら繰り返す:';
+                    const end = parseInt(params[0]) - 1;
+                    return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
                 } else if (params.length === 2) {
-                    return variable + ' を ' + params[0] + ' から ' + params[1] + '-1 まで 1 ずつ増やしながら繰り返す:';
+                    const end = parseInt(params[1]) - 1;
+                    return variable + ' を ' + params[0] + ' から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
                 } else if (params.length === 3) {
                     const step = parseInt(params[2]);
                     if (step > 0) {
-                        return variable + ' を ' + params[0] + ' から ' + params[1] + '-1 まで ' + params[2] + ' ずつ増やしながら繰り返す:';
+                        const end = parseInt(params[1]) - 1;
+                        return variable + ' を ' + params[0] + ' から ' + end + ' まで ' + params[2] + ' ずつ増やしながら繰り返す:';
                     } else {
-                        return variable + ' を ' + params[0] + ' から ' + params[1] + '+1 まで ' + Math.abs(step) + ' ずつ減らしながら繰り返す:';
+                        const end = parseInt(params[1]) + 1;
+                        return variable + ' を ' + params[0] + ' から ' + end + ' まで ' + Math.abs(step) + ' ずつ減らしながら繰り返す:';
                     }
                 }
             }
