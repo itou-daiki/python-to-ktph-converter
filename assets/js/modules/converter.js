@@ -189,6 +189,9 @@ class Converter {
         const result = [];
         let indentLevel = 0;
         
+        // Check if random function is used in the code
+        const needsRandomImport = commonTestCode.includes('乱数()');
+        
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             let trimmed = line.trim();
@@ -224,6 +227,18 @@ class Converter {
             // Increase indent after colon
             if (converted.endsWith(':')) {
                 indentLevel++;
+            }
+        }
+        
+        // Add import statement at the beginning if random function is used
+        if (needsRandomImport) {
+            // Check if import random already exists
+            const hasImportRandom = result.some(line => 
+                line.trim() === 'import random' || line.includes('from random import')
+            );
+            
+            if (!hasImportRandom) {
+                result.unshift('import random');
             }
         }
         
@@ -313,6 +328,7 @@ class Converter {
             .replace(/\bint\(/g, '整数(')
             .replace(/\bstr\(/g, '文字列(')
             .replace(/\bfloat\(/g, '実数(')
+            .replace(/\brandom\.random\(\)/g, '乱数()')
             .replace(/\brandom\(\)/g, '乱数()')
             .replace(/\/\//g, '÷')
             .replace(/%/g, '％');
@@ -327,7 +343,7 @@ class Converter {
             .replace(/整数\(/g, 'int(')
             .replace(/文字列\(/g, 'str(')
             .replace(/実数\(/g, 'float(')
-            .replace(/乱数\(\)/g, 'random()')
+            .replace(/乱数\(\)/g, 'random.random()')
             .replace(/÷/g, '//')
             .replace(/％/g, '%');
     }
