@@ -32,6 +32,7 @@ class Executor {
      */
     async runPythonCode(pythonCode) {
         const outputDiv = document.getElementById('output');
+        outputDiv.textContent = ''; // Clear previous output
         
         if (!this.pyodide) {
             await this.initPyodide();
@@ -44,10 +45,19 @@ from io import StringIO
 sys.stdout = StringIO()
         `);
         
-        // Handle input() function
+        // Handle input() function - return string directly to avoid Promise issues
         this.pyodide.globals.set("input", (prompt = "") => {
+            // Show prompt if provided
+            if (prompt) {
+                const outputDiv = document.getElementById('output');
+                outputDiv.textContent += prompt + '\n';
+            }
+            
             return new Promise((resolve) => {
                 this.showInputDialog((value) => {
+                    // Update output to show user input
+                    const outputDiv = document.getElementById('output');
+                    outputDiv.textContent += value + '\n';
                     resolve(value);
                 });
             });
@@ -56,7 +66,14 @@ sys.stdout = StringIO()
         try {
             await this.pyodide.runPythonAsync(pythonCode);
             const output = this.pyodide.runPython("sys.stdout.getvalue()");
-            outputDiv.textContent = output || '実行完了（出力なし）';
+            
+            // Combine existing output (from input dialogs) with execution output
+            const existingOutput = outputDiv.textContent;
+            const finalOutput = existingOutput + (output || '実行完了（出力なし）');
+            outputDiv.textContent = finalOutput;
+            
+            // Scroll to bottom to show the last line
+            outputDiv.scrollTop = outputDiv.scrollHeight;
         } catch (error) {
             outputDiv.textContent = 'Python実行エラー: ' + error.message;
         } finally {
@@ -70,13 +87,19 @@ sys.stdout = StringIO()
      */
     async executeCommonTestCode(code) {
         const lines = code.split('\n');
+        const outputDiv = document.getElementById('output');
+        outputDiv.textContent = ''; // Clear previous output
+        
         this.executionContext = {
             variables: {},
             output: []
         };
         
         await this.executeBlock(lines, 0, lines.length);
-        document.getElementById('output').textContent = this.executionContext.output.join('');
+        outputDiv.textContent = this.executionContext.output.join('');
+        
+        // Scroll to bottom to show the last line
+        outputDiv.scrollTop = outputDiv.scrollHeight;
     }
 
     /**
