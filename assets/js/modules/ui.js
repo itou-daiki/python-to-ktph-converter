@@ -35,7 +35,7 @@ class UIManager {
             indentWithTabs: false,
             lineWrapping: true,
             placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: Infinity,
+            viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
             autoCloseTags: true
@@ -49,7 +49,7 @@ class UIManager {
             lineNumbers: true,
             lineWrapping: true,
             placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: Infinity,
+            viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true
         });
