@@ -102,10 +102,14 @@ class Converter {
      * Convert individual line from Python to Common Test
      */
     convertLine(line, indent, lineIndex, allLines) {
-        // Variable assignment with input()
-        if (line.includes('= input(')) {
-            const parts = line.split('= input(');
-            return parts[0] + '= 【外部からの入力】';
+        // Variable assignment with input() - handle various patterns
+        if (line.includes('input()')) {
+            // Handle int(input()), str(input()), float(input()) etc.
+            line = line.replace(/int\(input\(\)\)/g, '整数(【外部からの入力】)');
+            line = line.replace(/str\(input\(\)\)/g, '文字列(【外部からの入力】)');
+            line = line.replace(/float\(input\(\)\)/g, '実数(【外部からの入力】)');
+            // Handle simple input()
+            line = line.replace(/input\(\)/g, '【外部からの入力】');
         }
         
         // print statement
@@ -230,9 +234,14 @@ class Converter {
      * Convert individual line from Common Test to Python
      */
     convertLineToPython(line) {
-        // Input
+        // Input - handle various patterns
         if (line.includes('【外部からの入力】')) {
-            return line.replace('【外部からの入力】', 'input()');
+            // Handle complex patterns first
+            line = line.replace(/整数\(【外部からの入力】\)/g, 'int(input())');
+            line = line.replace(/文字列\(【外部からの入力】\)/g, 'str(input())');
+            line = line.replace(/実数\(【外部からの入力】\)/g, 'float(input())');
+            // Handle simple pattern
+            line = line.replace(/【外部からの入力】/g, 'input()');
         }
         
         // Display
@@ -303,6 +312,7 @@ class Converter {
             .replace(/\blen\(/g, '要素数(')
             .replace(/\bint\(/g, '整数(')
             .replace(/\bstr\(/g, '文字列(')
+            .replace(/\bfloat\(/g, '実数(')
             .replace(/\brandom\(\)/g, '乱数()')
             .replace(/\/\//g, '÷')
             .replace(/%/g, '％');
@@ -316,6 +326,7 @@ class Converter {
             .replace(/要素数\(/g, 'len(')
             .replace(/整数\(/g, 'int(')
             .replace(/文字列\(/g, 'str(')
+            .replace(/実数\(/g, 'float(')
             .replace(/乱数\(\)/g, 'random()')
             .replace(/÷/g, '//')
             .replace(/％/g, '%');
