@@ -154,6 +154,10 @@ class UIManager {
     setupEventListeners() {
         console.log('Setting up event listeners');
         
+        // Set initial panel labels based on default direction
+        const defaultDirection = document.getElementById('conversionDirection').value;
+        this.updatePanelLabels(defaultDirection);
+        
         // Direction selector
         document.getElementById('conversionDirection').addEventListener('change', (e) => {
             this.updatePanelLabels(e.target.value);
