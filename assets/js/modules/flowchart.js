@@ -10,8 +10,15 @@ class FlowchartGenerator {
                 theme: 'default',
                 securityLevel: 'loose',
                 flowchart: {
-                    useMaxWidth: true,
-                    htmlLabels: true
+                    useMaxWidth: false,  // Allow diagram to use natural width
+                    htmlLabels: false,  // Use text labels to avoid HTML parsing issues
+                    curve: 'basis',
+                    padding: 20
+                },
+                fontFamily: 'arial',
+                fontSize: 12,
+                gantt: {
+                    useMaxWidth: false
                 }
             });
             console.log('Mermaid initialized');
@@ -52,12 +59,14 @@ class FlowchartGenerator {
                 nodeId++;
                 const currentNode = 'N' + nodeId;
                 
-                // Simplify the text for display
-                let nodeText = trimmed.length > 30 ? trimmed.substring(0, 30) + '...' : trimmed;
+                // Simplify the text for display and handle special cases
+                let nodeText = this.simplifyCodeText(trimmed);
                 nodeText = this.escapeForMermaid(nodeText);
                 
                 if (trimmed.includes('if ') || trimmed.includes('while ')) {
                     mermaidCode += `    ${currentNode}{${nodeText}}\n`;
+                } else if (trimmed.includes('print(') || trimmed.includes('input(')) {
+                    mermaidCode += `    ${currentNode}[[${nodeText}]]\n`;  // Subroutine shape for I/O
                 } else {
                     mermaidCode += `    ${currentNode}[${nodeText}]\n`;
                 }
@@ -77,6 +86,42 @@ class FlowchartGenerator {
     }
 
     /**
+     * Simplify code text for flowchart display
+     */
+    simplifyCodeText(text) {
+        // Handle common Python patterns
+        let simplified = text;
+        
+        // Simplify variable assignments with lists
+        if (simplified.includes(' = [') && simplified.includes(']')) {
+            const varName = simplified.split('=')[0].trim();
+            simplified = `${varName} = リスト`;
+        }
+        
+        // Simplify print statements
+        if (simplified.includes('print(')) {
+            simplified = '出力';
+        }
+        
+        // Simplify input statements
+        if (simplified.includes('input(')) {
+            simplified = '入力';
+        }
+        
+        // Simplify len() calls
+        if (simplified.includes('len(')) {
+            simplified = simplified.replace(/len\([^)]+\)/g, '長さ');
+        }
+        
+        // Truncate if still too long
+        if (simplified.length > 25) {
+            simplified = simplified.substring(0, 22) + '...';
+        }
+        
+        return simplified;
+    }
+
+    /**
      * Escape special characters for Mermaid
      */
     escapeForMermaid(text) {
@@ -85,7 +130,16 @@ class FlowchartGenerator {
             .replace(/'/g, '#apos;')
             .replace(/</g, '#lt;')
             .replace(/>/g, '#gt;')
-            .replace(/&/g, '#amp;');
+            .replace(/&/g, '#amp;')
+            .replace(/\[/g, '#91;')  // Escape square brackets
+            .replace(/\]/g, '#93;')
+            .replace(/\{/g, '#123;') // Escape curly braces
+            .replace(/\}/g, '#125;')
+            .replace(/\(/g, '#40;')  // Escape parentheses
+            .replace(/\)/g, '#41;')
+            .replace(/=/g, '#61;')   // Escape equals sign
+            .replace(/,/g, '#44;')   // Escape commas
+            .replace(/;/g, '#59;');  // Escape semicolons
     }
 
     /**

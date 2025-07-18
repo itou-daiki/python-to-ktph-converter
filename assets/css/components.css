@@ -52,8 +52,14 @@ button:active {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     min-height: 0;
+}
+
+/* Special handling for bottom panels (flowchart and output) */
+.bottom-left .panel,
+.bottom-right .panel {
+    overflow: hidden;
 }
 
 .panel-header {
