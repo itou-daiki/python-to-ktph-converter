@@ -56,7 +56,7 @@ class Converter {
             }
             
             // Convert the line
-            const converted = this.convertLine(trimmed, currentIndent, i, lines);
+            const converted = this.convertLine(trimmed);
             
             // Add appropriate prefix for indented content
             if (this.indentStack.length > 1) {
@@ -101,7 +101,7 @@ class Converter {
     /**
      * Convert individual line from Python to Common Test
      */
-    convertLine(line, indent, lineIndex, allLines) {
+    convertLine(line) {
         // Variable assignment with input() - handle various patterns
         if (line.includes('input()')) {
             // Handle int(input()), str(input()), float(input()) etc.
