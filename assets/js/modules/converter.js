@@ -105,9 +105,9 @@ class Converter {
         // Variable assignment with input() - handle various patterns
         if (line.includes('input()')) {
             // Handle int(input()), str(input()), float(input()) etc.
-            line = line.replace(/int\(input\(\)\)/g, '整数(【外部からの入力】)');
-            line = line.replace(/str\(input\(\)\)/g, '文字列(【外部からの入力】)');
-            line = line.replace(/float\(input\(\)\)/g, '実数(【外部からの入力】)');
+            line = line.replace(/int\(input\(\)\)/g, '【外部からの入力】');
+            line = line.replace(/str\(input\(\)\)/g, '【外部からの入力】');
+            line = line.replace(/float\(input\(\)\)/g, '【外部からの入力】');
             // Handle simple input()
             line = line.replace(/input\(\)/g, '【外部からの入力】');
         }
@@ -176,6 +176,15 @@ class Converter {
             if (varName[0] === varName[0].toLowerCase()) {
                 line = line.replace(varName, varName[0].toUpperCase() + varName.slice(1));
             }
+        }
+        
+        // Array initialization patterns (e.g., array.fill(0))
+        const fillMatch = line.match(/(\w+)\.fill\(([^)]+)\)/);
+        if (fillMatch) {
+            const arrayName = fillMatch[1];
+            const value = fillMatch[2];
+            const capitalizedName = arrayName[0].toUpperCase() + arrayName.slice(1);
+            line = line.replace(fillMatch[0], capitalizedName + 'のすべての値を' + value + 'にする');
         }
         
         return line;
@@ -251,12 +260,8 @@ class Converter {
     convertLineToPython(line) {
         // Input - handle various patterns
         if (line.includes('【外部からの入力】')) {
-            // Handle complex patterns first
-            line = line.replace(/整数\(【外部からの入力】\)/g, 'int(input())');
-            line = line.replace(/文字列\(【外部からの入力】\)/g, 'str(input())');
-            line = line.replace(/実数\(【外部からの入力】\)/g, 'float(input())');
-            // Handle simple pattern
-            line = line.replace(/【外部からの入力】/g, 'input()');
+            // According to official specification: 【外部からの入力】 = int(input())
+            line = line.replace(/【外部からの入力】/g, 'int(input())');
         }
         
         // Display
@@ -304,6 +309,14 @@ class Converter {
                 // For decreasing: end value needs -1
                 return `for ${variable} in range(${start}, ${end - 1}, -${step}):`;
             }
+        }
+        
+        // Array initialization pattern
+        const arrayFillMatch = line.match(/(\w+)のすべての値を(\d+)にする/);
+        if (arrayFillMatch) {
+            const arrayName = arrayFillMatch[1].toLowerCase();
+            const value = arrayFillMatch[2];
+            return `${arrayName} = [${value}] * len(${arrayName})`;
         }
         
         // Replace functions and operators back to Python
