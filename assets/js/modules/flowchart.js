@@ -92,6 +92,21 @@ class FlowchartGenerator {
         // Handle common Python patterns
         let simplified = text;
         
+        // Simplify for loops
+        if (simplified.includes('for ') && simplified.includes(' in ')) {
+            simplified = 'ループ処理';
+        }
+        
+        // Simplify while loops
+        if (simplified.includes('while ')) {
+            simplified = '条件ループ';
+        }
+        
+        // Simplify if statements
+        if (simplified.includes('if ')) {
+            simplified = '条件分岐';
+        }
+        
         // Simplify variable assignments with lists
         if (simplified.includes(' = [') && simplified.includes(']')) {
             const varName = simplified.split('=')[0].trim();
@@ -114,8 +129,8 @@ class FlowchartGenerator {
         }
         
         // Truncate if still too long
-        if (simplified.length > 25) {
-            simplified = simplified.substring(0, 22) + '...';
+        if (simplified.length > 20) {
+            simplified = simplified.substring(0, 17) + '...';
         }
         
         return simplified;
@@ -131,7 +146,11 @@ class FlowchartGenerator {
             .replace(/\[/g, '(')     // Replace square brackets with parentheses
             .replace(/\]/g, ')')
             .replace(/\{/g, '(')     // Replace curly braces with parentheses  
-            .replace(/\}/g, ')');
+            .replace(/\}/g, ')')
+            .replace(/:/g, '')       // Remove colons that cause syntax issues
+            .replace(/->/g, '→')     // Replace arrows to avoid conflicts
+            .replace(/\s+/g, ' ')    // Normalize whitespace
+            .trim();
     }
 
     /**
