@@ -112,9 +112,15 @@ class Converter {
             line = line.replace(/input\(\)/g, '【外部からの入力】');
         }
         
-        // print statement
+        // print statement - handle f-strings
         if (line.startsWith('print(')) {
-            const content = line.substring(6, line.length - 1);
+            let content = line.substring(6, line.length - 1);
+            
+            // Convert f-strings to concatenation format
+            if (content.startsWith('f"') || content.startsWith("f'")) {
+                content = this.convertFStringToConcat(content);
+            }
+            
             return '表示する(' + content + ')';
         }
         
@@ -252,6 +258,57 @@ class Converter {
         }
         
         return result.join('\n');
+    }
+
+    /**
+     * Convert f-string to concatenation format for Common Test notation
+     */
+    convertFStringToConcat(fstring) {
+        // Remove f prefix and quotes
+        let content = fstring.slice(2, -1); // Remove f" and "
+        
+        // Simple regex to find {variable} patterns
+        const parts = [];
+        let currentPart = '';
+        let i = 0;
+        
+        while (i < content.length) {
+            if (content[i] === '{') {
+                // Found start of variable
+                if (currentPart) {
+                    parts.push('"' + currentPart + '"');
+                    currentPart = '';
+                }
+                
+                // Find the end of the variable
+                let j = i + 1;
+                while (j < content.length && content[j] !== '}') {
+                    j++;
+                }
+                
+                if (j < content.length) {
+                    // Extract variable name
+                    const variable = content.slice(i + 1, j);
+                    parts.push(variable);
+                    i = j + 1;
+                } else {
+                    // No closing brace found, treat as literal
+                    currentPart += content[i];
+                    i++;
+                }
+            } else {
+                currentPart += content[i];
+                i++;
+            }
+        }
+        
+        // Add remaining part
+        if (currentPart) {
+            parts.push('"' + currentPart + '"');
+        }
+        
+        // Join with comma and space for concatenation
+        return parts.join(', ');
     }
 
     /**
