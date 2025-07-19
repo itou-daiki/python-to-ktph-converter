@@ -59,7 +59,7 @@ def custom_input(prompt=""):
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
         output_div = js.document.getElementById('output')
-        output_div.textContent += value + '\\n'
+        output_div.textContent += value + ' ←キーボードから入力\\n'
     return value if value is not None else ""
 
 # Set in globals
