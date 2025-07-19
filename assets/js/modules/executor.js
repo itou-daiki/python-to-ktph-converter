@@ -45,23 +45,26 @@ from io import StringIO
 sys.stdout = StringIO()
         `);
         
-        // Handle input() function - return string directly to avoid Promise issues
-        this.pyodide.globals.set("input", (prompt = "") => {
-            // Show prompt if provided
-            if (prompt) {
-                const outputDiv = document.getElementById('output');
-                outputDiv.textContent += prompt + '\n';
-            }
-            
-            return new Promise((resolve) => {
-                this.showInputDialog((value) => {
-                    // Update output to show user input
-                    const outputDiv = document.getElementById('output');
-                    outputDiv.textContent += value + '\n';
-                    resolve(value);
-                });
-            });
-        });
+        // Handle input() function - use synchronous input for proper int() compatibility
+        this.pyodide.runPython(`
+import js
+from pyodide.ffi import create_proxy
+
+def input_func(prompt=""):
+    if prompt:
+        output_div = js.document.getElementById('output')
+        output_div.textContent += prompt + '\\n'
+    
+    # Use window.prompt for synchronous input
+    value = js.window.prompt(prompt if prompt else "入力してください:")
+    if value is not None:
+        output_div = js.document.getElementById('output')
+        output_div.textContent += value + '\\n'
+    return value if value is not None else ""
+
+# Override the built-in input function
+__builtins__['input'] = input_func
+        `);
         
         try {
             await this.pyodide.runPythonAsync(pythonCode);
