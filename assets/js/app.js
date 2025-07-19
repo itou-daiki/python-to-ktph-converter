@@ -131,17 +131,10 @@ async function runCode() {
         const direction = document.getElementById('conversionDirection').value;
         console.log('Execution direction:', direction);
         
-        if (direction === 'pythonToCommon') {
-            // Run Python code using Pyodide
-            const pythonCode = uiManager.getPythonCode();
-            console.log('Python code to execute:', pythonCode.substring(0, 100) + '...');
-            await executor.runPythonCode(pythonCode);
-        } else {
-            // Run Common Test notation using interpreter
-            const commonTestCode = uiManager.getCommonTestCode();
-            console.log('Common test code to execute:', commonTestCode.substring(0, 100) + '...');
-            await executor.executeCommonTestCode(commonTestCode);
-        }
+        // Always run Python code using Pyodide regardless of direction
+        const pythonCode = uiManager.getPythonCode();
+        console.log('Python code to execute:', pythonCode.substring(0, 100) + '...');
+        await executor.runPythonCode(pythonCode);
         console.log('Execution completed successfully');
     } catch (error) {
         console.error('Execution failed:', error);

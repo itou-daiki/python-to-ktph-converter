@@ -48,7 +48,7 @@ sys.stdout = StringIO()
         // Handle input() function - use synchronous input for proper int() compatibility
         this.pyodide.runPython(`
 import js
-from pyodide.ffi import create_proxy
+import builtins
 
 def input_func(prompt=""):
     if prompt:
@@ -62,8 +62,8 @@ def input_func(prompt=""):
         output_div.textContent += value + '\\n'
     return value if value is not None else ""
 
-# Override the built-in input function
-__builtins__['input'] = input_func
+# Override the built-in input function using setattr
+setattr(builtins, 'input', input_func)
         `);
         
         try {
