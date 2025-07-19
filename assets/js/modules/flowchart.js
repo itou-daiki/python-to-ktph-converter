@@ -107,10 +107,14 @@ class FlowchartGenerator {
             simplified = '条件分岐';
         }
         
-        // Simplify variable assignments with lists
-        if (simplified.includes(' = [') && simplified.includes(']')) {
+        // Simplify variable assignments
+        if (simplified.includes('=')) {
             const varName = simplified.split('=')[0].trim();
-            simplified = `${varName} = リスト`;
+            if (simplified.includes('[') && simplified.includes(']')) {
+                simplified = `${varName} = リスト`;
+            } else {
+                simplified = `${varName} = 値`;
+            }
         }
         
         // Simplify print statements
@@ -140,16 +144,28 @@ class FlowchartGenerator {
      * Escape special characters for Mermaid
      */
     escapeForMermaid(text) {
-        // Only escape characters that are problematic for Mermaid syntax
+        // Remove/replace ALL problematic characters for Mermaid
         return text
-            .replace(/"/g, "'")      // Replace double quotes with single quotes
-            .replace(/\[/g, '(')     // Replace square brackets with parentheses
-            .replace(/\]/g, ')')
-            .replace(/\{/g, '(')     // Replace curly braces with parentheses  
-            .replace(/\}/g, ')')
-            .replace(/:/g, '')       // Remove colons that cause syntax issues
-            .replace(/->/g, '→')     // Replace arrows to avoid conflicts
-            .replace(/\s+/g, ' ')    // Normalize whitespace
+            .replace(/"/g, "'")         // Replace double quotes with single quotes
+            .replace(/\[/g, '')         // Remove square brackets
+            .replace(/\]/g, '')
+            .replace(/\{/g, '')         // Remove curly braces  
+            .replace(/\}/g, '')
+            .replace(/\(/g, '')         // Remove parentheses
+            .replace(/\)/g, '')
+            .replace(/:/g, '')          // Remove colons
+            .replace(/->/g, '→')        // Replace arrows
+            .replace(/\+/g, 'plus')     // Replace plus sign
+            .replace(/-/g, 'minus')     // Replace minus sign
+            .replace(/\*/g, 'times')    // Replace multiplication
+            .replace(/\//g, 'div')      // Replace division
+            .replace(/=/g, 'eq')        // Replace equals
+            .replace(/</g, 'lt')        // Replace less than
+            .replace(/>/g, 'gt')        // Replace greater than
+            .replace(/&/g, 'and')       // Replace ampersand
+            .replace(/\|/g, 'or')       // Replace pipe
+            .replace(/\r?\n/g, ' ')     // Replace newlines with space
+            .replace(/\s+/g, ' ')       // Normalize whitespace
             .trim();
     }
 
