@@ -45,12 +45,12 @@ from io import StringIO
 sys.stdout = StringIO()
         `);
         
-        // Handle input() function - use synchronous input for proper int() compatibility
+        // Handle input() function - override globally
+        this.pyodide.globals.set("original_input", this.pyodide.globals.get("input"));
         this.pyodide.runPython(`
 import js
-import builtins
 
-def input_func(prompt=""):
+def custom_input(prompt=""):
     if prompt:
         output_div = js.document.getElementById('output')
         output_div.textContent += prompt + '\\n'
@@ -62,8 +62,8 @@ def input_func(prompt=""):
         output_div.textContent += value + '\\n'
     return value if value is not None else ""
 
-# Override the built-in input function using setattr
-setattr(builtins, 'input', input_func)
+# Set in globals
+input = custom_input
         `);
         
         try {
