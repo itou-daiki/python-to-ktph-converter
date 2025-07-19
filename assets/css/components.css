@@ -73,11 +73,15 @@ button:active {
 
 /* Share Section */
 .share-section {
-    margin-top: 20px;
+    margin-top: 40px;
+    margin-bottom: 40px;
     padding: 20px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    clear: both;
+    position: relative;
+    z-index: 1;
 }
 
 .share-url {
