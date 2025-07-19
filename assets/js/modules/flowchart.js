@@ -125,21 +125,13 @@ class FlowchartGenerator {
      * Escape special characters for Mermaid
      */
     escapeForMermaid(text) {
+        // Only escape characters that are problematic for Mermaid syntax
         return text
-            .replace(/"/g, '#quot;')
-            .replace(/'/g, '#apos;')
-            .replace(/</g, '#lt;')
-            .replace(/>/g, '#gt;')
-            .replace(/&/g, '#amp;')
-            .replace(/\[/g, '#91;')  // Escape square brackets
-            .replace(/\]/g, '#93;')
-            .replace(/\{/g, '#123;') // Escape curly braces
-            .replace(/\}/g, '#125;')
-            .replace(/\(/g, '#40;')  // Escape parentheses
-            .replace(/\)/g, '#41;')
-            .replace(/=/g, '#61;')   // Escape equals sign
-            .replace(/,/g, '#44;')   // Escape commas
-            .replace(/;/g, '#59;');  // Escape semicolons
+            .replace(/"/g, "'")      // Replace double quotes with single quotes
+            .replace(/\[/g, '(')     // Replace square brackets with parentheses
+            .replace(/\]/g, ')')
+            .replace(/\{/g, '(')     // Replace curly braces with parentheses  
+            .replace(/\}/g, ')');
     }
 
     /**
