@@ -1,0 +1,95 @@
+/**
+ * Syntax highlighting styles for Common Test Programming Notation
+ * Colors optimized for material-darker theme
+ */
+
+/* Keywords (control flow statements) */
+.cm-s-material-darker .cm-keyword {
+    color: #C792EA !important; /* Purple for control flow keywords */
+    font-weight: bold;
+}
+
+/* Built-in functions */
+.cm-s-material-darker .cm-builtin {
+    color: #82AAFF !important; /* Blue for built-in functions */
+    font-weight: bold;
+}
+
+/* Tree structure symbols */
+.cm-s-material-darker .cm-tree-structure {
+    color: #C3E88D !important; /* Green for tree symbols */
+    font-weight: bold;
+}
+
+/* Special input notation */
+.cm-s-material-darker .cm-special-input {
+    color: #F78C6C !important; /* Orange for special input */
+    background-color: rgba(247, 140, 108, 0.2);
+    border-radius: 3px;
+    padding: 1px 2px;
+    font-weight: bold;
+}
+
+/* Strings */
+.cm-s-material-darker .cm-string {
+    color: #C3E88D !important; /* Green for strings */
+}
+
+/* Numbers */
+.cm-s-material-darker .cm-number {
+    color: #F78C6C !important; /* Orange for numbers */
+}
+
+/* Operators */
+.cm-s-material-darker .cm-operator {
+    color: #89DDFF !important; /* Cyan for operators */
+    font-weight: bold;
+}
+
+/* Variables */
+.cm-s-material-darker .cm-variable {
+    color: #EEFFFF !important; /* Default text color for variables */
+}
+
+/* Function names */
+.cm-s-material-darker .cm-variable-2 {
+    color: #82AAFF !important; /* Blue for function names */
+}
+
+/* Comments */
+.cm-s-material-darker .cm-comment {
+    color: #546E7A !important; /* Gray for comments */
+    font-style: italic;
+}
+
+/* Brackets and punctuation */
+.cm-s-material-darker .cm-bracket {
+    color: #89DDFF !important; /* Cyan for brackets */
+}
+
+.cm-s-material-darker .cm-punctuation {
+    color: #89DDFF !important; /* Cyan for punctuation */
+}
+
+/* Enhanced styling for better readability */
+.CodeMirror.cm-s-material-darker {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* Hover effect for keywords */
+.cm-s-material-darker .cm-keyword:hover,
+.cm-s-material-darker .cm-builtin:hover {
+    background-color: rgba(199, 146, 234, 0.2);
+    border-radius: 2px;
+}
+
+/* Selection styling */
+.cm-s-material-darker .CodeMirror-selected {
+    background: rgba(128, 203, 196, 0.2) !important;
+}
+
+.cm-s-material-darker .CodeMirror-line::selection,
+.cm-s-material-darker .CodeMirror-line > span::selection,
+.cm-s-material-darker .CodeMirror-line > span > span::selection {
+    background: rgba(128, 203, 196, 0.2);
+}

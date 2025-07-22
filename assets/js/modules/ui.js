@@ -44,7 +44,7 @@ class UIManager {
 
         console.log('Creating Common Test editor...');
         this.commonTestEditor = CodeMirror(commonTestContainer, {
-            mode: 'text/plain',
+            mode: 'commontest',
             theme: 'material-darker',
             lineNumbers: true,
             lineWrapping: true,
