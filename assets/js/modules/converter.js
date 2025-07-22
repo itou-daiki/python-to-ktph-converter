@@ -126,6 +126,11 @@ class Converter {
                 content = this.convertFStringToConcat(content);
             }
             
+            // Remove str() function calls from print content
+            content = content.replace(/str\([^)]+\)/g, function(match) {
+                return match.substring(4, match.length - 1); // Remove str( and )
+            });
+            
             return '表示する(' + content + ')';
         }
         
@@ -408,7 +413,7 @@ class Converter {
         return line
             .replace(/\blen\(/g, '要素数(')
             .replace(/\bint\(/g, '整数(')
-            .replace(/\bstr\(/g, '文字列(')
+            .replace(/\bstr\(/g, '')  // Remove str() completely for Common Test format
             .replace(/\bfloat\(/g, '実数(')
             .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
             .replace(/\brandom\.random\(\)/g, '乱数()')
