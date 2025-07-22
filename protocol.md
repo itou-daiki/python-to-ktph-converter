@@ -176,7 +176,11 @@ Python: str(値)
 
 乱数
 
+Python: random.random()
 共通テスト用: 乱数() #0以上1未満のランダムな値
+
+Python: random.randint(a, b)
+共通テスト用: 乱数(a, b) #a以上b以下の整数をランダムに1つ返す
 
 8. 特殊な表記
 コメント

@@ -102,6 +102,11 @@ class Converter {
      * Convert individual line from Python to Common Test
      */
     convertLine(line) {
+        // import random - skip this line
+        if (line.startsWith('import random')) {
+            return '';
+        }
+        
         // Variable assignment with input() - handle various patterns
         if (line.includes('input()')) {
             // Handle int(input()), str(input()), float(input()) etc.
@@ -155,8 +160,15 @@ class Converter {
                 const params = match[2].split(',').map(p => p.trim());
                 
                 if (params.length === 1) {
-                    const end = parseInt(params[0]) - 1;
-                    return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
+                    // Check if params[0] is a number or variable
+                    const param = params[0];
+                    if (!isNaN(parseInt(param))) {
+                        const end = parseInt(param) - 1;
+                        return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
+                    } else {
+                        // If it's a variable, use the variable-1 format
+                        return variable + ' を 0 から ' + param + '-1 まで 1 ずつ増やしながら繰り返す:';
+                    }
                 } else if (params.length === 2) {
                     const end = parseInt(params[1]) - 1;
                     return variable + ' を ' + params[0] + ' から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
@@ -398,6 +410,7 @@ class Converter {
             .replace(/\bint\(/g, '整数(')
             .replace(/\bstr\(/g, '文字列(')
             .replace(/\bfloat\(/g, '実数(')
+            .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
             .replace(/\brandom\.random\(\)/g, '乱数()')
             .replace(/\brandom\(\)/g, '乱数()')
             .replace(/\/\//g, '÷')
@@ -413,6 +426,7 @@ class Converter {
             .replace(/整数\(/g, 'int(')
             .replace(/文字列\(/g, 'str(')
             .replace(/実数\(/g, 'float(')
+            .replace(/乱数\((\d+),\s*(\d+)\)/g, 'random.randint($1, $2)')
             .replace(/乱数\(\)/g, 'random.random()')
             .replace(/÷/g, '//')
             .replace(/％/g, '%');
