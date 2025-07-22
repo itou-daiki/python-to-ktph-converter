@@ -641,48 +641,38 @@ else:
                 throw new Error('Common test editor not initialized');
             }
             
-            if (direction === 'pythonToCommon') {
-                const pythonCode = this.pythonEditor.getValue();
-                console.log('Python code length:', pythonCode.length);
-                console.log('Python code preview:', pythonCode.substring(0, 100));
-                
-                if (!pythonCode.trim()) {
-                    console.log('No Python code to convert');
-                    return;
-                }
-                
-                console.log('Calling converter.pythonToCommonTest()...');
-                const converted = window.converter.pythonToCommonTest(pythonCode);
-                console.log('Conversion successful, result length:', converted.length);
-                console.log('Conversion result preview:', converted.substring(0, 100));
-                
-                this.commonTestEditor.setValue(converted);
-                console.log('Set converted text to common test editor');
-                
-            } else {
-                const commonTestCode = this.commonTestEditor.getValue();
-                console.log('Common test code length:', commonTestCode.length);
-                console.log('Common test code preview:', commonTestCode.substring(0, 100));
-                
-                if (!commonTestCode.trim()) {
-                    console.log('No common test code to convert');
-                    return;
-                }
-                
-                console.log('Calling converter.commonTestToPython()...');
-                const converted = window.converter.commonTestToPython(commonTestCode);
-                console.log('Conversion successful, result length:', converted.length);
-                console.log('Conversion result preview:', converted.substring(0, 100));
-                
-                this.pythonEditor.setValue(converted);
-                console.log('Set converted text to python editor');
+            // Always convert from left editor to right editor
+            const leftCode = this.pythonEditor.getValue();
+            console.log('Left editor code length:', leftCode.length);
+            console.log('Left editor code preview:', leftCode.substring(0, 100));
+            
+            if (!leftCode.trim()) {
+                console.log('No code in left editor to convert');
+                return;
             }
             
-            // Generate flowchart
+            let converted;
+            if (direction === 'pythonToCommon') {
+                console.log('Converting Python to Common Test...');
+                converted = window.converter.pythonToCommonTest(leftCode);
+            } else {
+                console.log('Converting Common Test to Python...');
+                converted = window.converter.commonTestToPython(leftCode);
+            }
+            
+            console.log('Conversion successful, result length:', converted.length);
+            console.log('Conversion result preview:', converted.substring(0, 100));
+            
+            this.commonTestEditor.setValue(converted);
+            console.log('Set converted text to right editor');
+            
+            // Generate flowchart using Python code
             try {
                 if (window.flowchartGenerator) {
                     console.log('Generating flowchart...');
-                    await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+                    // Use converted Python code if we converted from Common Test, otherwise use original
+                    const pythonCodeForFlowchart = direction === 'commonToPython' ? converted : leftCode;
+                    await window.flowchartGenerator.generateFlowchart(pythonCodeForFlowchart);
                     console.log('Flowchart generated successfully');
                 }
             } catch (flowchartError) {
