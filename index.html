@@ -34,14 +34,6 @@
     <div class="container">
         <!-- Controls -->
         <div class="controls">
-            <div class="direction-selector">
-                <label for="conversionDirection">変換方向:</label>
-                <select id="conversionDirection">
-                    <option value="pythonToCommon">Python → 共通テスト</option>
-                    <option value="commonToPython">共通テスト → Python</option>
-                </select>
-            </div>
-            <button class="convert-button">変換</button>
             <button class="run-button">実行</button>
             <button class="clear-button">クリア</button>
             <div class="sample-selector">
@@ -61,19 +53,25 @@
 
         <!-- Main Content Grid -->
         <div class="main-content">
-            <!-- Top Left: Python/Input Code -->
+            <!-- Top Left: Python Code -->
             <div class="panel top-left">
                 <div class="panel-header">
-                    <span id="leftPanelLabel">Python</span>
+                    <span>Python</span>
                     <button class="copy-button python-copy-button">📋</button>
                 </div>
                 <div id="pythonEditor"></div>
             </div>
             
-            <!-- Top Right: Common Test Notation/Output Code -->
+            <!-- Conversion Controls -->
+            <div class="conversion-controls">
+                <button class="convert-button-right" onclick="convertPythonToCommon()">→</button>
+                <button class="convert-button-left" onclick="convertCommonToPython()">←</button>
+            </div>
+            
+            <!-- Top Right: Common Test Notation -->
             <div class="panel top-right">
                 <div class="panel-header">
-                    <span id="rightPanelLabel">共通テスト用プログラム表記</span>
+                    <span>共通テスト用プログラム表記</span>
                     <button class="copy-button common-copy-button">📋</button>
                 </div>
                 <div id="commonTestEditor"></div>

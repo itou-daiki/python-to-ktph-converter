@@ -70,36 +70,56 @@ window.addEventListener('load', async function() {
  * Global functions for HTML onclick handlers
  */
 
-// Convert code based on selected direction
-async function convert() {
-    console.log('=== Convert function called ===');
-    console.log('uiManager exists:', !!uiManager);
-    console.log('converter exists:', !!converter);
-    console.log('uiManager.pythonEditor exists:', !!(uiManager && uiManager.pythonEditor));
-    console.log('uiManager.commonTestEditor exists:', !!(uiManager && uiManager.commonTestEditor));
+// Convert Python to Common Test
+async function convertPythonToCommon() {
+    console.log('=== Convert Python to Common Test ===');
     
-    if (!uiManager) {
-        console.error('UIManager not initialized');
-        alert('UIManager not initialized');
-        return;
-    }
-    
-    if (!converter) {
-        console.error('Converter not initialized');
-        alert('Converter not initialized');
-        return;
-    }
-    
-    if (!uiManager.pythonEditor || !uiManager.commonTestEditor) {
-        console.error('Editors not initialized');
-        alert('Editors not initialized');
+    if (!uiManager || !converter) {
+        console.error('UIManager or Converter not initialized');
         return;
     }
     
     try {
-        console.log('Calling uiManager.convert()...');
-        await uiManager.convert();
-        console.log('Conversion completed successfully');
+        const pythonCode = uiManager.getPythonCode();
+        console.log('Converting Python code:', pythonCode.substring(0, 100) + '...');
+        
+        const commonTestCode = await converter.pythonToCommonTest(pythonCode);
+        uiManager.setCommonTestCode(commonTestCode);
+        
+        // Generate flowchart from converted code
+        if (flowchartGenerator) {
+            await flowchartGenerator.generateFromCode(commonTestCode);
+        }
+        
+        console.log('Python to Common Test conversion completed successfully');
+    } catch (error) {
+        console.error('Conversion failed:', error);
+        alert('Conversion failed: ' + error.message);
+    }
+}
+
+// Convert Common Test to Python
+async function convertCommonToPython() {
+    console.log('=== Convert Common Test to Python ===');
+    
+    if (!uiManager || !converter) {
+        console.error('UIManager or Converter not initialized');
+        return;
+    }
+    
+    try {
+        const commonTestCode = uiManager.getCommonTestCode();
+        console.log('Converting Common Test code:', commonTestCode.substring(0, 100) + '...');
+        
+        const pythonCode = await converter.commonTestToPython(commonTestCode);
+        uiManager.setPythonCode(pythonCode);
+        
+        // Generate flowchart from converted code
+        if (flowchartGenerator) {
+            await flowchartGenerator.generateFromCode(pythonCode);
+        }
+        
+        console.log('Common Test to Python conversion completed successfully');
     } catch (error) {
         console.error('Conversion failed:', error);
         alert('Conversion failed: ' + error.message);
@@ -128,10 +148,7 @@ async function runCode() {
     }
     
     try {
-        const direction = document.getElementById('conversionDirection').value;
-        console.log('Execution direction:', direction);
-        
-        // Always run Python code using Pyodide regardless of direction
+        // Always run Python code using Pyodide
         const pythonCode = uiManager.getPythonCode();
         console.log('Python code to execute:', pythonCode.substring(0, 100) + '...');
         await executor.runPythonCode(pythonCode);
@@ -188,7 +205,8 @@ function closeInputDialog() {
 }
 
 // Make global functions available
-window.convert = convert;
+window.convertPythonToCommon = convertPythonToCommon;
+window.convertCommonToPython = convertCommonToPython;
 window.runCode = runCode;
 window.clearAll = clearAll;
 window.clearOutput = clearOutput;
