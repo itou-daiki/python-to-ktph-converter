@@ -60,7 +60,8 @@ button:active {
 /* Special handling for bottom panels (flowchart and output) */
 .bottom-left .panel,
 .bottom-right .panel {
-    overflow: hidden;
+    overflow: visible;
+    padding-bottom: 25px;
 }
 
 .panel-header {
