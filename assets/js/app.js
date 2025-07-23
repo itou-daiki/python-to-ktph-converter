@@ -86,9 +86,9 @@ async function convertPythonToCommon() {
         const commonTestCode = await converter.pythonToCommonTest(pythonCode);
         uiManager.setCommonTestCode(commonTestCode);
         
-        // Generate flowchart from converted Common Test code
+        // Generate flowchart from Python code with Common Test style labels
         if (flowchartGenerator) {
-            await flowchartGenerator.generateFlowchart(commonTestCode);
+            await flowchartGenerator.generateFlowchart(pythonCode);
         }
         
         console.log('Python to Common Test conversion completed successfully');
@@ -114,9 +114,10 @@ async function convertCommonToPython() {
         const pythonCode = await converter.commonTestToPython(commonTestCode);
         uiManager.setPythonCode(pythonCode);
         
-        // Generate flowchart from Common Test code
+        // Generate flowchart from Python code with Common Test style labels
         if (flowchartGenerator) {
-            await flowchartGenerator.generateFlowchart(commonTestCode);
+            const pythonCode = await converter.commonTestToPython(commonTestCode);
+            await flowchartGenerator.generateFlowchart(pythonCode);
         }
         
         console.log('Common Test to Python conversion completed successfully');

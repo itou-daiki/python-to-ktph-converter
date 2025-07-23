@@ -28,19 +28,19 @@ class FlowchartGenerator {
     }
 
     /**
-     * Generate flowchart from Common Test code
+     * Generate flowchart from Python code with Common Test style labels
      */
-    async generateFlowchart(commonTestCode) {
-        if (!commonTestCode || commonTestCode.trim() === '') {
+    async generateFlowchart(pythonCode) {
+        if (!pythonCode || pythonCode.trim() === '') {
             console.log('No code to generate flowchart');
             this.clearFlowchart();
             return;
         }
 
         try {
-            console.log('Generating flowchart for:', commonTestCode.substring(0, 100) + '...');
+            console.log('Generating flowchart for:', pythonCode.substring(0, 100) + '...');
             
-            const lines = commonTestCode.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
+            const lines = pythonCode.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
             
             if (lines.length === 0) {
                 console.log('No valid lines for flowchart');
@@ -59,13 +59,13 @@ class FlowchartGenerator {
                 nodeId++;
                 const currentNode = 'N' + nodeId;
                 
-                // Use detailed Common Test code text for display
-                let nodeText = this.processCommonTestText(trimmed);
+                // Convert Python code to Common Test style for display
+                let nodeText = this.convertPythonToCommonTestStyle(trimmed);
                 nodeText = this.escapeForMermaid(nodeText);
                 
-                if (trimmed.includes('もし ') || trimmed.includes('の間繰り返す')) {
+                if (trimmed.includes('if ') || trimmed.includes('while ') || trimmed.includes('for ')) {
                     mermaidCode += `    ${currentNode}{${nodeText}}\n`;
-                } else if (trimmed.includes('表示する') || trimmed.includes('【外部からの入力】')) {
+                } else if (trimmed.includes('print(') || trimmed.includes('input(')) {
                     mermaidCode += `    ${currentNode}[[${nodeText}]]\n`;  // Subroutine shape for I/O
                 } else {
                     mermaidCode += `    ${currentNode}[${nodeText}]\n`;
@@ -86,30 +86,63 @@ class FlowchartGenerator {
     }
 
     /**
-     * Process Common Test code text to show detailed processing content
+     * Convert Python code to Common Test style notation for flowchart display
      */
-    processCommonTestText(text) {
-        let processed = text.trim();
+    convertPythonToCommonTestStyle(pythonCode) {
+        let converted = pythonCode.trim();
         
-        // Remove control symbols
-        processed = processed.replace(/^[｜⎿\s]+/, '');
-        
-        // Keep the detailed text but make it more readable for flowcharts
-        if (processed.length > 50) {
-            // For very long lines, try to break at natural points
-            if (processed.includes('ずつ増やしながら繰り返す')) {
-                // Keep loop descriptions intact as they're important
-                return processed;
-            } else if (processed.includes('ずつ減らしながら繰り返す')) {
-                // Keep loop descriptions intact as they're important
-                return processed;
-            } else {
-                // For other long statements, truncate reasonably
-                processed = processed.substring(0, 47) + '...';
-            }
+        // Convert for loops to Common Test style
+        const forMatch = converted.match(/for\s+(\w+)\s+in\s+range\s*\((\d+),\s*(\d+)(?:,\s*(\d+))?\s*\)\s*:/);
+        if (forMatch) {
+            const variable = forMatch[1];
+            const start = forMatch[2];
+            const end = parseInt(forMatch[3]) - 1; // range is exclusive of end
+            const step = forMatch[4] || '1';
+            return `${variable} を ${start} から ${end} まで ${step} ずつ増やしながら繰り返す`;
         }
         
-        return processed;
+        // Convert while loops
+        const whileMatch = converted.match(/while\s+(.+)\s*:/);
+        if (whileMatch) {
+            const condition = whileMatch[1];
+            return `${condition} の間繰り返す`;
+        }
+        
+        // Convert if statements
+        const ifMatch = converted.match(/if\s+(.+)\s*:/);
+        if (ifMatch) {
+            const condition = ifMatch[1];
+            return `もし ${condition} ならば`;
+        }
+        
+        // Convert print statements
+        const printMatch = converted.match(/print\s*\((.*)\)/);
+        if (printMatch) {
+            const content = printMatch[1];
+            return `表示する(${content})`;
+        }
+        
+        // Convert input statements
+        const inputMatch = converted.match(/(\w+)\s*=\s*input\s*\((.*)\)/);
+        if (inputMatch) {
+            const variable = inputMatch[1];
+            return `${variable} = 【外部からの入力】`;
+        }
+        
+        // Convert variable assignments
+        const assignMatch = converted.match(/(\w+)\s*=\s*(.+)/);
+        if (assignMatch) {
+            const variable = assignMatch[1];
+            const value = assignMatch[2];
+            return `${variable} = ${value}`;
+        }
+        
+        // Truncate if still too long
+        if (converted.length > 50) {
+            converted = converted.substring(0, 47) + '...';
+        }
+        
+        return converted;
     }
 
     /**
