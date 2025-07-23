@@ -552,10 +552,33 @@ else:
         
         try {
             console.log('Loading sample:', sample.title);
-            const response = await fetch(`Sample/${sample.file}`);
             
-            if (sample.file.endsWith('.json')) {
-                // New JSON format
+            if (sample.folder && sample.pythonFile && sample.commonTestFile) {
+                // New folder-based structure
+                const [pythonResponse, commonTestResponse] = await Promise.all([
+                    fetch(`Sample/${sample.folder}/${sample.pythonFile}`),
+                    fetch(`Sample/${sample.folder}/${sample.commonTestFile}`)
+                ]);
+                
+                const pythonContent = await pythonResponse.text();
+                const commonTestContent = await commonTestResponse.text();
+                
+                // Extract code from markdown files
+                const pythonCodeMatch = pythonContent.match(/```python\n([\s\S]*?)\n```/);
+                const commonTestCodeMatch = commonTestContent.match(/```\n([\s\S]*?)\n```/);
+                
+                if (pythonCodeMatch && pythonCodeMatch[1]) {
+                    this.pythonEditor.setValue(pythonCodeMatch[1]);
+                }
+                
+                if (commonTestCodeMatch && commonTestCodeMatch[1]) {
+                    this.commonTestEditor.setValue(commonTestCodeMatch[1]);
+                }
+                
+                console.log('Sample loaded successfully from folder structure:', sample.title);
+            } else if (sample.file && sample.file.endsWith('.json')) {
+                // Legacy JSON format (backward compatibility)
+                const response = await fetch(`Sample/${sample.file}`);
                 const sampleData = await response.json();
                 
                 // Load both Python and Common Test code
@@ -566,9 +589,10 @@ else:
                     this.commonTestEditor.setValue(sampleData.commonTest);
                 }
                 
-                console.log('Sample loaded successfully:', sample.title);
+                console.log('Sample loaded successfully from JSON format:', sample.title);
             } else {
                 // Old markdown format (backward compatibility)
+                const response = await fetch(`Sample/${sample.file}`);
                 const markdownContent = await response.text();
                 
                 // Extract code from markdown (try Python first, then plain code blocks)

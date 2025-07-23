@@ -1,7 +1,0 @@
-{
-  "title": "線形探索",
-  "description": "配列を先頭から順に検索するアルゴリズム",
-  "category": "探索アルゴリズム",
-  "python": "# 線形探索の例\ndata = [2, 3, 4, 10, 40]\nprint(\"検索する値を入力してください\")\nx = int(input())\n\n# 線形探索\nfound = False\nfor i in range(len(data)):\n    if data[i] == x:\n        print(f\"値 {x} は位置 {i} にあります\")\n        found = True\n        break\n\nif not found:\n    print(f\"値 {x} は見つかりませんでした\")",
-  "commonTest": "# 線形探索の例\ndata ← [2, 3, 4, 10, 40]\n\"検索する値を入力してください\" を出力する\nx ← 整数値を入力する\n\n# 線形探索\nfound ← False\ni を 0 から len(data)-1 まで繰り返す\n    もし data[i] == x ならば\n        \"値\", x, \"は位置\", i, \"にあります\" を出力する\n        found ← True\n        繰り返しを終了する\n\nもし found == False ならば\n    \"値\", x, \"は見つかりませんでした\" を出力する"
-}

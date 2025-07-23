@@ -34,8 +34,6 @@
     <div class="container">
         <!-- Controls -->
         <div class="controls">
-            <button class="run-button">実行</button>
-            <button class="clear-button">クリア</button>
             <div class="sample-selector">
                 <label for="sampleSelect">サンプル:</label>
                 <select id="sampleSelect">
@@ -66,6 +64,8 @@
             <div class="conversion-controls">
                 <button class="convert-button-right" onclick="convertPythonToCommon()">→</button>
                 <button class="convert-button-left" onclick="convertCommonToPython()">←</button>
+                <button class="run-button" onclick="runCode()">実行</button>
+                <button class="clear-button" onclick="clearAll()">クリア</button>
             </div>
             
             <!-- Top Right: Common Test Notation -->

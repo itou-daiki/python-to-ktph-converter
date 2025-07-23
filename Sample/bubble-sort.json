@@ -1,7 +1,0 @@
-{
-  "title": "バブルソート",
-  "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム",
-  "category": "ソートアルゴリズム",
-  "python": "# バブルソートの例\ndata = [64, 34, 25, 12, 22, 11, 90]\nn = len(data)\n\nprint(\"ソート前のデータ:\")\nfor i in range(n):\n    print(data[i], end=\" \")\nprint()\n\n# バブルソート\nfor i in range(n):\n    for j in range(0, n - i - 1):\n        if data[j] > data[j + 1]:\n            # 要素を交換\n            data[j], data[j + 1] = data[j + 1], data[j]\n\nprint(\"ソート後のデータ:\")\nfor i in range(n):\n    print(data[i], end=\" \")\nprint()",
-  "commonTest": "# バブルソートの例\ndata ← [64, 34, 25, 12, 22, 11, 90]\nn ← len(data)\n\n\"ソート前のデータ:\" を出力する\ni を 0 から n-1 まで繰り返す\n    data[i] を出力する（改行なし）\n改行を出力する\n\n# バブルソート\ni を 0 から n-1 まで繰り返す\n    j を 0 から n-i-2 まで繰り返す\n        もし data[j] > data[j + 1] ならば\n            # 要素を交換\n            temp ← data[j]\n            data[j] ← data[j + 1]\n            data[j + 1] ← temp\n\n\"ソート後のデータ:\" を出力する\ni を 0 から n-1 まで繰り返す\n    data[i] を出力する（改行なし）\n改行を出力する"
-}

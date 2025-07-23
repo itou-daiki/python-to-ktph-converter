@@ -3,42 +3,54 @@
     {
       "id": "binary-search",
       "title": "二分探索",
-      "file": "binary-search.json",
+      "folder": "binary-search",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "ソート済み配列から特定の値を効率的に検索",
       "category": "探索アルゴリズム"
     },
     {
       "id": "bubble-sort",
       "title": "バブルソート",
-      "file": "bubble-sort.json",
+      "folder": "bubble-sort",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム",
       "category": "ソートアルゴリズム"
     },
     {
       "id": "linear-search",
       "title": "線形探索",
-      "file": "linear-search.json",
+      "folder": "linear-search",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "配列を先頭から順に検索するアルゴリズム",
       "category": "探索アルゴリズム"
     },
     {
       "id": "factorial",
       "title": "階乗計算",
-      "file": "factorial.json",
+      "folder": "factorial",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "再帰を使った階乗計算",
       "category": "再帰アルゴリズム"
     },
     {
       "id": "fibonacci",
       "title": "フィボナッチ数列",
-      "file": "fibonacci.json",
+      "folder": "fibonacci",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "フィボナッチ数列を生成するアルゴリズム",
       "category": "数値計算"
     },
     {
       "id": "prime-check",
       "title": "素数判定",
-      "file": "prime-check.json",
+      "folder": "prime-check",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
       "description": "効率的な素数判定アルゴリズム",
       "category": "数値計算"
     }

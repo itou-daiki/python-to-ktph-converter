@@ -1,7 +1,0 @@
-{
-  "title": "素数判定",
-  "description": "効率的な素数判定アルゴリズム",
-  "category": "数値計算",
-  "python": "# 素数判定の例\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n <= 3:\n        return True\n    if n % 2 == 0 or n % 3 == 0:\n        return False\n    \n    i = 5\n    while i * i <= n:\n        if n % i == 0 or n % (i + 2) == 0:\n            return False\n        i += 6\n    return True\n\nprint(\"素数かどうか調べる数を入力してください\")\nnum = int(input())\n\nif is_prime(num):\n    print(f\"{num} は素数です\")\nelse:\n    print(f\"{num} は素数ではありません\")",
-  "commonTest": "# 素数判定の例\n関数 is_prime(n)\n    もし n <= 1 ならば\n        False を返す\n    もし n <= 3 ならば\n        True を返す\n    もし n を 2 で割った余りが 0 または n を 3 で割った余りが 0 ならば\n        False を返す\n    \n    i ← 5\n    i * i <= n の間\n        もし n を i で割った余りが 0 または n を (i + 2) で割った余りが 0 ならば\n            False を返す\n        i ← i + 6\n    True を返す\n\n\"素数かどうか調べる数を入力してください\" を出力する\nnum ← 整数値を入力する\n\nもし is_prime(num) ならば\n    num, \"は素数です\" を出力する\nそうでなければ\n    num, \"は素数ではありません\" を出力する"
-}
