@@ -803,6 +803,17 @@ else:
     getCommonTestCode() {
         return this.commonTestEditor.getValue();
     }
+
+    /**
+     * Set editor values
+     */
+    setPythonCode(code) {
+        this.pythonEditor.setValue(code);
+    }
+
+    setCommonTestCode(code) {
+        this.commonTestEditor.setValue(code);
+    }
 }
 
 // Export for use in other modules
