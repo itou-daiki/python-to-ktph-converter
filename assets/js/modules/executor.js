@@ -41,9 +41,6 @@ class Executor {
         // Initialize output capture array in JavaScript
         let capturedOutput = [];
         
-        // Clear any existing captured output from previous runs
-        this.pyodide.globals.delete("capturedOutput");
-        
         // Make capturedOutput available to Python code first
         this.pyodide.globals.set("capturedOutput", capturedOutput);
         
@@ -53,9 +50,14 @@ import sys
 import js
 import builtins
 
-# Store original functions
-original_print = builtins.print
-original_input = builtins.input
+# Store original functions if not already stored
+if not hasattr(builtins, '_original_print'):
+    builtins._original_print = builtins.print
+if not hasattr(builtins, '_original_input'):
+    builtins._original_input = builtins.input
+
+original_print = builtins._original_print
+original_input = builtins._original_input
 
 # Get the capturedOutput from global namespace
 captured_output = capturedOutput
@@ -83,13 +85,6 @@ builtins.input = custom_input
         `);
         
         try {
-            // Reset any global state that might cause duplication
-            this.pyodide.runPython(`
-# Clear any previous execution state
-if 'captured_output' in globals():
-    captured_output.clear()
-            `);
-            
             await this.pyodide.runPythonAsync(pythonCode);
             
             // Get captured output from JavaScript array
@@ -103,18 +98,12 @@ if 'captured_output' in globals():
         } catch (error) {
             outputDiv.textContent = 'Python実行エラー: ' + error.message;
         } finally {
-            // Reset to original functions and clear globals
+            // Reset to original functions
             this.pyodide.runPython(`
 # Reset print and input to original functions
 builtins.print = original_print
 builtins.input = original_input
-# Clear captured_output reference
-if 'captured_output' in globals():
-    del captured_output
             `);
-            
-            // Remove the JavaScript global as well
-            this.pyodide.globals.delete("capturedOutput");
         }
     }
 
