@@ -28,19 +28,19 @@ class FlowchartGenerator {
     }
 
     /**
-     * Generate flowchart from Python code
+     * Generate flowchart from Common Test code
      */
-    async generateFlowchart(pythonCode) {
-        if (!pythonCode || pythonCode.trim() === '') {
+    async generateFlowchart(commonTestCode) {
+        if (!commonTestCode || commonTestCode.trim() === '') {
             console.log('No code to generate flowchart');
             this.clearFlowchart();
             return;
         }
 
         try {
-            console.log('Generating flowchart for:', pythonCode.substring(0, 100) + '...');
+            console.log('Generating flowchart for:', commonTestCode.substring(0, 100) + '...');
             
-            const lines = pythonCode.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
+            const lines = commonTestCode.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
             
             if (lines.length === 0) {
                 console.log('No valid lines for flowchart');
@@ -59,13 +59,13 @@ class FlowchartGenerator {
                 nodeId++;
                 const currentNode = 'N' + nodeId;
                 
-                // Simplify the text for display and handle special cases
-                let nodeText = this.simplifyCodeText(trimmed);
+                // Use detailed Common Test code text for display
+                let nodeText = this.processCommonTestText(trimmed);
                 nodeText = this.escapeForMermaid(nodeText);
                 
-                if (trimmed.includes('if ') || trimmed.includes('while ')) {
+                if (trimmed.includes('もし ') || trimmed.includes('の間繰り返す')) {
                     mermaidCode += `    ${currentNode}{${nodeText}}\n`;
-                } else if (trimmed.includes('print(') || trimmed.includes('input(')) {
+                } else if (trimmed.includes('表示する') || trimmed.includes('【外部からの入力】')) {
                     mermaidCode += `    ${currentNode}[[${nodeText}]]\n`;  // Subroutine shape for I/O
                 } else {
                     mermaidCode += `    ${currentNode}[${nodeText}]\n`;
@@ -86,84 +86,47 @@ class FlowchartGenerator {
     }
 
     /**
-     * Simplify code text for flowchart display
+     * Process Common Test code text to show detailed processing content
      */
-    simplifyCodeText(text) {
-        // Handle common Python patterns
-        let simplified = text;
+    processCommonTestText(text) {
+        let processed = text.trim();
         
-        // Simplify for loops
-        if (simplified.includes('for ') && simplified.includes(' in ')) {
-            simplified = 'ループ処理';
-        }
+        // Remove control symbols
+        processed = processed.replace(/^[｜⎿\s]+/, '');
         
-        // Simplify while loops
-        if (simplified.includes('while ')) {
-            simplified = '条件ループ';
-        }
-        
-        // Simplify if statements
-        if (simplified.includes('if ')) {
-            simplified = '条件分岐';
-        }
-        
-        // Simplify variable assignments
-        if (simplified.includes('=')) {
-            const varName = simplified.split('=')[0].trim();
-            if (simplified.includes('[') && simplified.includes(']')) {
-                simplified = `${varName} = リスト`;
+        // Keep the detailed text but make it more readable for flowcharts
+        if (processed.length > 50) {
+            // For very long lines, try to break at natural points
+            if (processed.includes('ずつ増やしながら繰り返す')) {
+                // Keep loop descriptions intact as they're important
+                return processed;
+            } else if (processed.includes('ずつ減らしながら繰り返す')) {
+                // Keep loop descriptions intact as they're important
+                return processed;
             } else {
-                simplified = `${varName} = 値`;
+                // For other long statements, truncate reasonably
+                processed = processed.substring(0, 47) + '...';
             }
         }
         
-        // Simplify print statements
-        if (simplified.includes('print(')) {
-            simplified = '出力';
-        }
-        
-        // Simplify input statements
-        if (simplified.includes('input(')) {
-            simplified = '入力';
-        }
-        
-        // Simplify len() calls
-        if (simplified.includes('len(')) {
-            simplified = simplified.replace(/len\([^)]+\)/g, '長さ');
-        }
-        
-        // Truncate if still too long
-        if (simplified.length > 20) {
-            simplified = simplified.substring(0, 17) + '...';
-        }
-        
-        return simplified;
+        return processed;
     }
 
     /**
-     * Escape special characters for Mermaid
+     * Escape special characters for Mermaid while preserving Japanese text
      */
     escapeForMermaid(text) {
-        // Remove/replace ALL problematic characters for Mermaid
+        // Only escape truly problematic characters for Mermaid, preserve Japanese content
         return text
             .replace(/"/g, "'")         // Replace double quotes with single quotes
-            .replace(/\[/g, '')         // Remove square brackets
-            .replace(/\]/g, '')
-            .replace(/\{/g, '')         // Remove curly braces  
-            .replace(/\}/g, '')
-            .replace(/\(/g, '')         // Remove parentheses
-            .replace(/\)/g, '')
-            .replace(/:/g, '')          // Remove colons
+            .replace(/\[/g, '［')       // Replace with full-width brackets
+            .replace(/\]/g, '］')
+            .replace(/\{/g, '｛')       // Replace with full-width braces
+            .replace(/\}/g, '｝')
+            .replace(/\(/g, '（')       // Replace with full-width parentheses
+            .replace(/\)/g, '）')
+            .replace(/:/g, '：')        // Replace with full-width colon
             .replace(/->/g, '→')        // Replace arrows
-            .replace(/\+/g, 'plus')     // Replace plus sign
-            .replace(/-/g, 'minus')     // Replace minus sign
-            .replace(/\*/g, 'times')    // Replace multiplication
-            .replace(/\//g, 'div')      // Replace division
-            .replace(/=/g, 'eq')        // Replace equals
-            .replace(/</g, 'lt')        // Replace less than
-            .replace(/>/g, 'gt')        // Replace greater than
-            .replace(/&/g, 'and')       // Replace ampersand
-            .replace(/\|/g, 'or')       // Replace pipe
             .replace(/\r?\n/g, ' ')     // Replace newlines with space
             .replace(/\s+/g, ' ')       // Normalize whitespace
             .trim();
