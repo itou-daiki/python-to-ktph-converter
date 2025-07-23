@@ -38,37 +38,41 @@ class Executor {
             await this.initPyodide();
         }
         
-        // Capture print output
+        // Set up output capture and input handling
         this.pyodide.runPython(`
 import sys
 from io import StringIO
-sys.stdout = StringIO()
-        `);
-        
-        // Handle input() function - override globally
-        this.pyodide.globals.set("original_input", this.pyodide.globals.get("input"));
-        this.pyodide.runPython(`
 import js
 
+# Create StringIO for capturing output
+output_buffer = StringIO()
+original_stdout = sys.stdout
+
+def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
+    """Custom print function that captures output"""
+    text = sep.join(str(arg) for arg in args) + end
+    output_buffer.write(text)
+    
 def custom_input(prompt=""):
+    """Custom input function using browser prompt"""
     if prompt:
-        output_div = js.document.getElementById('output')
-        output_div.textContent += prompt + '\\n'
+        # Add prompt to output buffer
+        output_buffer.write(prompt)
     
     # Use window.prompt for synchronous input
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
-        output_div = js.document.getElementById('output')
-        output_div.textContent += value + ' ←キーボードから入力\\n'
+        output_buffer.write(value + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
-# Set in globals
-input = custom_input
+# Override built-in functions
+__builtins__['print'] = custom_print
+__builtins__['input'] = custom_input
         `);
         
         try {
             await this.pyodide.runPythonAsync(pythonCode);
-            const output = this.pyodide.runPython("sys.stdout.getvalue()");
+            const output = this.pyodide.runPython("output_buffer.getvalue()");
             
             // Combine existing output (from input dialogs) with execution output
             const existingOutput = outputDiv.textContent;
@@ -80,8 +84,14 @@ input = custom_input
         } catch (error) {
             outputDiv.textContent = 'Python実行エラー: ' + error.message;
         } finally {
-            // Reset stdout
-            this.pyodide.runPython("sys.stdout = sys.__stdout__");
+            // Reset to original functions
+            this.pyodide.runPython(`
+# Reset print and input to built-in functions
+import builtins
+__builtins__['print'] = builtins.print
+__builtins__['input'] = builtins.input
+sys.stdout = original_stdout
+            `);
         }
     }
 
