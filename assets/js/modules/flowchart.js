@@ -50,39 +50,196 @@ class FlowchartGenerator {
 
             let mermaidCode = 'flowchart TD\n';
             let nodeId = 0;
-            let previousNode = 'Start';
             
             mermaidCode += '    Start([開始])\n';
             
-            for (let i = 0; i < Math.min(lines.length, 10); i++) { // Limit to 10 nodes for simplicity
-                const trimmed = lines[i].trim();
-                nodeId++;
-                const currentNode = 'N' + nodeId;
-                
-                // Convert Python code to Common Test style for display
-                let nodeText = this.convertPythonToCommonTestStyle(trimmed);
-                nodeText = this.escapeForMermaid(nodeText);
-                
-                if (trimmed.includes('if ') || trimmed.includes('while ') || trimmed.includes('for ')) {
-                    mermaidCode += `    ${currentNode}{${nodeText}}\n`;
-                } else if (trimmed.includes('print(') || trimmed.includes('input(')) {
-                    mermaidCode += `    ${currentNode}[[${nodeText}]]\n`;  // Subroutine shape for I/O
-                } else {
-                    mermaidCode += `    ${currentNode}[${nodeText}]\n`;
-                }
-                
-                mermaidCode += `    ${previousNode} --> ${currentNode}\n`;
-                previousNode = currentNode;
-            }
+            const result = this.parseCodeStructure(lines, 0);
+            mermaidCode += result.mermaidCode;
+            nodeId = result.nodeId;
             
             mermaidCode += '    End([終了])\n';
-            mermaidCode += `    ${previousNode} --> End\n`;
+            mermaidCode += `    Start --> ${result.firstNode || 'End'}\n`;
+            mermaidCode += `    ${result.lastNode || 'Start'} --> End\n`;
             
             console.log('Generated mermaid code:', mermaidCode);
             await this.renderFlowchart(mermaidCode);
         } catch (error) {
             console.error('Error generating flowchart:', error);
         }
+    }
+
+    /**
+     * Parse code structure and generate proper branching flowchart
+     */
+    parseCodeStructure(lines, startIndex = 0, nodeCounter = { value: 0 }) {
+        let mermaidCode = '';
+        let i = startIndex;
+        let firstNode = null;
+        let lastNode = null;
+        let previousNode = null;
+
+        while (i < lines.length) {
+            const line = lines[i].trim();
+            const indentLevel = this.getIndentLevel(lines[i]);
+            
+            if (line === '') {
+                i++;
+                continue;
+            }
+
+            nodeCounter.value++;
+            const currentNode = 'N' + nodeCounter.value;
+            
+            if (!firstNode) firstNode = currentNode;
+
+            // Convert Python code to Common Test style for display
+            let nodeText = this.convertPythonToCommonTestStyle(line);
+            nodeText = this.escapeForMermaid(nodeText);
+
+            if (line.startsWith('if ')) {
+                // Handle if statement with branching
+                mermaidCode += `    ${currentNode}{${nodeText}}\n`;
+                
+                if (previousNode) {
+                    mermaidCode += `    ${previousNode} --> ${currentNode}\n`;
+                }
+
+                // Find the if block and else block
+                const ifBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
+                const elseIndex = this.findElseStatement(lines, i, indentLevel);
+                
+                // Process if block (Yes branch)
+                if (i + 1 < ifBlockEnd) {
+                    const ifResult = this.parseCodeStructure(lines.slice(i + 1, elseIndex || ifBlockEnd), 0, nodeCounter);
+                    mermaidCode += ifResult.mermaidCode;
+                    if (ifResult.firstNode) {
+                        mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\n`;
+                    }
+                    if (ifResult.lastNode) {
+                        lastNode = ifResult.lastNode;
+                    }
+                }
+
+                // Process else block (No branch) if exists
+                if (elseIndex && elseIndex < lines.length) {
+                    const elseBlockEnd = this.findBlockEnd(lines, elseIndex + 1, indentLevel);
+                    if (elseIndex + 1 < elseBlockEnd) {
+                        const elseResult = this.parseCodeStructure(lines.slice(elseIndex + 1, elseBlockEnd), 0, nodeCounter);
+                        mermaidCode += elseResult.mermaidCode;
+                        if (elseResult.firstNode) {
+                            mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\n`;
+                        }
+                        if (elseResult.lastNode) {
+                            // Merge both branches
+                            const mergeNode = 'N' + (++nodeCounter.value);
+                            mermaidCode += `    ${mergeNode}[ ]\n`;
+                            mermaidCode += `    ${lastNode} --> ${mergeNode}\n`;
+                            mermaidCode += `    ${elseResult.lastNode} --> ${mergeNode}\n`;
+                            lastNode = mergeNode;
+                        }
+                    } else {
+                        // No else block, just continue with No branch
+                        lastNode = currentNode;
+                    }
+                    i = elseBlockEnd - 1;
+                } else {
+                    // No else block
+                    lastNode = lastNode || currentNode;
+                    i = ifBlockEnd - 1;
+                }
+
+            } else if (line.startsWith('for ') || line.startsWith('while ')) {
+                // Handle loops
+                mermaidCode += `    ${currentNode}{${nodeText}}\n`;
+                
+                if (previousNode) {
+                    mermaidCode += `    ${previousNode} --> ${currentNode}\n`;
+                }
+
+                // Find loop body
+                const loopBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
+                
+                if (i + 1 < loopBlockEnd) {
+                    const loopResult = this.parseCodeStructure(lines.slice(i + 1, loopBlockEnd), 0, nodeCounter);
+                    mermaidCode += loopResult.mermaidCode;
+                    if (loopResult.firstNode) {
+                        mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\n`;
+                        if (loopResult.lastNode) {
+                            mermaidCode += `    ${loopResult.lastNode} --> ${currentNode}\n`;
+                        }
+                    }
+                }
+                
+                lastNode = currentNode;
+                i = loopBlockEnd - 1;
+
+            } else {
+                // Regular statement
+                if (line.includes('print(') || line.includes('input(')) {
+                    mermaidCode += `    ${currentNode}[[${nodeText}]]\n`;  // I/O shape
+                } else {
+                    mermaidCode += `    ${currentNode}[${nodeText}]\n`;  // Process shape
+                }
+                
+                if (previousNode) {
+                    mermaidCode += `    ${previousNode} --> ${currentNode}\n`;
+                }
+                
+                lastNode = currentNode;
+            }
+
+            previousNode = lastNode;
+            i++;
+        }
+
+        return {
+            mermaidCode: mermaidCode,
+            firstNode: firstNode,
+            lastNode: lastNode,
+            nodeId: nodeCounter.value
+        };
+    }
+
+    /**
+     * Get indentation level of a line
+     */
+    getIndentLevel(line) {
+        const match = line.match(/^(\s*)/);
+        return match ? match[1].length : 0;
+    }
+
+    /**
+     * Find the end of a code block
+     */
+    findBlockEnd(lines, startIndex, parentIndentLevel) {
+        for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
+            
+            const indentLevel = this.getIndentLevel(lines[i]);
+            if (indentLevel <= parentIndentLevel) {
+                return i;
+            }
+        }
+        return lines.length;
+    }
+
+    /**
+     * Find corresponding else statement for an if
+     */
+    findElseStatement(lines, ifIndex, ifIndentLevel) {
+        const blockEnd = this.findBlockEnd(lines, ifIndex + 1, ifIndentLevel);
+        
+        if (blockEnd < lines.length) {
+            const nextLine = lines[blockEnd].trim();
+            const nextIndentLevel = this.getIndentLevel(lines[blockEnd]);
+            
+            if (nextLine.startsWith('else:') && nextIndentLevel === ifIndentLevel) {
+                return blockEnd;
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -113,6 +270,18 @@ class FlowchartGenerator {
         if (ifMatch) {
             const condition = ifMatch[1];
             return `もし ${condition} ならば`;
+        }
+        
+        // Convert elif statements
+        const elifMatch = converted.match(/elif\s+(.+)\s*:/);
+        if (elifMatch) {
+            const condition = elifMatch[1];
+            return `そうでなくもし ${condition} ならば`;
+        }
+        
+        // Convert else statements
+        if (converted === 'else:') {
+            return 'そうでなければ';
         }
         
         // Convert print statements
