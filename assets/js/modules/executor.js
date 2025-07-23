@@ -45,10 +45,11 @@ class Executor {
         this.pyodide.runPython(`
 import sys
 import js
+import builtins
 
 # Store original functions
-original_print = print
-original_input = input
+original_print = builtins.print
+original_input = builtins.input
 
 def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
     """Custom print function that captures output to JavaScript"""
@@ -67,9 +68,9 @@ def custom_input(prompt=""):
         js.capturedOutput.append(value + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
-# Override built-in functions
-__builtins__['print'] = custom_print
-__builtins__['input'] = custom_input
+# Override built-in functions using builtins module
+builtins.print = custom_print
+builtins.input = custom_input
         `);
         
         // Make capturedOutput available to Python code
@@ -94,8 +95,8 @@ __builtins__['input'] = custom_input
             // Reset to original functions
             this.pyodide.runPython(`
 # Reset print and input to original functions
-__builtins__['print'] = original_print
-__builtins__['input'] = original_input
+builtins.print = original_print
+builtins.input = original_input
             `);
         }
     }
