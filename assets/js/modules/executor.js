@@ -41,6 +41,9 @@ class Executor {
         // Initialize output capture array in JavaScript
         let capturedOutput = [];
         
+        // Make capturedOutput available to Python code first
+        this.pyodide.globals.set("capturedOutput", capturedOutput);
+        
         // Set up output capture and input handling
         this.pyodide.runPython(`
 import sys
@@ -51,21 +54,24 @@ import builtins
 original_print = builtins.print
 original_input = builtins.input
 
+# Get the capturedOutput from global namespace
+captured_output = capturedOutput
+
 def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
     """Custom print function that captures output to JavaScript"""
     text = sep.join(str(arg) for arg in args) + end
-    js.capturedOutput.append(text)
+    captured_output.append(text)
     
 def custom_input(prompt=""):
     """Custom input function using browser prompt"""
     if prompt:
         # Add prompt to output
-        js.capturedOutput.append(prompt)
+        captured_output.append(prompt)
     
     # Use window.prompt for synchronous input
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
-        js.capturedOutput.append(value + ' ←キーボードから入力\\n')
+        captured_output.append(value + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
 # Override built-in functions using builtins module
@@ -73,19 +79,14 @@ builtins.print = custom_print
 builtins.input = custom_input
         `);
         
-        // Make capturedOutput available to Python code
-        this.pyodide.globals.set("capturedOutput", capturedOutput);
-        
         try {
             await this.pyodide.runPythonAsync(pythonCode);
             
             // Get captured output from JavaScript array
             const output = capturedOutput.join('');
             
-            // Combine existing output (from input dialogs) with execution output
-            const existingOutput = outputDiv.textContent;
-            const finalOutput = existingOutput + (output || '実行完了（出力なし）');
-            outputDiv.textContent = finalOutput;
+            // Set final output (don't combine with existing output to avoid duplication)
+            outputDiv.textContent = output || '実行完了（出力なし）';
             
             // Scroll to bottom to show the last line
             outputDiv.scrollTop = outputDiv.scrollHeight;
