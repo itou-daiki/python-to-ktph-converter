@@ -266,14 +266,17 @@ class UIManager {
             });
         }
 
-        // Enter key in input dialog
-        document.getElementById('userInput').addEventListener('keypress', (e) => {
+        // Enter key in input dialog (remove existing listener first to prevent duplicates)
+        const userInput = document.getElementById('userInput');
+        userInput.removeEventListener('keypress', this.handleUserInputKeypress);
+        this.handleUserInputKeypress = (e) => {
             if (e.key === 'Enter') {
                 if (window.executor) {
                     window.executor.submitInput();
                 }
             }
-        });
+        };
+        userInput.addEventListener('keypress', this.handleUserInputKeypress);
     }
 
     /**
