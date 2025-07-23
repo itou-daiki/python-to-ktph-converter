@@ -67,7 +67,7 @@
     color: white;
     border: none;
     border-radius: 6px;
-    width: 60px;
+    width: 80px;
     height: 30px;
     font-size: 12px;
     font-weight: bold;
@@ -78,6 +78,8 @@
     align-items: center;
     justify-content: center;
     text-align: center;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
 }
 
 .conversion-controls .run-button {
