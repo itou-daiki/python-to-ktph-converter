@@ -44,22 +44,34 @@ class Executor {
         // Make capturedOutput available to Python code first
         this.pyodide.globals.set("capturedOutput", capturedOutput);
         
-        // Set up output capture and input handling
+        // Reset completely and set up fresh output capture
         this.pyodide.runPython(`
 import sys
 import js
 import builtins
 
-# Store original functions if not already stored
-if not hasattr(builtins, '_original_print'):
-    builtins._original_print = builtins.print
-if not hasattr(builtins, '_original_input'):
-    builtins._original_input = builtins.input
+# Store original functions ONCE
+if not hasattr(builtins, '_ORIGINAL_PRINT'):
+    builtins._ORIGINAL_PRINT = builtins.print
+if not hasattr(builtins, '_ORIGINAL_INPUT'):
+    builtins._ORIGINAL_INPUT = builtins.input
 
-original_print = builtins._original_print
-original_input = builtins._original_input
+# Reset to original functions first
+builtins.print = builtins._ORIGINAL_PRINT
+builtins.input = builtins._ORIGINAL_INPUT
 
-# Get the capturedOutput from global namespace
+# Clear any existing capture setup
+if 'captured_output' in globals():
+    del captured_output
+if 'custom_print' in globals():
+    del custom_print
+if 'custom_input' in globals():
+    del custom_input
+        `);
+        
+        // Now set up fresh capture
+        this.pyodide.runPython(`
+# Get the fresh capturedOutput from global namespace
 captured_output = capturedOutput
 
 def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
@@ -70,16 +82,13 @@ def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
 def custom_input(prompt=""):
     """Custom input function using browser prompt"""
     if prompt:
-        # Add prompt to output
         captured_output.append(prompt)
-    
-    # Use window.prompt for synchronous input
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
         captured_output.append(value + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
-# Override built-in functions using builtins module
+# Override built-in functions
 builtins.print = custom_print
 builtins.input = custom_input
         `);
@@ -101,8 +110,15 @@ builtins.input = custom_input
             // Reset to original functions
             this.pyodide.runPython(`
 # Reset print and input to original functions
-builtins.print = original_print
-builtins.input = original_input
+builtins.print = builtins._ORIGINAL_PRINT
+builtins.input = builtins._ORIGINAL_INPUT
+# Clean up globals
+if 'captured_output' in globals():
+    del captured_output
+if 'custom_print' in globals():
+    del custom_print
+if 'custom_input' in globals():
+    del custom_input
             `);
         }
     }
