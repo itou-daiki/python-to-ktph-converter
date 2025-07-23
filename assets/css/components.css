@@ -61,7 +61,7 @@ button:active {
 .bottom-left .panel,
 .bottom-right .panel {
     overflow: visible;
-    padding: 25px;
+    padding: 15px;
 }
 
 .panel-header {
