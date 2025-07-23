@@ -38,31 +38,33 @@ class Executor {
             await this.initPyodide();
         }
         
+        // Initialize output capture array in JavaScript
+        let capturedOutput = [];
+        
         // Set up output capture and input handling
         this.pyodide.runPython(`
 import sys
-from io import StringIO
 import js
 
-# Create StringIO for capturing output
-output_buffer = StringIO()
-original_stdout = sys.stdout
+# Store original functions
+original_print = print
+original_input = input
 
 def custom_print(*args, sep=' ', end='\\n', file=None, flush=False):
-    """Custom print function that captures output"""
+    """Custom print function that captures output to JavaScript"""
     text = sep.join(str(arg) for arg in args) + end
-    output_buffer.write(text)
+    js.capturedOutput.append(text)
     
 def custom_input(prompt=""):
     """Custom input function using browser prompt"""
     if prompt:
-        # Add prompt to output buffer
-        output_buffer.write(prompt)
+        # Add prompt to output
+        js.capturedOutput.append(prompt)
     
     # Use window.prompt for synchronous input
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
-        output_buffer.write(value + ' ←キーボードから入力\\n')
+        js.capturedOutput.append(value + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
 # Override built-in functions
@@ -70,9 +72,14 @@ __builtins__['print'] = custom_print
 __builtins__['input'] = custom_input
         `);
         
+        // Make capturedOutput available to Python code
+        this.pyodide.globals.set("capturedOutput", capturedOutput);
+        
         try {
             await this.pyodide.runPythonAsync(pythonCode);
-            const output = this.pyodide.runPython("output_buffer.getvalue()");
+            
+            // Get captured output from JavaScript array
+            const output = capturedOutput.join('');
             
             // Combine existing output (from input dialogs) with execution output
             const existingOutput = outputDiv.textContent;
@@ -86,11 +93,9 @@ __builtins__['input'] = custom_input
         } finally {
             // Reset to original functions
             this.pyodide.runPython(`
-# Reset print and input to built-in functions
-import builtins
-__builtins__['print'] = builtins.print
-__builtins__['input'] = builtins.input
-sys.stdout = original_stdout
+# Reset print and input to original functions
+__builtins__['print'] = original_print
+__builtins__['input'] = original_input
             `);
         }
     }
