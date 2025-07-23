@@ -52,8 +52,9 @@ button:active {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    overflow: visible;
+    overflow: hidden;
     min-height: 0;
+    height: 100%;
 }
 
 /* Special handling for bottom panels (flowchart and output) */

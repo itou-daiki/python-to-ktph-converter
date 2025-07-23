@@ -154,16 +154,20 @@ class UIManager {
     setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Set initial panel labels based on default direction
-        const defaultDirection = document.getElementById('conversionDirection').value;
-        this.updatePanelLabels(defaultDirection);
-        
-        // Direction selector
-        document.getElementById('conversionDirection').addEventListener('change', (e) => {
-            this.updatePanelLabels(e.target.value);
-        });
+        // Check if the old direction selector exists (for backward compatibility)
+        const directionSelector = document.getElementById('conversionDirection');
+        if (directionSelector) {
+            // Set initial panel labels based on default direction
+            const defaultDirection = directionSelector.value;
+            this.updatePanelLabels(defaultDirection);
+            
+            // Direction selector
+            directionSelector.addEventListener('change', (e) => {
+                this.updatePanelLabels(e.target.value);
+            });
+        }
 
-        // Convert button
+        // Convert button (check if exists for backward compatibility)
         const convertBtn = document.querySelector('.convert-button');
         if (convertBtn) {
             console.log('Convert button found, adding event listener');
@@ -549,43 +553,59 @@ else:
         try {
             console.log('Loading sample:', sample.title);
             const response = await fetch(`Sample/${sample.file}`);
-            const markdownContent = await response.text();
             
-            // Extract code from markdown (try Python first, then plain code blocks)
-            let codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
-            let isPythonCode = true;
-            
-            if (!codeMatch) {
-                // Try plain code block (for Common Test notation)
-                codeMatch = markdownContent.match(/```\n([\s\S]*?)\n```/);
-                isPythonCode = false;
-            }
-            
-            if (codeMatch && codeMatch[1]) {
-                const code = codeMatch[1];
+            if (sample.file.endsWith('.json')) {
+                // New JSON format
+                const sampleData = await response.json();
                 
-                if (isPythonCode) {
-                    // Set Python code and convert to Common Test
-                    this.pythonEditor.setValue(code);
-                    // Ensure conversion direction is set to Python → Common Test
-                    document.getElementById('conversionDirection').value = 'pythonToCommon';
-                    this.updatePanelLabels('pythonToCommon');
-                } else {
-                    // Set Common Test code and convert to Python
-                    this.commonTestEditor.setValue(code);
-                    // Ensure conversion direction is set to Common Test → Python  
-                    document.getElementById('conversionDirection').value = 'commonToPython';
-                    this.updatePanelLabels('commonToPython');
+                // Load both Python and Common Test code
+                if (sampleData.python) {
+                    this.pythonEditor.setValue(sampleData.python);
+                }
+                if (sampleData.commonTest) {
+                    this.commonTestEditor.setValue(sampleData.commonTest);
                 }
                 
-                // Auto-convert after loading sample
-                setTimeout(async () => {
-                    if (window.converter) {
-                        await this.convert();
-                    }
-                }, 100);
+                console.log('Sample loaded successfully:', sample.title);
             } else {
-                console.error('No code found in markdown file');
+                // Old markdown format (backward compatibility)
+                const markdownContent = await response.text();
+                
+                // Extract code from markdown (try Python first, then plain code blocks)
+                let codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
+                let isPythonCode = true;
+                
+                if (!codeMatch) {
+                    // Try plain code block (for Common Test notation)
+                    codeMatch = markdownContent.match(/```\n([\s\S]*?)\n```/);
+                    isPythonCode = false;
+                }
+                
+                if (codeMatch && codeMatch[1]) {
+                    const code = codeMatch[1];
+                    
+                    if (isPythonCode) {
+                        // Set Python code
+                        this.pythonEditor.setValue(code);
+                        // Auto-convert to Common Test
+                        setTimeout(async () => {
+                            if (window.convertPythonToCommon) {
+                                await window.convertPythonToCommon();
+                            }
+                        }, 100);
+                    } else {
+                        // Set Common Test code
+                        this.commonTestEditor.setValue(code);
+                        // Auto-convert to Python
+                        setTimeout(async () => {
+                            if (window.convertCommonToPython) {
+                                await window.convertCommonToPython();
+                            }
+                        }, 100);
+                    }
+                } else {
+                    console.error('No code found in markdown file');
+                }
             }
         } catch (error) {
             console.error('Failed to load sample file:', error);

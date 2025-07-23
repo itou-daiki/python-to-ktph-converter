@@ -2,8 +2,9 @@
 @media (max-width: 768px) {
     .main-content {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
+        grid-template-rows: auto auto auto auto auto;
         height: auto;
+        gap: 15px;
     }
     
     .top-left { 
@@ -11,19 +12,28 @@
         grid-row: 1; 
     }
     
-    .top-right { 
+    .conversion-controls {
         grid-column: 1; 
-        grid-row: 2; 
+        grid-row: 2;
+        flex-direction: row;
+        justify-content: center;
+        padding: 15px;
+        gap: 20px;
     }
     
-    .bottom-left { 
+    .top-right { 
         grid-column: 1; 
         grid-row: 3; 
     }
     
-    .bottom-right { 
+    .bottom-left { 
         grid-column: 1; 
         grid-row: 4; 
+    }
+    
+    .bottom-right { 
+        grid-column: 1; 
+        grid-row: 5; 
     }
     
     .panel {
@@ -85,6 +95,18 @@
     .copy-button {
         padding: 4px 8px;
         font-size: 11px;
+    }
+
+    .convert-button-right,
+    .convert-button-left {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .conversion-controls {
+        gap: 15px;
+        padding: 10px;
     }
 
     .input-dialog {

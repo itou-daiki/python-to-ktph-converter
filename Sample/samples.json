@@ -3,44 +3,44 @@
     {
       "id": "binary-search",
       "title": "二分探索",
-      "file": "binary-search.md",
-      "description": "ソート済み配列から特定の値を効率的に検索"
+      "file": "binary-search.json",
+      "description": "ソート済み配列から特定の値を効率的に検索",
+      "category": "探索アルゴリズム"
     },
     {
       "id": "bubble-sort",
       "title": "バブルソート",
-      "file": "bubble-sort.md",
-      "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム"
+      "file": "bubble-sort.json",
+      "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム",
+      "category": "ソートアルゴリズム"
     },
     {
       "id": "linear-search",
       "title": "線形探索",
-      "file": "linear-search.md",
-      "description": "配列を先頭から順に検索するアルゴリズム"
+      "file": "linear-search.json",
+      "description": "配列を先頭から順に検索するアルゴリズム",
+      "category": "探索アルゴリズム"
     },
     {
       "id": "factorial",
       "title": "階乗計算",
-      "file": "factorial.md",
-      "description": "再帰を使った階乗計算"
+      "file": "factorial.json",
+      "description": "再帰を使った階乗計算",
+      "category": "再帰アルゴリズム"
     },
     {
       "id": "fibonacci",
       "title": "フィボナッチ数列",
-      "file": "fibonacci.md",
-      "description": "フィボナッチ数列を生成するアルゴリズム"
+      "file": "fibonacci.json",
+      "description": "フィボナッチ数列を生成するアルゴリズム",
+      "category": "数値計算"
     },
     {
       "id": "prime-check",
       "title": "素数判定",
-      "file": "prime-check.md",
-      "description": "効率的な素数判定アルゴリズム"
-    },
-    {
-      "id": "common-test-sample",
-      "title": "共通テスト表記サンプル",
-      "file": "common-test-sample.md",
-      "description": "共通テストからPythonへの変換テスト用サンプル"
+      "file": "prime-check.json",
+      "description": "効率的な素数判定アルゴリズム",
+      "category": "数値計算"
     }
   ]
 }

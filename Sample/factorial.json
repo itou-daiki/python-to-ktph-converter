@@ -1,0 +1,7 @@
+{
+  "title": "階乗計算",
+  "description": "再帰を使った階乗計算のアルゴリズム",
+  "category": "再帰アルゴリズム",
+  "python": "# 階乗計算の例\ndef factorial(n):\n    if n == 0 or n == 1:\n        return 1\n    else:\n        return n * factorial(n - 1)\n\nprint(\"階乗を計算する数を入力してください\")\nnum = int(input())\n\nif num < 0:\n    print(\"負の数の階乗は定義されません\")\nelse:\n    result = factorial(num)\n    print(f\"{num}! = {result}\")",
+  "commonTest": "# 階乗計算の例\n関数 factorial(n)\n    もし n == 0 または n == 1 ならば\n        1 を返す\n    そうでなければ\n        n * factorial(n - 1) を返す\n\n\"階乗を計算する数を入力してください\" を出力する\nnum ← 整数値を入力する\n\nもし num < 0 ならば\n    \"負の数の階乗は定義されません\" を出力する\nそうでなければ\n    result ← factorial(num)\n    num, \"! = \", result を出力する"
+}

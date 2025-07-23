@@ -1,0 +1,7 @@
+{
+  "title": "二分探索",
+  "description": "ソート済み配列から特定の値を効率的に検索するアルゴリズム",
+  "category": "探索アルゴリズム",
+  "python": "# 二分探索の例\ndata = [3, 18, 29, 33, 48, 52, 62, 77, 89, 97]\nkazu = len(data)\nprint(\"0～99の数字を入力してください\")\natai = int(input())\nhidari = 0\nmigi = kazu - 1\nowari = 0\n\nwhile hidari <= migi and owari == 0:\n    aida = (hidari + migi) // 2\n    if data[aida] == atai:\n        print(atai, \"は\", aida, \"番目にありました\")\n        owari = 1\n    elif data[aida] < atai:\n        hidari = aida + 1\n    else:\n        migi = aida - 1\n\nif owari == 0:\n    print(atai, \"は見つかりませんでした\")\n\nprint(\"添字\", \" \", \"要素\")\nfor i in range(0, kazu):\n    print(i, \" \", data[i])",
+  "commonTest": "# 二分探索の例\ndata ← [3, 18, 29, 33, 48, 52, 62, 77, 89, 97]\nkazu ← len(data)\n\"0～99の数字を入力してください\" を出力する\natai ← 整数値を入力する\nhidari ← 0\nmigi ← kazu - 1\nowari ← 0\n\nhidari <= migi かつ owari == 0 の間\n    aida ← (hidari + migi) // 2\n    もし data[aida] == atai ならば\n        atai, \"は\", aida, \"番目にありました\" を出力する\n        owari ← 1\n    そうでなくもし data[aida] < atai ならば\n        hidari ← aida + 1\n    そうでなければ\n        migi ← aida - 1\n\nもし owari == 0 ならば\n    atai, \"は見つかりませんでした\" を出力する\n\n\"添字\", \" \", \"要素\" を出力する\ni を 0 から kazu-1 まで繰り返す\n    i, \" \", data[i] を出力する"
+}

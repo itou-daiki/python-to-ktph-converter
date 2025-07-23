@@ -1,0 +1,7 @@
+{
+  "title": "フィボナッチ数列",
+  "description": "フィボナッチ数列を生成するアルゴリズム",
+  "category": "数値計算",
+  "python": "# フィボナッチ数列の例\nprint(\"フィボナッチ数列の項数を入力してください\")\nn = int(input())\n\n# 最初の2項\na, b = 0, 1\n\nprint(\"フィボナッチ数列:\")\nif n >= 1:\n    print(a, end=\" \")\nif n >= 2:\n    print(b, end=\" \")\n\nfor i in range(2, n):\n    c = a + b\n    print(c, end=\" \")\n    a, b = b, c\n\nprint()",
+  "commonTest": "# フィボナッチ数列の例\n\"フィボナッチ数列の項数を入力してください\" を出力する\nn ← 整数値を入力する\n\n# 最初の2項\na ← 0\nb ← 1\n\n\"フィボナッチ数列:\" を出力する\nもし n >= 1 ならば\n    a を出力する（改行なし）\nもし n >= 2 ならば\n    b を出力する（改行なし）\n\ni を 2 から n-1 まで繰り返す\n    c ← a + b\n    c を出力する（改行なし）\n    a ← b\n    b ← c\n\n改行を出力する"
+}
