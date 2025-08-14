@@ -73,6 +73,8 @@ button:active {
     border: none;
     border-radius: 0;
     flex: 1;
+    min-height: 0; /* Allow flexbox to shrink */
+    max-height: calc(100% - 40px); /* Account for header and padding */
 }
 
 .panel-header {

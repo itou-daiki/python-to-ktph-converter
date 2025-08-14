@@ -39,7 +39,13 @@
     }
     
     .panel {
-        min-height: 400px;
+        min-height: 350px;
+    }
+    
+    /* Bottom panels specific adjustments for mobile */
+    .bottom-left .panel,
+    .bottom-right .panel {
+        min-height: 300px;
     }
 
     #pythonEditor .CodeMirror,

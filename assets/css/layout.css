@@ -4,8 +4,8 @@
     grid-template-columns: 1fr 100px 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 15px;
-    height: calc(100vh - 180px);
-    min-height: 700px;
+    height: calc(100vh - 200px);
+    min-height: 600px;
     overflow: hidden;
     align-items: stretch;
 }
@@ -189,9 +189,10 @@
     border-radius: 4px;
     overflow: auto;
     background: #fafafa;
-    min-height: 300px;
+    min-height: 250px;
     padding: 10px;
     box-sizing: border-box;
+    max-height: 100%;
 }
 
 #output {
@@ -204,8 +205,9 @@
     overflow: auto;
     background: #f8f8f8;
     white-space: pre-wrap;
-    min-height: 300px;
+    min-height: 250px;
     box-sizing: border-box;
+    max-height: 100%;
 }
 
 /* Mermaid diagram styles */
