@@ -15,13 +15,23 @@ class Executor {
      * Initialize Pyodide
      */
     async initPyodide() {
-        if (!this.pyodide) {
+        if (!this.pyodide && !this.initializingPyodide) {
+            this.initializingPyodide = true;
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
                 this.pyodide = await loadPyodide();
                 console.log("Pyodide loaded successfully");
+            } catch (error) {
+                console.error("Failed to load Pyodide:", error);
+                throw error;
             } finally {
                 document.getElementById('loadingOverlay').style.display = 'none';
+                this.initializingPyodide = false;
+            }
+        } else if (this.initializingPyodide) {
+            // Wait for existing initialization to complete
+            while (this.initializingPyodide) {
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
         }
         return this.pyodide;

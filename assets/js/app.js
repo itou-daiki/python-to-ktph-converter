@@ -116,7 +116,6 @@ async function convertCommonToPython() {
         
         // Generate flowchart from Python code with Common Test style labels
         if (flowchartGenerator) {
-            const pythonCode = await converter.commonTestToPython(commonTestCode);
             await flowchartGenerator.generateFlowchart(pythonCode);
         }
         

@@ -71,7 +71,7 @@ class FlowchartGenerator {
     /**
      * Parse code structure and generate proper branching flowchart
      */
-    parseCodeStructure(lines, startIndex = 0, nodeCounter = { value: 0 }) {
+    parseCodeStructure(lines, startIndex = 0, nodeCounter = { value: 0 }, isInBlock = false) {
         let mermaidCode = '';
         let i = startIndex;
         let firstNode = null;
@@ -93,7 +93,9 @@ class FlowchartGenerator {
             if (!firstNode) firstNode = currentNode;
 
             // Convert Python code to Common Test style for display
-            let nodeText = this.convertPythonToCommonTestStyle(line);
+            const isFirst = (i === startIndex);
+            const isLast = (i === lines.length - 1 || (i + 1 < lines.length && this.getIndentLevel(lines[i + 1]) <= indentLevel));
+            let nodeText = this.convertPythonToCommonTestStyle(line, isInBlock, isFirst, isLast);
             nodeText = this.escapeForMermaid(nodeText);
 
             if (line.startsWith('if ')) {
@@ -110,7 +112,7 @@ class FlowchartGenerator {
                 
                 // Process if block (Yes branch)
                 if (i + 1 < ifBlockEnd) {
-                    const ifResult = this.parseCodeStructure(lines.slice(i + 1, elseIndex || ifBlockEnd), 0, nodeCounter);
+                    const ifResult = this.parseCodeStructure(lines.slice(i + 1, elseIndex || ifBlockEnd), 0, nodeCounter, true);
                     mermaidCode += ifResult.mermaidCode;
                     if (ifResult.firstNode) {
                         mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\n`;
@@ -124,7 +126,7 @@ class FlowchartGenerator {
                 if (elseIndex && elseIndex < lines.length) {
                     const elseBlockEnd = this.findBlockEnd(lines, elseIndex + 1, indentLevel);
                     if (elseIndex + 1 < elseBlockEnd) {
-                        const elseResult = this.parseCodeStructure(lines.slice(elseIndex + 1, elseBlockEnd), 0, nodeCounter);
+                        const elseResult = this.parseCodeStructure(lines.slice(elseIndex + 1, elseBlockEnd), 0, nodeCounter, true);
                         mermaidCode += elseResult.mermaidCode;
                         if (elseResult.firstNode) {
                             mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\n`;
@@ -160,7 +162,7 @@ class FlowchartGenerator {
                 const loopBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
                 
                 if (i + 1 < loopBlockEnd) {
-                    const loopResult = this.parseCodeStructure(lines.slice(i + 1, loopBlockEnd), 0, nodeCounter);
+                    const loopResult = this.parseCodeStructure(lines.slice(i + 1, loopBlockEnd), 0, nodeCounter, true);
                     mermaidCode += loopResult.mermaidCode;
                     if (loopResult.firstNode) {
                         mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\n`;
@@ -243,9 +245,27 @@ class FlowchartGenerator {
     }
 
     /**
+     * Add control symbols to code blocks for Common Test style
+     */
+    addControlSymbols(nodeText, isFirst, isLast, isInBlock) {
+        if (!isInBlock) {
+            return nodeText;
+        }
+        
+        let prefix = '';
+        if (isLast) {
+            prefix = '⎿ ';  // End of control block
+        } else {
+            prefix = '｜ ';  // Inside control block
+        }
+        
+        return prefix + nodeText;
+    }
+
+    /**
      * Convert Python code to Common Test style notation for flowchart display
      */
-    convertPythonToCommonTestStyle(pythonCode) {
+    convertPythonToCommonTestStyle(pythonCode, isInBlock = false, isFirst = false, isLast = false) {
         let converted = pythonCode.trim();
         
         // Convert for loops to Common Test style
@@ -255,33 +275,33 @@ class FlowchartGenerator {
             const start = forMatch[2];
             const end = parseInt(forMatch[3]) - 1; // range is exclusive of end
             const step = forMatch[4] || '1';
-            return `${variable} を ${start} から ${end} まで ${step} ずつ増やしながら繰り返す`;
+            return `${variable} を ${start} から ${end} まで ${step} ずつ増やしながら繰り返す:`;
         }
         
         // Convert while loops
         const whileMatch = converted.match(/while\s+(.+)\s*:/);
         if (whileMatch) {
             const condition = whileMatch[1];
-            return `${condition} の間繰り返す`;
+            return `${condition} の間繰り返す:`;
         }
         
         // Convert if statements
         const ifMatch = converted.match(/if\s+(.+)\s*:/);
         if (ifMatch) {
             const condition = ifMatch[1];
-            return `もし ${condition} ならば`;
+            return `もし ${condition} ならば:`;
         }
         
         // Convert elif statements
         const elifMatch = converted.match(/elif\s+(.+)\s*:/);
         if (elifMatch) {
             const condition = elifMatch[1];
-            return `そうでなくもし ${condition} ならば`;
+            return `そうでなくもし ${condition} ならば:`;
         }
         
         // Convert else statements
         if (converted === 'else:') {
-            return 'そうでなければ';
+            return 'そうでなければ:';
         }
         
         // Convert print statements
@@ -310,6 +330,9 @@ class FlowchartGenerator {
         if (converted.length > 50) {
             converted = converted.substring(0, 47) + '...';
         }
+        
+        // Add control symbols if in a block
+        converted = this.addControlSymbols(converted, isFirst, isLast, isInBlock);
         
         return converted;
     }

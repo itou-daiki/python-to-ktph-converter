@@ -190,9 +190,9 @@
     overflow: auto;
     background: #fafafa;
     min-height: 400px;
-    max-height: calc(100% - 20px);
-    height: calc(100% - 20px);
-    margin: 5px 5px 15px 5px;
+    max-height: calc(100% - 40px);
+    height: auto;
+    margin: 5px;
 }
 
 #output {
@@ -206,9 +206,9 @@
     background: #f8f8f8;
     white-space: pre-wrap;
     min-height: 400px;
-    max-height: calc(100% - 20px);
-    height: calc(100% - 20px);
-    margin: 5px 5px 15px 5px;
+    max-height: calc(100% - 40px);
+    height: auto;
+    margin: 5px;
 }
 
 /* Mermaid diagram styles */

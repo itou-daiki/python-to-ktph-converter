@@ -757,7 +757,12 @@ else:
     shareCode() {
         const pythonCode = this.pythonEditor.getValue();
         const commonTestCode = this.commonTestEditor.getValue();
-        const direction = document.getElementById('conversionDirection').value;
+        
+        // Since conversionDirection element doesn't exist, determine direction based on content
+        let direction = 'python-to-common';
+        if (commonTestCode && !pythonCode) {
+            direction = 'common-to-python';
+        }
         
         const data = {
             python: pythonCode,
@@ -769,6 +774,7 @@ else:
         const url = window.location.origin + window.location.pathname + '#' + compressed;
         
         document.getElementById('shareUrl').value = url;
+        console.log('Share URL generated:', url);
     }
 
     /**
@@ -807,8 +813,9 @@ else:
                     this.commonTestEditor.setValue(data.common);
                 }
                 if (data.direction) {
-                    document.getElementById('conversionDirection').value = data.direction;
-                    this.updatePanelLabels(data.direction);
+                    // Since conversionDirection element doesn't exist, just log the direction
+                    console.log('Loaded direction from URL:', data.direction);
+                    // Skip panel label updates since the direction selector doesn't exist
                 }
                 
                 if (window.flowchartGenerator) {
