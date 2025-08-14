@@ -189,10 +189,9 @@
     border-radius: 4px;
     overflow: auto;
     background: #fafafa;
-    min-height: 400px;
-    max-height: calc(100% - 40px);
-    height: auto;
-    margin: 5px;
+    min-height: 300px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 #output {
@@ -205,10 +204,8 @@
     overflow: auto;
     background: #f8f8f8;
     white-space: pre-wrap;
-    min-height: 400px;
-    max-height: calc(100% - 40px);
-    height: auto;
-    margin: 5px;
+    min-height: 300px;
+    box-sizing: border-box;
 }
 
 /* Mermaid diagram styles */

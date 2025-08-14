@@ -60,8 +60,19 @@ button:active {
 /* Special handling for bottom panels (flowchart and output) */
 .bottom-left .panel,
 .bottom-right .panel {
-    overflow: visible;
+    overflow: hidden;
     padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the content areas fill the available space within the panel */
+.bottom-left .panel #flowchart,
+.bottom-right .panel #output {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    flex: 1;
 }
 
 .panel-header {
