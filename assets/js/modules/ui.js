@@ -183,7 +183,12 @@ class UIManager {
         const runBtn = document.querySelector('.run-button');
         if (runBtn) {
             console.log('Run button found, adding event listener');
-            runBtn.addEventListener('click', async () => {
+            // Remove any existing event listeners to prevent duplicates
+            runBtn.onclick = null;
+            runBtn.replaceWith(runBtn.cloneNode(true));
+            // Re-get the button reference after cloning
+            const newRunBtn = document.querySelector('.run-button');
+            newRunBtn.addEventListener('click', async () => {
                 console.log('Run button clicked via event listener');
                 await window.runCode();
             });

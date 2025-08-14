@@ -190,7 +190,7 @@
     overflow: auto;
     background: #fafafa;
     min-height: 250px;
-    padding: 10px;
+    padding: 8px;
     box-sizing: border-box;
     max-height: 100%;
 }
@@ -199,7 +199,7 @@
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 10px;
+    padding: 8px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
     overflow: auto;

@@ -61,7 +61,7 @@ button:active {
 .bottom-left .panel,
 .bottom-right .panel {
     overflow: hidden;
-    padding: 15px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
 }
@@ -69,12 +69,12 @@ button:active {
 /* Ensure the content areas fill the available space within the panel */
 .bottom-left .panel #flowchart,
 .bottom-right .panel #output {
-    margin: 0;
-    border: none;
-    border-radius: 0;
+    margin: 5px 0 0 0; /* Small top margin to separate from header */
+    border: 1px solid #ddd; /* Restore border for visual separation */
+    border-radius: 4px; /* Restore rounded corners */
     flex: 1;
     min-height: 0; /* Allow flexbox to shrink */
-    max-height: calc(100% - 40px); /* Account for header and padding */
+    max-height: calc(100% - 50px); /* Account for header, padding, and margin */
 }
 
 .panel-header {
