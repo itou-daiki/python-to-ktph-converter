@@ -41,8 +41,10 @@ window.addEventListener('load', async function() {
         await executor.initPyodide();
         console.log('Pyodide initialized successfully');
         
-        // Load from URL if hash exists
-        await uiManager.loadFromUrl();
+        // Load from URL if hash exists (with slight delay to ensure editors are ready)
+        setTimeout(async () => {
+            await uiManager.loadFromUrl();
+        }, 200);
         
         // Make instances globally available immediately after initialization
         window.converter = converter;

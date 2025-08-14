@@ -282,6 +282,12 @@ class UIManager {
             }
         };
         userInput.addEventListener('keypress', this.handleUserInputKeypress);
+        
+        // Hash change event listener for URL sharing
+        window.addEventListener('hashchange', () => {
+            console.log('Hash change detected');
+            this.loadFromUrl();
+        });
     }
 
     /**
@@ -763,6 +769,10 @@ else:
         const pythonCode = this.pythonEditor.getValue();
         const commonTestCode = this.commonTestEditor.getValue();
         
+        console.log('shareCode called');
+        console.log('Python code length:', pythonCode.length);
+        console.log('Common test code length:', commonTestCode.length);
+        
         // Since conversionDirection element doesn't exist, determine direction based on content
         let direction = 'python-to-common';
         if (commonTestCode && !pythonCode) {
@@ -775,11 +785,29 @@ else:
             direction: direction
         };
         
-        const compressed = btoa(encodeURIComponent(JSON.stringify(data)));
+        console.log('Data to encode:', data);
+        
+        const jsonString = JSON.stringify(data);
+        console.log('JSON string length:', jsonString.length);
+        
+        const encodedString = encodeURIComponent(jsonString);
+        console.log('Encoded string length:', encodedString.length);
+        
+        const compressed = btoa(encodedString);
+        console.log('Compressed string length:', compressed.length);
+        
         const url = window.location.origin + window.location.pathname + '#' + compressed;
         
         document.getElementById('shareUrl').value = url;
         console.log('Share URL generated:', url);
+        
+        // Test immediate decode to verify
+        try {
+            const testDecode = JSON.parse(decodeURIComponent(atob(compressed)));
+            console.log('Test decode successful:', testDecode);
+        } catch (e) {
+            console.error('Test decode failed:', e);
+        }
     }
 
     /**
@@ -806,29 +834,77 @@ else:
      * Load code from URL
      */
     async loadFromUrl() {
+        console.log('loadFromUrl called');
+        console.log('Current URL hash:', window.location.hash);
+        
         if (window.location.hash) {
             try {
                 const compressed = window.location.hash.substring(1);
-                const data = JSON.parse(decodeURIComponent(atob(compressed)));
+                console.log('Compressed data:', compressed);
+                
+                // Decode the data
+                const decodedData = atob(compressed);
+                console.log('Decoded data:', decodedData);
+                
+                const data = JSON.parse(decodeURIComponent(decodedData));
+                console.log('Parsed data:', data);
+                
+                // Check if editors are available, wait if not
+                if (!this.pythonEditor || !this.commonTestEditor) {
+                    console.log('Editors not initialized yet, waiting...');
+                    let retries = 0;
+                    while ((!this.pythonEditor || !this.commonTestEditor) && retries < 50) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        retries++;
+                    }
+                    
+                    if (!this.pythonEditor || !this.commonTestEditor) {
+                        console.error('Editors still not available after waiting');
+                        return;
+                    }
+                }
+                
+                console.log('Editors are ready, loading data...');
                 
                 if (data.python) {
+                    console.log('Loading Python code:', data.python.substring(0, 100) + '...');
                     this.pythonEditor.setValue(data.python);
+                    console.log('Python code loaded successfully');
                 }
                 if (data.common) {
+                    console.log('Loading Common Test code:', data.common.substring(0, 100) + '...');
                     this.commonTestEditor.setValue(data.common);
+                    console.log('Common Test code loaded successfully');
                 }
                 if (data.direction) {
-                    // Since conversionDirection element doesn't exist, just log the direction
                     console.log('Loaded direction from URL:', data.direction);
-                    // Skip panel label updates since the direction selector doesn't exist
                 }
                 
-                if (window.flowchartGenerator) {
-                    await window.flowchartGenerator.generateFlowchart(this.pythonEditor.getValue());
+                // Refresh editors to ensure proper display
+                setTimeout(() => {
+                    this.refreshEditors();
+                }, 100);
+                
+                if (window.flowchartGenerator && data.python) {
+                    console.log('Generating flowchart...');
+                    setTimeout(async () => {
+                        try {
+                            await window.flowchartGenerator.generateFlowchart(data.python);
+                            console.log('Flowchart generated successfully');
+                        } catch (error) {
+                            console.error('Flowchart generation error:', error);
+                        }
+                    }, 300);
                 }
+                
+                console.log('URL loading completed successfully');
             } catch (e) {
                 console.error('Failed to load from URL:', e);
+                console.error('Hash content:', window.location.hash);
+                alert('URLからのデータ読み込みに失敗しました: ' + e.message);
             }
+        } else {
+            console.log('No hash found in URL');
         }
     }
 
