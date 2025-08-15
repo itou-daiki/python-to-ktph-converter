@@ -344,6 +344,12 @@ class UIManager {
         }
         document.getElementById('output').textContent = '';
         document.getElementById('shareUrl').value = '';
+        
+        // Hide the share URL link
+        const shareUrlLink = document.getElementById('shareUrlLink');
+        if (shareUrlLink) {
+            shareUrlLink.style.display = 'none';
+        }
     }
 
     /**
@@ -796,7 +802,14 @@ else:
         
         // Use Base64 encoding that can handle Unicode characters
         const utf8Bytes = new TextEncoder().encode(jsonString);
-        const compressed = btoa(String.fromCharCode(...utf8Bytes));
+        const base64String = btoa(String.fromCharCode(...utf8Bytes));
+        
+        // Convert to URL-safe Base64 to avoid issues with +, /, and = characters
+        const compressed = base64String
+            .replace(/\+/g, '-')    // Replace + with -
+            .replace(/\//g, '_')    // Replace / with _
+            .replace(/=/g, '');     // Remove padding = characters
+        
         console.log('Compressed string length:', compressed.length);
         
         // Generate clean URL without any existing hash
@@ -812,9 +825,26 @@ else:
         document.getElementById('shareUrl').value = url;
         console.log('Share URL generated:', url.length, 'characters');
         
+        // Update the link element to make URL clickable
+        const shareUrlLink = document.getElementById('shareUrlLink');
+        if (shareUrlLink) {
+            shareUrlLink.href = url;
+            shareUrlLink.style.display = 'inline'; // Show the link
+        }
+        
         // Test immediate decode to verify
         try {
-            const binaryString = atob(compressed);
+            // Convert back from URL-safe Base64
+            let base64ForDecode = compressed
+                .replace(/-/g, '+')    // Replace - with +
+                .replace(/_/g, '/');   // Replace _ with /
+            
+            // Add padding if needed
+            while (base64ForDecode.length % 4) {
+                base64ForDecode += '=';
+            }
+            
+            const binaryString = atob(base64ForDecode);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
@@ -860,8 +890,18 @@ else:
                 const compressed = window.location.hash.substring(1);
                 console.log('Compressed data:', compressed);
                 
+                // Convert back from URL-safe Base64
+                let base64ForDecode = compressed
+                    .replace(/-/g, '+')    // Replace - with +
+                    .replace(/_/g, '/');   // Replace _ with /
+                
+                // Add padding if needed
+                while (base64ForDecode.length % 4) {
+                    base64ForDecode += '=';
+                }
+                
                 // Decode the data
-                const binaryString = atob(compressed);
+                const binaryString = atob(base64ForDecode);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
