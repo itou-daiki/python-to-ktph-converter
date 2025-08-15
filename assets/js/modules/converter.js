@@ -66,10 +66,12 @@ class Converter {
                 let nextIndent = null;
                 
                 // Find the next non-empty, non-comment line
+                let nextLineContent = '';
                 for (let j = i + 1; j < lines.length; j++) {
                     const nextLine = lines[j].trim();
                     if (nextLine === '' || nextLine.startsWith('#')) continue;
                     nextIndent = lines[j].length - lines[j].trimStart().length;
+                    nextLineContent = nextLine;
                     break;
                 }
                 
@@ -78,31 +80,26 @@ class Converter {
                     nextIndent = 0;
                 }
                 
-                // Simple and correct approach: ⎿ only when the block really ends
+                // Determine which blocks will close after this line
                 prefix = '';
-                let isLastLineInCurrentBlock = false;
                 
-                // Check if this is truly the last line in the current deepest block
-                if (i === lines.length - 1 || nextIndent <= this.indentStack[0]) {
-                    // Last line of file or returning to top level
-                    isLastLineInCurrentBlock = true;
-                } else {
-                    // Check if next line will dedent from current block
-                    for (let k = this.indentStack.length - 1; k > 0; k--) {
-                        if (nextIndent < this.indentStack[k] && currentIndent >= this.indentStack[k]) {
-                            // This line is in a block that will close
-                            if (k === this.indentStack.length - 1) {
-                                // This is the deepest block and it will close
-                                isLastLineInCurrentBlock = true;
-                            }
-                            break;
+                // Build prefix based on which blocks will close
+                for (let level = 0; level < this.indentStack.length - 1; level++) {
+                    const blockIndent = this.indentStack[level + 1];
+                    
+                    // Special case: if next line is else/elif at same level as if, 
+                    // don't close the if block yet
+                    let willClose = nextIndent < blockIndent;
+                    
+                    if (willClose && nextIndent === blockIndent - 4) {
+                        // Next line is at the same level as the block header
+                        if (nextLineContent.startsWith('else:') || nextLineContent.startsWith('elif ')) {
+                            // This is continuing the if-else structure, don't close the block
+                            willClose = false;
                         }
                     }
-                }
-                
-                // Build prefix: use ⎿ only for the rightmost (deepest) position if this is the last line
-                for (let level = 0; level < this.indentStack.length - 1; level++) {
-                    if (isLastLineInCurrentBlock && level === this.indentStack.length - 2) {
+                    
+                    if (willClose) {
                         prefix += '⎿ ';
                     } else {
                         prefix += '｜ ';
