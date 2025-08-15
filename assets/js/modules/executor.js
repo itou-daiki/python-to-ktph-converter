@@ -109,8 +109,18 @@ builtins.input = custom_input
             // Get captured output from JavaScript array
             const output = capturedOutput.join('');
             
-            // Set final output (don't combine with existing output to avoid duplication)
-            outputDiv.textContent = output || '実行完了（出力なし）';
+            // Process output to make keyboard input prompts red and bold
+            const processedOutput = output.replace(
+                / ←キーボードから入力/g, 
+                ' <span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>'
+            );
+            
+            // Set final output using innerHTML to render HTML tags
+            if (processedOutput.includes('<span')) {
+                outputDiv.innerHTML = processedOutput.replace(/\n/g, '<br>') || '実行完了（出力なし）';
+            } else {
+                outputDiv.textContent = output || '実行完了（出力なし）';
+            }
             
             // Scroll to bottom to show the last line
             outputDiv.scrollTop = outputDiv.scrollHeight;
