@@ -129,6 +129,22 @@ class Converter {
             return '';
         }
         
+        // Function definition
+        if (line.startsWith('def ')) {
+            // Match pattern: def function_name(parameters):
+            const match = line.match(/def\s+(\w+)\s*\(([^)]*)\)\s*:/);
+            if (match) {
+                const functionName = match[1];
+                const parameters = match[2].trim();
+                
+                if (parameters) {
+                    return `関数 ${functionName}(${parameters}):`;
+                } else {
+                    return `関数 ${functionName}():`;
+                }
+            }
+        }
+        
         // Variable assignment with input() - handle various patterns
         if (line.includes('input(')) {
             // Handle int(input("prompt")), str(input("prompt")), float(input("prompt")) etc.
@@ -380,6 +396,22 @@ class Converter {
      * Convert individual line from Common Test to Python
      */
     convertLineToPython(line) {
+        // Function definition (関数 function_name(): -> def function_name():)
+        if (line.startsWith('関数 ')) {
+            // Match pattern: 関数 function_name(parameters):
+            const match = line.match(/関数\s+(\w+)\s*\(([^)]*)\)\s*:/);
+            if (match) {
+                const functionName = match[1];
+                const parameters = match[2].trim();
+                
+                if (parameters) {
+                    return `def ${functionName}(${parameters}):`;
+                } else {
+                    return `def ${functionName}():`;
+                }
+            }
+        }
+        
         // Input - handle various patterns
         if (line.includes('【外部からの入力】')) {
             // According to official specification: 【外部からの入力】 = int(input())
