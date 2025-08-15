@@ -799,10 +799,18 @@ else:
         const compressed = btoa(String.fromCharCode(...utf8Bytes));
         console.log('Compressed string length:', compressed.length);
         
-        const url = window.location.origin + window.location.pathname + '#' + compressed;
+        // Generate clean URL without any existing hash
+        const baseUrl = window.location.origin + window.location.pathname;
+        const url = baseUrl + '#' + compressed;
+        
+        // Check URL length (browser limit is usually around 2048 characters)
+        if (url.length > 2000) {
+            console.warn('Generated URL is very long:', url.length, 'characters');
+            alert('生成されたURLが非常に長くなっています。一部のブラウザで問題が発生する可能性があります。');
+        }
         
         document.getElementById('shareUrl').value = url;
-        console.log('Share URL generated:', url);
+        console.log('Share URL generated:', url.length, 'characters');
         
         // Test immediate decode to verify
         try {
