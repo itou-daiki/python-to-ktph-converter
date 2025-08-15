@@ -1,26 +1,27 @@
 /* Info Sections Styling */
 
 .info-section {
-    margin-top: 20px;
+    margin-top: 24px;
     background: #ffffff;
     border: 1px solid #e1e8ed;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 0;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .info-section .panel-header {
-    background: #f8f9fa;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e1e8ed;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 16px 20px;
+    border-bottom: none;
     font-weight: 600;
-    color: #2c3e50;
+    color: #ffffff;
     margin: 0;
+    font-size: 16px;
 }
 
 .info-content {
-    padding: 20px;
+    padding: 24px;
     background: #ffffff;
 }
 
@@ -33,34 +34,51 @@
 }
 
 .note-item {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 6px;
-    border: 1px solid #e1e8ed;
+    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .note-item h4 {
-    margin: 0 0 8px 0;
-    color: #2c3e50;
-    font-size: 14px;
+    margin: 0 0 12px 0;
+    color: #4a5568;
+    font-size: 15px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.note-item h4::before {
+    content: '💡';
+    margin-right: 8px;
+    font-size: 16px;
 }
 
 .note-item p {
     margin: 0;
     font-size: 13px;
-    line-height: 1.5;
-    color: #333333;
+    line-height: 1.6;
+    color: #4a5568;
 }
 
 .note-item code {
-    background: #e8f4fd;
-    padding: 2px 6px;
-    border-radius: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 6px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 12px;
-    color: #2c3e50;
-    border: 1px solid #d1ecf1;
+    font-weight: 500;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* Comparison Table */
@@ -71,17 +89,21 @@
 }
 
 .comparison-category {
-    background: #f8f9fa;
-    border-radius: 6px;
-    padding: 16px;
-    border: 1px solid #e1e8ed;
+    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 16px;
 }
 
 .comparison-category h4 {
-    margin: 0 0 12px 0;
-    color: #2c3e50;
-    font-size: 14px;
+    margin: 0 0 16px 0;
+    color: #4a5568;
+    font-size: 15px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
 }
 
 .comparison-category table {
@@ -89,20 +111,24 @@
     border-collapse: collapse;
     font-size: 13px;
     background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .comparison-category th {
-    background: #e9ecef;
-    padding: 8px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px 16px;
     text-align: left;
     font-weight: 600;
-    color: #2c3e50;
-    border: 1px solid #dee2e6;
+    color: #ffffff;
+    border: none;
 }
 
 .comparison-category td {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid #f1f3f4;
     vertical-align: top;
     background: #ffffff;
 }
@@ -110,6 +136,7 @@
 .comparison-category td:first-child {
     background: #f8f9fa;
     width: 45%;
+    font-weight: 500;
 }
 
 .comparison-category td:last-child {
@@ -117,15 +144,21 @@
     width: 55%;
 }
 
+.comparison-category tr:last-child td {
+    border-bottom: none;
+}
+
 .comparison-category code {
-    background: #e8f4fd;
-    padding: 2px 6px;
-    border-radius: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 12px;
-    color: #2c3e50;
+    font-weight: 500;
     white-space: nowrap;
-    border: 1px solid #d1ecf1;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* Responsive Design */
@@ -149,15 +182,26 @@
     }
 }
 
-/* Force light theme for info sections */
+/* Enhanced styling with gradients and modern design */
 .info-section,
 .info-section * {
     color-scheme: light;
 }
 
+/* Smooth animations */
+.note-item,
+.comparison-category {
+    transition: all 0.2s ease;
+}
+
+.note-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Ensure consistent styling across browsers */
 .info-section .panel-header {
-    background: #f8f9fa !important;
-    color: #2c3e50 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
 }
 
 .info-content {
@@ -165,51 +209,37 @@
 }
 
 .note-item {
-    background: #f8f9fa !important;
-    color: #333333 !important;
+    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%) !important;
 }
 
 .comparison-category {
-    background: #f8f9fa !important;
-}
-
-.comparison-category table {
-    background: #ffffff !important;
+    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%) !important;
 }
 
 .comparison-category th {
-    background: #e9ecef !important;
-    color: #2c3e50 !important;
-}
-
-.comparison-category td {
-    background: #ffffff !important;
-    color: #333333 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
 }
 
 .comparison-category td:first-child {
     background: #f8f9fa !important;
 }
 
-/* Improved contrast for all text */
+/* Text colors with better contrast */
 .info-section h4 {
-    color: #2c3e50 !important;
+    color: #4a5568 !important;
 }
 
 .info-section p {
-    color: #333333 !important;
+    color: #4a5568 !important;
 }
 
 .info-section code {
-    background: #e8f4fd !important;
-    color: #2c3e50 !important;
-    border: 1px solid #d1ecf1 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
 }
 
-.info-section td {
-    color: #333333 !important;
-}
-
-.info-section th {
-    color: #2c3e50 !important;
+.comparison-category td {
+    color: #4a5568 !important;
 }
