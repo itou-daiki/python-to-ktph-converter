@@ -61,27 +61,52 @@ class Converter {
             // Add appropriate prefix for indented content
             if (this.indentStack.length > 1) {
                 let prefix = '';
-                let isLastInBlock = false;
                 
-                // Check if this is the last line in the current block
+                // Determine which blocks will close after this line
+                let nextIndent = null;
+                
+                // Find the next non-empty, non-comment line
                 for (let j = i + 1; j < lines.length; j++) {
                     const nextLine = lines[j].trim();
-                    if (nextLine === '') continue; // Skip empty lines
-                    
-                    const nextIndent = lines[j].length - lines[j].trimStart().length;
-                    if (nextIndent < currentIndent) {
-                        isLastInBlock = true;
-                        break;
-                    } else if (nextIndent >= currentIndent) {
-                        break;
+                    if (nextLine === '' || nextLine.startsWith('#')) continue;
+                    nextIndent = lines[j].length - lines[j].trimStart().length;
+                    break;
+                }
+                
+                // If no next line found, treat as file end (indent 0)
+                if (nextIndent === null) {
+                    nextIndent = 0;
+                }
+                
+                // Simple and correct approach: ⎿ only when the block really ends
+                prefix = '';
+                let isLastLineInCurrentBlock = false;
+                
+                // Check if this is truly the last line in the current deepest block
+                if (i === lines.length - 1 || nextIndent <= this.indentStack[0]) {
+                    // Last line of file or returning to top level
+                    isLastLineInCurrentBlock = true;
+                } else {
+                    // Check if next line will dedent from current block
+                    for (let k = this.indentStack.length - 1; k > 0; k--) {
+                        if (nextIndent < this.indentStack[k] && currentIndent >= this.indentStack[k]) {
+                            // This line is in a block that will close
+                            if (k === this.indentStack.length - 1) {
+                                // This is the deepest block and it will close
+                                isLastLineInCurrentBlock = true;
+                            }
+                            break;
+                        }
                     }
                 }
                 
-                // Use appropriate symbol
-                if (isLastInBlock || i === lines.length - 1) {
-                    prefix = '⎿ '.repeat(this.indentStack.length - 1);
-                } else {
-                    prefix = '｜ '.repeat(this.indentStack.length - 1);
+                // Build prefix: use ⎿ only for the rightmost (deepest) position if this is the last line
+                for (let level = 0; level < this.indentStack.length - 1; level++) {
+                    if (isLastLineInCurrentBlock && level === this.indentStack.length - 2) {
+                        prefix += '⎿ ';
+                    } else {
+                        prefix += '｜ ';
+                    }
                 }
                 
                 result.push(prefix + converted);
@@ -108,13 +133,13 @@ class Converter {
         }
         
         // Variable assignment with input() - handle various patterns
-        if (line.includes('input()')) {
-            // Handle int(input()), str(input()), float(input()) etc.
-            line = line.replace(/int\(input\(\)\)/g, '【外部からの入力】');
-            line = line.replace(/str\(input\(\)\)/g, '【外部からの入力】');
-            line = line.replace(/float\(input\(\)\)/g, '【外部からの入力】');
+        if (line.includes('input(')) {
+            // Handle int(input("prompt")), str(input("prompt")), float(input("prompt")) etc.
+            line = line.replace(/int\(input\([^)]*\)\)/g, '【外部からの入力】');
+            line = line.replace(/str\(input\([^)]*\)\)/g, '【外部からの入力】');
+            line = line.replace(/float\(input\([^)]*\)\)/g, '【外部からの入力】');
             // Handle simple input()
-            line = line.replace(/input\(\)/g, '【外部からの入力】');
+            line = line.replace(/input\([^)]*\)/g, '【外部からの入力】');
         }
         
         // print statement - handle f-strings
