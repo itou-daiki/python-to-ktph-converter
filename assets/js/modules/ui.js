@@ -35,10 +35,11 @@ class UIManager {
             indentWithTabs: false,
             lineWrapping: true,
             placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: 10,
+            viewportMargin: Infinity, // Show all lines for better scrolling
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
-            autoCloseTags: true
+            autoCloseTags: true,
+            height: 'auto' // Auto height adjustment
         });
         console.log('Python editor created:', !!this.pythonEditor);
 
@@ -49,9 +50,10 @@ class UIManager {
             lineNumbers: true,
             lineWrapping: true,
             placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: 10,
+            viewportMargin: Infinity, // Show all lines for better scrolling
             scrollbarStyle: 'native',
-            autoCloseBrackets: true
+            autoCloseBrackets: true,
+            height: 'auto' // Auto height adjustment
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
@@ -60,9 +62,46 @@ class UIManager {
             this.refreshEditors();
         }, 100);
         
+        // Additional refresh after layout stabilizes
+        setTimeout(() => {
+            this.refreshEditors();
+        }, 500);
+        
         // Also refresh on window resize
         window.addEventListener('resize', () => {
-            this.refreshEditors();
+            setTimeout(() => {
+                this.refreshEditors();
+            }, 100);
+        });
+        
+        // Refresh editors when they receive focus
+        this.pythonEditor.on('focus', () => {
+            setTimeout(() => {
+                this.pythonEditor.refresh();
+            }, 50);
+        });
+        
+        this.commonTestEditor.on('focus', () => {
+            setTimeout(() => {
+                this.commonTestEditor.refresh();
+            }, 50);
+        });
+        
+        // Refresh editors when content changes significantly
+        this.pythonEditor.on('change', (cm, change) => {
+            if (change.text.length > 1 || change.removed.length > 1) {
+                setTimeout(() => {
+                    this.pythonEditor.refresh();
+                }, 100);
+            }
+        });
+        
+        this.commonTestEditor.on('change', (cm, change) => {
+            if (change.text.length > 1 || change.removed.length > 1) {
+                setTimeout(() => {
+                    this.commonTestEditor.refresh();
+                }, 100);
+            }
         });
         
         // Test editors with sample text
@@ -77,14 +116,30 @@ class UIManager {
     refreshEditors() {
         if (this.pythonEditor) {
             this.pythonEditor.refresh();
-            this.pythonEditor.setSize(null, '100%');
+            // Set size to null for both width and height to use CSS
+            this.pythonEditor.setSize(null, null);
+            // Force scroll bars to appear if needed
+            this.pythonEditor.scrollTo(0, 0);
             console.log('Python editor refreshed');
         }
         if (this.commonTestEditor) {
             this.commonTestEditor.refresh();
-            this.commonTestEditor.setSize(null, '100%');
+            // Set size to null for both width and height to use CSS
+            this.commonTestEditor.setSize(null, null);
+            // Force scroll bars to appear if needed
+            this.commonTestEditor.scrollTo(0, 0);
             console.log('Common test editor refreshed');
         }
+        
+        // Additional refresh after a short delay to ensure proper rendering
+        setTimeout(() => {
+            if (this.pythonEditor) {
+                this.pythonEditor.refresh();
+            }
+            if (this.commonTestEditor) {
+                this.commonTestEditor.refresh();
+            }
+        }, 100);
     }
 
     /**

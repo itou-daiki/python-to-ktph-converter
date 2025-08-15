@@ -138,7 +138,9 @@
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
-    height: 100%;
+    height: 100% !important;
+    min-height: 400px;
+    max-height: 100%;
 }
 
 .CodeMirror-focused {
@@ -152,29 +154,59 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 #pythonEditor .CodeMirror,
 #commonTestEditor .CodeMirror {
-    height: 100%;
+    height: 100% !important;
     flex: 1;
     min-height: 400px;
+    position: relative;
 }
 
 .CodeMirror-scroll {
     overflow: auto !important;
-    height: 100%;
-    padding-bottom: 10px;
+    height: 100% !important;
+    min-height: 400px !important;
+    padding-bottom: 20px !important;
     box-sizing: border-box;
+    position: relative;
+}
+
+.CodeMirror-sizer {
+    position: relative !important;
+    min-height: inherit !important;
+    padding-bottom: 20px !important;
+}
+
+.CodeMirror-lines {
+    padding: 4px 0 20px 0 !important;
+    min-height: inherit !important;
 }
 
 .CodeMirror-vscrollbar,
 .CodeMirror-hscrollbar {
     outline: none;
+    display: block !important;
+}
+
+.CodeMirror-vscrollbar {
+    right: 0 !important;
+    top: 0 !important;
+    width: 18px !important;
+}
+
+.CodeMirror-hscrollbar {
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 18px !important;
 }
 
 .CodeMirror-scrollbar-filler {
     background-color: #f5f5f5;
+    width: 18px !important;
+    height: 18px !important;
 }
 
 .CodeMirror-scrollbar-filler,
