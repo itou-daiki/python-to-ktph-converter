@@ -109,52 +109,33 @@ builtins.input = custom_input
             // Get captured output from JavaScript array
             const output = capturedOutput.join('');
             
-            // Debug: Log the output to see what we're working with
-            console.log('=== DEBUG OUTPUT ===');
-            console.log('Raw output:', JSON.stringify(output));
-            console.log('Raw output length:', output.length);
-            console.log('Contains ←キーボードから入力:', output.includes('←キーボードから入力'));
-            
-            // Search for the exact pattern in the output
-            const inputPattern = '←キーボードから入力';
-            const matches = output.match(new RegExp(inputPattern, 'g'));
-            console.log('Pattern matches found:', matches ? matches.length : 0);
-            
             // Process output to make keyboard input prompts red and bold
+            const inputPattern = '←キーボードから入力';
             let processedOutput = output;
             
-            // Use multiple replacement strategies
+            // Apply styling to keyboard input indicators
             if (output.includes(inputPattern)) {
-                console.log('Found input pattern, applying styling...');
-                
-                // Strategy 1: Replace all occurrences with HTML span
+                // Replace all occurrences with styled HTML span
                 processedOutput = processedOutput.replace(
                     new RegExp(inputPattern, 'g'),
                     '<span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
                 );
                 
-                // Strategy 2: Also handle cases with spaces
+                // Also handle cases with spaces
                 processedOutput = processedOutput.replace(
                     new RegExp(' ' + inputPattern, 'g'),
                     ' <span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
                 );
-                
-                console.log('Applied styling to output');
             }
             
-            console.log('Processed output:', JSON.stringify(processedOutput.substring(0, 200) + '...'));
-            console.log('Contains span tag:', processedOutput.includes('<span'));
-            
-            // Always use innerHTML if we have any HTML content
+            // Set final output
             if (processedOutput.includes('<span') || processedOutput !== output) {
-                // Convert newlines to <br> tags for HTML display
+                // Use innerHTML for HTML content
                 const htmlOutput = processedOutput.replace(/\n/g, '<br>');
                 outputDiv.innerHTML = htmlOutput || '実行完了（出力なし）';
-                console.log('Using innerHTML for output display');
-                console.log('Final HTML output:', htmlOutput.substring(0, 200) + '...');
             } else {
+                // Use textContent for plain text
                 outputDiv.textContent = output || '実行完了（出力なし）';
-                console.log('Using textContent for output display');
             }
             
             // Scroll to bottom to show the last line

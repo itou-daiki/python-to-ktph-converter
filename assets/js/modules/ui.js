@@ -167,40 +167,29 @@ class UIManager {
             });
         }
 
-        // Convert button (check if exists for backward compatibility)
-        const convertBtn = document.querySelector('.convert-button');
-        if (convertBtn) {
-            console.log('Convert button found, adding event listener');
-            convertBtn.addEventListener('click', async () => {
-                console.log('Convert button clicked via event listener');
-                await this.convert();
-            });
-        } else {
-            console.error('Convert button not found!');
-        }
+        // Convert buttons (Python to Common and Common to Python)
+        const convertRightBtn = document.querySelector('.convert-button-right');
+        const convertLeftBtn = document.querySelector('.convert-button-left');
+        
+        // Convert buttons use onclick attributes in HTML, no event listeners needed
 
         // Run button
         const runBtn = document.querySelector('.run-button');
         if (runBtn) {
-            console.log('Run button found, adding event listener');
             // Remove any existing event listeners to prevent duplicates
             runBtn.onclick = null;
             runBtn.replaceWith(runBtn.cloneNode(true));
             // Re-get the button reference after cloning
             const newRunBtn = document.querySelector('.run-button');
             newRunBtn.addEventListener('click', async () => {
-                console.log('Run button clicked via event listener');
                 await window.runCode();
             });
-        } else {
-            console.error('Run button not found!');
         }
 
         // Clear button
         const clearBtn = document.querySelector('.clear-button');
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
-                console.log('Clear button clicked');
                 this.clearAll();
             });
         }
@@ -209,15 +198,12 @@ class UIManager {
         const loadSampleBtn = document.querySelector('.load-sample-button');
         if (loadSampleBtn) {
             loadSampleBtn.addEventListener('click', () => {
-                console.log('Load sample button clicked');
                 const sampleSelect = document.getElementById('sampleSelect');
                 const selectedSample = sampleSelect.value;
                 
                 if (selectedSample) {
                     this.loadSampleCode(selectedSample);
-                    console.log('Loaded sample:', selectedSample);
                 } else {
-                    console.log('No sample selected');
                     alert('サンプルを選択してください');
                 }
             });
@@ -229,7 +215,6 @@ class UIManager {
             sampleSelect.addEventListener('change', (e) => {
                 const selectedSample = e.target.value;
                 if (selectedSample) {
-                    console.log('Sample selected:', selectedSample);
                     this.loadSampleCode(selectedSample);
                 }
             });
@@ -239,7 +224,6 @@ class UIManager {
         const shareGenerateBtn = document.querySelector('.share-generate-button');
         if (shareGenerateBtn) {
             shareGenerateBtn.addEventListener('click', () => {
-                console.log('Share generate button clicked');
                 this.shareCode();
             });
         }
@@ -248,7 +232,6 @@ class UIManager {
         const shareCopyBtn = document.querySelector('.share-copy-button');
         if (shareCopyBtn) {
             shareCopyBtn.addEventListener('click', async (event) => {
-                console.log('Share copy button clicked');
                 await this.copyShareUrl(event.target);
             });
         }
@@ -257,7 +240,6 @@ class UIManager {
         const pythonCopyBtn = document.querySelector('.python-copy-button');
         if (pythonCopyBtn) {
             pythonCopyBtn.addEventListener('click', async (event) => {
-                console.log('Python copy button clicked');
                 await this.copyToClipboard('pythonCode', event.target);
             });
         }
@@ -266,7 +248,6 @@ class UIManager {
         const commonCopyBtn = document.querySelector('.common-copy-button');
         if (commonCopyBtn) {
             commonCopyBtn.addEventListener('click', async (event) => {
-                console.log('Common test copy button clicked');
                 await this.copyToClipboard('commonTestCode', event.target);
             });
         }
@@ -285,7 +266,6 @@ class UIManager {
         
         // Hash change event listener for URL sharing
         window.addEventListener('hashchange', () => {
-            console.log('Hash change detected');
             this.loadFromUrl();
         });
     }
