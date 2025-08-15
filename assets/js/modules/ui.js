@@ -989,15 +989,22 @@ else:
             console.log('QRCode library not ready, retrying...');
             qrCodeDisplay.innerHTML = '<p style="color: #3498db;">QRコードを生成中...</p>';
             
-            // Retry after a short delay
+            // Retry after a longer delay to allow for library loading
             setTimeout(() => {
                 if (typeof QRCode !== 'undefined') {
                     this.generateQRCode(url);
                 } else {
-                    console.error('QRCode library failed to load');
-                    qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込めませんでした</p>';
+                    // Try one more time after additional delay
+                    setTimeout(() => {
+                        if (typeof QRCode !== 'undefined') {
+                            this.generateQRCode(url);
+                        } else {
+                            console.error('QRCode library failed to load after retries');
+                            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込めませんでした<br><small>ページを再読み込みしてお試しください</small></p>';
+                        }
+                    }, 2000);
                 }
-            }, 1000);
+            }, 2000);
             return;
         }
         
