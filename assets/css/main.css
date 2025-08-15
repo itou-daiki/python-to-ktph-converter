@@ -1,4 +1,18 @@
 /* Main Styles */
+:root {
+    /* Color Variables */
+    --primary-color: #3498db;
+    --secondary-bg: #ffffff;
+    --panel-bg: #ffffff;
+    --header-bg: #f8f9fa;
+    --border-color: #e1e8ed;
+    --text-color: #333333;
+    --code-bg: #f8f9fa;
+    --code-color: #e74c3c;
+    --accent-bg: #e8f4fd;
+    --dark-secondary-bg: #2a2a2a;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

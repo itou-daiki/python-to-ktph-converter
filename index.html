@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/css/modal.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
     <link rel="stylesheet" href="assets/css/commontest-highlight.css">
+    <link rel="stylesheet" href="assets/css/info-sections.css">
     
     <!-- External JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -102,6 +103,112 @@
                 <button class="copy-button share-generate-button">生成</button>
                 <input type="text" id="shareUrl" readonly placeholder="共有URLをここに表示します">
                 <button class="copy-button share-copy-button">📋 コピー</button>
+            </div>
+        </div>
+
+        <!-- Python Notes Section -->
+        <div class="info-section">
+            <div class="panel-header">🐍 Python記述時の注意点</div>
+            <div class="info-content">
+                <div class="notes-grid">
+                    <div class="note-item">
+                        <h4>記号は半角で入力</h4>
+                        <p><code>= : ( ) [ ] { } + - * / % == != < > <= >=</code><br>
+                        全角文字を使うとエラーになります</p>
+                    </div>
+                    <div class="note-item">
+                        <h4>インデントは4文字スペース</h4>
+                        <p>タブではなく<strong>スペース4文字</strong>でインデントしてください<br>
+                        <code>if</code>文、<code>for</code>文、<code>def</code>文の中身は必ずインデント</p>
+                    </div>
+                    <div class="note-item">
+                        <h4>文字列はダブルクォート</h4>
+                        <p><code>"文字列"</code> または <code>'文字列'</code><br>
+                        全角の<code>"文字列"</code>はエラーになります</p>
+                    </div>
+                    <div class="note-item">
+                        <h4>コロン（:）を忘れずに</h4>
+                        <p><code>if</code>文、<code>for</code>文、<code>while</code>文、<code>def</code>文の末尾には<code>:</code>が必要</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Section -->
+        <div class="info-section">
+            <div class="panel-header">📊 Python ⇄ 共通テスト用プログラム表記 対応表</div>
+            <div class="info-content">
+                <div class="comparison-table">
+                    <div class="comparison-category">
+                        <h4>🔢 基本構文</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Python</th><th>共通テスト用プログラム表記</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>print("hello")</code></td><td><code>表示する("hello")</code></td></tr>
+                                <tr><td><code>int(input())</code></td><td><code>【外部からの入力】</code></td></tr>
+                                <tr><td><code>len(data)</code></td><td><code>要素数(data)</code></td></tr>
+                                <tr><td><code>data = [1,2,3]</code></td><td><code>Data = [1,2,3]</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="comparison-category">
+                        <h4>🔀 条件分岐</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Python</th><th>共通テスト用プログラム表記</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>if x < 5:</code></td><td><code>もし x < 5 ならば:</code></td></tr>
+                                <tr><td><code>elif x == 10:</code></td><td><code>そうでなくもし x == 10 ならば:</code></td></tr>
+                                <tr><td><code>else:</code></td><td><code>そうでなければ:</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="comparison-category">
+                        <h4>🔄 繰り返し</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Python</th><th>共通テスト用プログラム表記</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>for i in range(5):</code></td><td><code>i を 0 から 4 まで 1 ずつ増やしながら繰り返す:</code></td></tr>
+                                <tr><td><code>while x < 10:</code></td><td><code>x < 10 の間繰り返す:</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="comparison-category">
+                        <h4>🧮 演算子</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Python</th><th>共通テスト用プログラム表記</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><code>//</code> （整数除算）</td><td><code>÷</code></td></tr>
+                                <tr><td><code>%</code> （余り）</td><td><code>％</code></td></tr>
+                                <tr><td><code>**</code> （べき乗）</td><td><code>**</code></td></tr>
+                                <tr><td><code>and, or, not</code></td><td><code>and, or, not</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="comparison-category">
+                        <h4>🎯 制御記号</h4>
+                        <table>
+                            <thead>
+                                <tr><th>意味</th><th>共通テスト用プログラム表記</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>ブロック内の継続行</td><td><code>｜</code> （縦線）</td></tr>
+                                <tr><td>ブロックの最終行</td><td><code>⎿</code> （角括弧）</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
