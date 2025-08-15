@@ -111,7 +111,7 @@ class FlowchartGenerator {
 
             if (line.startsWith('if ')) {
                 // Handle if statement with branching
-                mermaidCode += `    ${currentNode}{${nodeText}}\\n`;
+                mermaidCode += `    ${currentNode}{"${nodeText}"}\\n`;
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
@@ -175,7 +175,7 @@ class FlowchartGenerator {
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
-                mermaidCode += `    ${currentNode}{${nodeText}}\\n`;
+                mermaidCode += `    ${currentNode}{"${nodeText}"}\\n`;
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
@@ -207,9 +207,9 @@ class FlowchartGenerator {
             } else {
                 // Regular statement
                 if (line.includes('print(') || line.includes('input(')) {
-                    mermaidCode += `    ${currentNode}[[${nodeText}]]\\n`;  // I/O shape
+                    mermaidCode += `    ${currentNode}[["${nodeText}"]]\\n`;  // I/O shape
                 } else {
-                    mermaidCode += `    ${currentNode}[${nodeText}]\\n`;  // Process shape
+                    mermaidCode += `    ${currentNode}["${nodeText}"]\\n`;  // Process shape
                 }
                 
                 // Connect from previous nodes
@@ -373,21 +373,10 @@ class FlowchartGenerator {
      * Escape special characters for Mermaid while preserving Japanese text
      */
     escapeForMermaid(text) {
-        // Only escape truly problematic characters for Mermaid, preserve Japanese content
+        // For Mermaid, we need to be more careful with special characters
+        // Use quotes to wrap the text and escape internal quotes
         return text
             .replace(/"/g, "'")         // Replace double quotes with single quotes
-            .replace(/\[/g, '［')       // Replace with full-width brackets
-            .replace(/\]/g, '］')
-            .replace(/\{/g, '｛')       // Replace with full-width braces
-            .replace(/\}/g, '｝')
-            .replace(/\(/g, '（')       // Replace with full-width parentheses
-            .replace(/\)/g, '）')
-            .replace(/:/g, '：')        // Replace with full-width colon
-            .replace(/->/g, '→')        // Replace arrows
-            // Don't escape < and > symbols - use full-width versions to avoid HTML escaping
-            .replace(/</g, '＜')        // Replace < with full-width <
-            .replace(/>/g, '＞')        // Replace > with full-width >
-            .replace(/&/g, '＆')        // Replace & with full-width &
             .replace(/\r?\n/g, ' ')     // Replace newlines with space
             .replace(/\s+/g, ' ')       // Normalize whitespace
             .trim();
