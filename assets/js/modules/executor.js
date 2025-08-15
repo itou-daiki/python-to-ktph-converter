@@ -95,7 +95,7 @@ def custom_input(prompt=""):
         captured_output.append(prompt)
     value = js.window.prompt(prompt if prompt else "入力してください:")
     if value is not None:
-        captured_output.append(value + ' ←キーボードから入力\\n')
+        captured_output.append(str(value) + ' ←キーボードから入力\\n')
     return value if value is not None else ""
 
 # Override built-in functions
@@ -110,23 +110,48 @@ builtins.input = custom_input
             const output = capturedOutput.join('');
             
             // Debug: Log the output to see what we're working with
+            console.log('=== DEBUG OUTPUT ===');
             console.log('Raw output:', JSON.stringify(output));
+            console.log('Raw output length:', output.length);
             console.log('Contains ←キーボードから入力:', output.includes('←キーボードから入力'));
             
-            // Process output to make keyboard input prompts red and bold
-            // Try multiple patterns to catch different variations
-            let processedOutput = output
-                .replace(/←キーボードから入力\n/g, '<span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>\n')
-                .replace(/←キーボードから入力/g, '<span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>')
-                .replace(/ ←キーボードから入力/g, ' <span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>');
+            // Search for the exact pattern in the output
+            const inputPattern = '←キーボードから入力';
+            const matches = output.match(new RegExp(inputPattern, 'g'));
+            console.log('Pattern matches found:', matches ? matches.length : 0);
             
-            console.log('Processed output:', JSON.stringify(processedOutput));
+            // Process output to make keyboard input prompts red and bold
+            let processedOutput = output;
+            
+            // Use multiple replacement strategies
+            if (output.includes(inputPattern)) {
+                console.log('Found input pattern, applying styling...');
+                
+                // Strategy 1: Replace all occurrences with HTML span
+                processedOutput = processedOutput.replace(
+                    new RegExp(inputPattern, 'g'),
+                    '<span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
+                );
+                
+                // Strategy 2: Also handle cases with spaces
+                processedOutput = processedOutput.replace(
+                    new RegExp(' ' + inputPattern, 'g'),
+                    ' <span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
+                );
+                
+                console.log('Applied styling to output');
+            }
+            
+            console.log('Processed output:', JSON.stringify(processedOutput.substring(0, 200) + '...'));
             console.log('Contains span tag:', processedOutput.includes('<span'));
             
-            // Set final output using innerHTML to render HTML tags
-            if (processedOutput.includes('<span')) {
-                outputDiv.innerHTML = processedOutput.replace(/\n/g, '<br>') || '実行完了（出力なし）';
+            // Always use innerHTML if we have any HTML content
+            if (processedOutput.includes('<span') || processedOutput !== output) {
+                // Convert newlines to <br> tags for HTML display
+                const htmlOutput = processedOutput.replace(/\n/g, '<br>');
+                outputDiv.innerHTML = htmlOutput || '実行完了（出力なし）';
                 console.log('Using innerHTML for output display');
+                console.log('Final HTML output:', htmlOutput.substring(0, 200) + '...');
             } else {
                 outputDiv.textContent = output || '実行完了（出力なし）';
                 console.log('Using textContent for output display');
