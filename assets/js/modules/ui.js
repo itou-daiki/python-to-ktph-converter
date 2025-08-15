@@ -984,10 +984,20 @@ else:
         // Clear previous QR code
         qrCodeDisplay.innerHTML = '';
         
-        // Check if QRCode library is available
+        // Check if QRCode library is available with retry
         if (typeof QRCode === 'undefined') {
-            console.error('QRCode library not loaded');
-            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込まれていません</p>';
+            console.log('QRCode library not ready, retrying...');
+            qrCodeDisplay.innerHTML = '<p style="color: #3498db;">QRコードを生成中...</p>';
+            
+            // Retry after a short delay
+            setTimeout(() => {
+                if (typeof QRCode !== 'undefined') {
+                    this.generateQRCode(url);
+                } else {
+                    console.error('QRCode library failed to load');
+                    qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込めませんでした</p>';
+                }
+            }, 1000);
             return;
         }
         

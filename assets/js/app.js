@@ -59,6 +59,12 @@ window.addEventListener('load', async function() {
         console.log('- window.flowchartGenerator:', !!window.flowchartGenerator);
         console.log('- window.uiManager:', !!window.uiManager);
         
+        // Check external libraries
+        console.log('External libraries verified:');
+        console.log('- mermaid:', typeof mermaid !== 'undefined');
+        console.log('- QRCode:', typeof QRCode !== 'undefined');
+        console.log('- pyodide:', typeof pyodide !== 'undefined');
+        
     } catch (error) {
         console.error('Failed to initialize application:', error);
         document.getElementById('output').textContent = 'アプリケーションの初期化に失敗しました: ' + error.message;
