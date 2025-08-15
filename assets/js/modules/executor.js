@@ -109,17 +109,27 @@ builtins.input = custom_input
             // Get captured output from JavaScript array
             const output = capturedOutput.join('');
             
+            // Debug: Log the output to see what we're working with
+            console.log('Raw output:', JSON.stringify(output));
+            console.log('Contains ←キーボードから入力:', output.includes('←キーボードから入力'));
+            
             // Process output to make keyboard input prompts red and bold
-            const processedOutput = output.replace(
-                / ←キーボードから入力/g, 
-                ' <span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>'
-            );
+            // Try multiple patterns to catch different variations
+            let processedOutput = output
+                .replace(/←キーボードから入力\n/g, '<span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>\n')
+                .replace(/←キーボードから入力/g, '<span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>')
+                .replace(/ ←キーボードから入力/g, ' <span style="color: #e74c3c; font-weight: bold;">←キーボードから入力</span>');
+            
+            console.log('Processed output:', JSON.stringify(processedOutput));
+            console.log('Contains span tag:', processedOutput.includes('<span'));
             
             // Set final output using innerHTML to render HTML tags
             if (processedOutput.includes('<span')) {
                 outputDiv.innerHTML = processedOutput.replace(/\n/g, '<br>') || '実行完了（出力なし）';
+                console.log('Using innerHTML for output display');
             } else {
                 outputDiv.textContent = output || '実行完了（出力なし）';
+                console.log('Using textContent for output display');
             }
             
             // Scroll to bottom to show the last line

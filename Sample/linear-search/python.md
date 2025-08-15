@@ -1,21 +1,24 @@
 # 線形探索
 
-配列を先頭から順に検索するアルゴリズム
+配列から値を順番に探す
 
 ```python
-# 線形探索の例
-data = [2, 3, 4, 10, 40]
-print("検索する値を入力してください")
-x = int(input())
+# 線形探索のサンプル
+data = [5, 2, 8, 1, 9, 3]
+print("配列:", data)
+target = int(input("探す値を入力してください: "))
 
-# 線形探索
 found = False
+position = -1
+
 for i in range(len(data)):
-    if data[i] == x:
-        print(f"値 {x} は位置 {i} にあります")
+    if data[i] == target:
         found = True
+        position = i
         break
 
-if not found:
-    print(f"値 {x} は見つかりませんでした")
+if found:
+    print(f"値 {target} は位置 {position} にあります")
+else:
+    print(f"値 {target} は見つかりませんでした")
 ```

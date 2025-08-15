@@ -1,22 +1,40 @@
 {
   "samples": [
     {
-      "id": "binary-search",
-      "title": "二分探索",
-      "folder": "binary-search",
+      "id": "basic-calculation",
+      "title": "基本計算",
+      "folder": "basic-calculation",
       "pythonFile": "python.md",
       "commonTestFile": "common-test.md",
-      "description": "ソート済み配列から特定の値を効率的に検索",
-      "category": "探索アルゴリズム"
+      "description": "入力と出力、四則演算の基本",
+      "category": "基本文法"
     },
     {
-      "id": "bubble-sort",
-      "title": "バブルソート",
-      "folder": "bubble-sort",
+      "id": "conditional",
+      "title": "条件分岐",
+      "folder": "conditional",
       "pythonFile": "python.md",
       "commonTestFile": "common-test.md",
-      "description": "隣接する要素を比較して交換を繰り返すソートアルゴリズム",
-      "category": "ソートアルゴリズム"
+      "description": "if文を使った条件分岐の基本",
+      "category": "制御構造"
+    },
+    {
+      "id": "loop",
+      "title": "繰り返し処理",
+      "folder": "loop",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "for文とwhile文を使った繰り返し",
+      "category": "制御構造"
+    },
+    {
+      "id": "list-basic",
+      "title": "配列の基本",
+      "folder": "list-basic",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "配列の作成と要素の操作",
+      "category": "データ構造"
     },
     {
       "id": "linear-search",
@@ -24,35 +42,17 @@
       "folder": "linear-search",
       "pythonFile": "python.md",
       "commonTestFile": "common-test.md",
-      "description": "配列を先頭から順に検索するアルゴリズム",
-      "category": "探索アルゴリズム"
+      "description": "配列から値を順番に探す",
+      "category": "アルゴリズム"
     },
     {
-      "id": "factorial",
-      "title": "階乗計算",
-      "folder": "factorial",
+      "id": "function-basic",
+      "title": "関数の基本",
+      "folder": "function-basic",
       "pythonFile": "python.md",
       "commonTestFile": "common-test.md",
-      "description": "再帰を使った階乗計算",
-      "category": "再帰アルゴリズム"
-    },
-    {
-      "id": "fibonacci",
-      "title": "フィボナッチ数列",
-      "folder": "fibonacci",
-      "pythonFile": "python.md",
-      "commonTestFile": "common-test.md",
-      "description": "フィボナッチ数列を生成するアルゴリズム",
-      "category": "数値計算"
-    },
-    {
-      "id": "prime-check",
-      "title": "素数判定",
-      "folder": "prime-check",
-      "pythonFile": "python.md",
-      "commonTestFile": "common-test.md",
-      "description": "効率的な素数判定アルゴリズム",
-      "category": "数値計算"
+      "description": "関数の定義と呼び出し",
+      "category": "関数"
     }
   ]
 }
