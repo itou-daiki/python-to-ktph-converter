@@ -360,6 +360,10 @@ class FlowchartGenerator {
             .replace(/\)/g, '）')
             .replace(/:/g, '：')        // Replace with full-width colon
             .replace(/->/g, '→')        // Replace arrows
+            // Don't escape < and > symbols - use full-width versions to avoid HTML escaping
+            .replace(/</g, '＜')        // Replace < with full-width <
+            .replace(/>/g, '＞')        // Replace > with full-width >
+            .replace(/&/g, '＆')        // Replace & with full-width &
             .replace(/\r?\n/g, ' ')     // Replace newlines with space
             .replace(/\s+/g, ' ')       // Normalize whitespace
             .trim();
