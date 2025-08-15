@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python概要（詳細） | Python ⇄ 共通テスト用プログラム表記 変換ツール</title>
+    
+    <!-- External CSS Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/info-sections.css">
+    <link rel="stylesheet" href="assets/css/detail-pages.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>Python概要（詳細）</h1>
+        <p>Python言語の基本構文と特徴について</p>
+        <nav class="header-nav">
+            <a href="index.html" class="nav-link">🏠 メインページ</a>
+            <a href="commontest-overview.html" class="nav-link">📚 共通テスト表記詳細</a>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <div class="detail-container">
+        
+        <!-- Python概要 -->
+        <section class="detail-section">
+            <h2>🐍 Pythonとは</h2>
+            <div class="content-grid">
+                <div class="text-content">
+                    <p>Pythonは1991年にGuido van Rossumによって開発されたプログラミング言語です。</p>
+                    <ul>
+                        <li><strong>読みやすさ重視</strong>：英語に近い自然な構文</li>
+                        <li><strong>豊富なライブラリ</strong>：機械学習、Web開発、データ分析等</li>
+                        <li><strong>クロスプラットフォーム</strong>：Windows、Mac、Linux対応</li>
+                        <li><strong>インタープリタ言語</strong>：コンパイル不要で即実行</li>
+                    </ul>
+                </div>
+                <div class="code-example">
+                    <h4>基本的なPythonコード</h4>
+                    <pre><code># Hello Worldプログラム
+print("Hello, World!")
+
+# 変数と計算
+name = "Python"
+age = 32
+print(f"{name}は{age}歳です")
+
+# リスト操作
+numbers = [1, 2, 3, 4, 5]
+for num in numbers:
+    print(num * 2)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Python基本構文 -->
+        <section class="detail-section">
+            <h2>📝 Python基本構文</h2>
+            
+            <div class="syntax-category">
+                <h3>1. 変数と基本データ型</h3>
+                <div class="syntax-examples">
+                    <div class="syntax-item">
+                        <h4>数値</h4>
+                        <pre><code># 整数
+age = 25
+count = -10
+
+# 浮動小数点数
+price = 99.99
+temperature = -15.5
+
+# 計算
+result = age + 5
+total = price * 0.8</code></pre>
+                    </div>
+                    
+                    <div class="syntax-item">
+                        <h4>文字列</h4>
+                        <pre><code># 文字列定義
+name = "山田太郎"
+message = '今日は良い天気です'
+
+# 文字列結合
+full_name = "姓: " + "田中" + ", 名: " + "花子"
+
+# f-string（推奨）
+age = 20
+greeting = f"私は{age}歳です"</code></pre>
+                    </div>
+
+                    <div class="syntax-item">
+                        <h4>リスト（配列）</h4>
+                        <pre><code># リスト作成
+fruits = ["りんご", "バナナ", "オレンジ"]
+numbers = [1, 2, 3, 4, 5]
+
+# 要素へのアクセス
+first_fruit = fruits[0]  # "りんご"
+last_number = numbers[-1]  # 5
+
+# 要素の追加・削除
+fruits.append("いちご")
+numbers.remove(3)</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="syntax-category">
+                <h3>2. 制御構造</h3>
+                <div class="syntax-examples">
+                    <div class="syntax-item">
+                        <h4>条件分岐（if文）</h4>
+                        <pre><code># 基本的なif文
+score = 85
+
+if score >= 90:
+    print("優秀です")
+elif score >= 70:
+    print("良いです")
+else:
+    print("頑張りましょう")
+
+# 複数条件
+age = 18
+has_license = True
+
+if age >= 18 and has_license:
+    print("運転できます")</code></pre>
+                    </div>
+
+                    <div class="syntax-item">
+                        <h4>繰り返し（for文）</h4>
+                        <pre><code># range()を使った繰り返し
+for i in range(5):
+    print(f"回数: {i}")
+
+# リストの要素を順番に処理
+fruits = ["りんご", "バナナ", "オレンジ"]
+for fruit in fruits:
+    print(f"果物: {fruit}")
+
+# enumerate()でインデックスも取得
+for index, fruit in enumerate(fruits):
+    print(f"{index}: {fruit}")</code></pre>
+                    </div>
+
+                    <div class="syntax-item">
+                        <h4>繰り返し（while文）</h4>
+                        <pre><code># while文の基本
+count = 0
+while count < 5:
+    print(f"カウント: {count}")
+    count += 1
+
+# 無限ループとbreak
+while True:
+    user_input = input("終了するには'q'を入力: ")
+    if user_input == 'q':
+        break
+    print(f"入力: {user_input}")</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="syntax-category">
+                <h3>3. 関数</h3>
+                <div class="syntax-examples">
+                    <div class="syntax-item">
+                        <h4>関数の定義と呼び出し</h4>
+                        <pre><code># 基本的な関数
+def greet(name):
+    return f"こんにちは、{name}さん"
+
+# 関数の呼び出し
+message = greet("太郎")
+print(message)
+
+# 複数の引数を持つ関数
+def calculate_area(width, height):
+    area = width * height
+    return area
+
+result = calculate_area(5, 3)</code></pre>
+                    </div>
+
+                    <div class="syntax-item">
+                        <h4>デフォルト引数</h4>
+                        <pre><code># デフォルト値を持つ引数
+def introduce(name, age=20, city="東京"):
+    return f"{name}です。{age}歳、{city}在住です。"
+
+# 様々な呼び出し方
+print(introduce("田中"))
+print(introduce("佐藤", 25))
+print(introduce("山田", 30, "大阪"))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Python特徴と利点 -->
+        <section class="detail-section">
+            <h2>✨ Pythonの特徴と利点</h2>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h3>🔤 読みやすい構文</h3>
+                    <p>インデント（字下げ）でブロックを表現し、自然な英語に近い構文で書けます。</p>
+                    <pre><code>if age >= 18:
+    print("成人です")
+else:
+    print("未成年です")</code></pre>
+                </div>
+
+                <div class="feature-item">
+                    <h3>📚 豊富な標準ライブラリ</h3>
+                    <p>ファイル操作、数学計算、ネットワーク通信など、多くの機能が標準で利用できます。</p>
+                    <pre><code>import math
+import datetime
+
+# 数学関数
+result = math.sqrt(16)  # 平方根
+
+# 日付処理
+today = datetime.date.today()</code></pre>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🔧 動的型付け</h3>
+                    <p>変数の型を宣言する必要がなく、実行時に自動で型が決まります。</p>
+                    <pre><code># 型の宣言不要
+name = "太郎"        # 文字列
+age = 25           # 整数
+height = 170.5     # 浮動小数点数</code></pre>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🌐 クロスプラットフォーム</h3>
+                    <p>Windows、macOS、Linuxなど、様々なOS上で同じコードが動作します。</p>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🤝 オープンソース</h3>
+                    <p>無料で使用でき、世界中の開発者がライブラリや改良を貢献しています。</p>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🎯 多目的言語</h3>
+                    <p>Web開発、データ分析、機械学習、自動化など、幅広い分野で活用されています。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Python活用分野 -->
+        <section class="detail-section">
+            <h2>🎯 Pythonの活用分野</h2>
+            
+            <div class="applications-grid">
+                <div class="application-item">
+                    <h3>🤖 機械学習・AI</h3>
+                    <ul>
+                        <li>TensorFlow、PyTorchなどのライブラリ</li>
+                        <li>画像認識、自然言語処理</li>
+                        <li>データ予測、分類問題</li>
+                    </ul>
+                </div>
+
+                <div class="application-item">
+                    <h3>📊 データ分析</h3>
+                    <ul>
+                        <li>pandas（データ操作）</li>
+                        <li>NumPy（数値計算）</li>
+                        <li>matplotlib（グラフ作成）</li>
+                    </ul>
+                </div>
+
+                <div class="application-item">
+                    <h3>🌐 Web開発</h3>
+                    <ul>
+                        <li>Django、Flaskフレームワーク</li>
+                        <li>RESTful API開発</li>
+                        <li>Webスクレイピング</li>
+                    </ul>
+                </div>
+
+                <div class="application-item">
+                    <h3>⚙️ 自動化・スクリプト</h3>
+                    <ul>
+                        <li>ファイル操作の自動化</li>
+                        <li>タスクスケジューリング</li>
+                        <li>システム管理</li>
+                    </ul>
+                </div>
+
+                <div class="application-item">
+                    <h3>🎮 ゲーム開発</h3>
+                    <ul>
+                        <li>Pygameライブラリ</li>
+                        <li>2Dゲーム開発</li>
+                        <li>プロトタイプ作成</li>
+                    </ul>
+                </div>
+
+                <div class="application-item">
+                    <h3>🧪 科学計算</h3>
+                    <ul>
+                        <li>SciPy（科学計算）</li>
+                        <li>SymPy（数式処理）</li>
+                        <li>研究・シミュレーション</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 学習リソース -->
+        <section class="detail-section">
+            <h2>📖 Python学習リソース</h2>
+            
+            <div class="resources-grid">
+                <div class="resource-category">
+                    <h3>📚 公式・基本リソース</h3>
+                    <ul>
+                        <li><a href="https://docs.python.org/ja/" target="_blank">Python公式ドキュメント（日本語）</a></li>
+                        <li><a href="https://www.python.org/" target="_blank">Python.org</a></li>
+                        <li><a href="https://tutorial.python.org/" target="_blank">Python チュートリアル</a></li>
+                    </ul>
+                </div>
+
+                <div class="resource-category">
+                    <h3>💻 オンライン学習</h3>
+                    <ul>
+                        <li>Codecademy Python Course</li>
+                        <li>Coursera Python for Everybody</li>
+                        <li>edX Introduction to Python</li>
+                        <li>Udemy Pythonコース</li>
+                    </ul>
+                </div>
+
+                <div class="resource-category">
+                    <h3>📖 書籍（日本語）</h3>
+                    <ul>
+                        <li>「入門 Python 3」- Bill Lubanovic</li>
+                        <li>「みんなのPython」- 柴田淳</li>
+                        <li>「Pythonスタートブック」- 辻真吾</li>
+                        <li>「詳解 Pythonプログラミング」</li>
+                    </ul>
+                </div>
+
+                <div class="resource-category">
+                    <h3>🛠️ 開発環境</h3>
+                    <ul>
+                        <li><strong>IDLE</strong>：Python標準の開発環境</li>
+                        <li><strong>PyCharm</strong>：高機能統合開発環境</li>
+                        <li><strong>VS Code</strong>：軽量で拡張可能</li>
+                        <li><strong>Jupyter Notebook</strong>：データ分析向け</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="detail-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Python ⇄ 共通テスト用プログラム表記 変換ツール</p>
+            <p>Created by Dit-Lab.(Daiki ITO)・Shinichi UEGAKI</p>
+        </div>
+    </footer>
+</body>
+</html>
