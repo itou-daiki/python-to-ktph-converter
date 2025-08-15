@@ -353,13 +353,6 @@ class UIManager {
             });
         }
 
-        // QR toggle button
-        const qrToggleBtn = document.getElementById('qrToggleButton');
-        if (qrToggleBtn) {
-            qrToggleBtn.addEventListener('click', () => {
-                this.toggleQRCode();
-            });
-        }
 
         // Enter key in input dialog (remove existing listener first to prevent duplicates)
         const userInput = document.getElementById('userInput');
@@ -440,22 +433,6 @@ class UIManager {
             shareUrlLink.style.display = 'none';
         }
         
-        // Hide QR code elements
-        const qrToggleButton = document.getElementById('qrToggleButton');
-        if (qrToggleButton) {
-            qrToggleButton.style.display = 'none';
-            qrToggleButton.textContent = '📱 QR';
-        }
-        
-        const qrCodeContainer = document.getElementById('qrCodeContainer');
-        if (qrCodeContainer) {
-            qrCodeContainer.style.display = 'none';
-        }
-        
-        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
-        if (qrCodeDisplay) {
-            qrCodeDisplay.innerHTML = '';
-        }
     }
 
     /**
@@ -938,14 +915,6 @@ else:
             shareUrlLink.style.display = 'inline'; // Show the link
         }
         
-        // Show QR button
-        const qrToggleButton = document.getElementById('qrToggleButton');
-        if (qrToggleButton) {
-            qrToggleButton.style.display = 'inline-block';
-        }
-        
-        // Generate QR Code
-        this.generateQRCode(url);
         
         // Test immediate decode to verify
         try {
@@ -971,86 +940,7 @@ else:
         }
     }
 
-    /**
-     * Generate QR Code for the given URL
-     */
-    generateQRCode(url) {
-        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
-        if (!qrCodeDisplay) {
-            console.error('QR code display element not found');
-            return;
-        }
-        
-        // Clear previous QR code
-        qrCodeDisplay.innerHTML = '';
-        
-        // Check if QRCode library is available with retry
-        if (typeof QRCode === 'undefined') {
-            console.log('QRCode library not ready, retrying...');
-            qrCodeDisplay.innerHTML = '<p style="color: #3498db;">QRコードを生成中...</p>';
-            
-            // Retry after a longer delay to allow for library loading
-            setTimeout(() => {
-                if (typeof QRCode !== 'undefined') {
-                    this.generateQRCode(url);
-                } else {
-                    // Try one more time after additional delay
-                    setTimeout(() => {
-                        if (typeof QRCode !== 'undefined') {
-                            this.generateQRCode(url);
-                        } else {
-                            console.error('QRCode library failed to load after retries');
-                            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込めませんでした<br><small>ページを再読み込みしてお試しください</small></p>';
-                        }
-                    }, 2000);
-                }
-            }, 2000);
-            return;
-        }
-        
-        try {
-            // Generate QR code as canvas
-            QRCode.toCanvas(url, {
-                width: 200,
-                height: 200,
-                margin: 2,
-                color: {
-                    dark: '#2c3e50',
-                    light: '#ffffff'
-                },
-                errorCorrectionLevel: 'M'
-            }, (error, canvas) => {
-                if (error) {
-                    console.error('QR code generation failed:', error);
-                    qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコード生成エラー</p>';
-                } else {
-                    qrCodeDisplay.appendChild(canvas);
-                    console.log('QR code generated successfully');
-                }
-            });
-        } catch (error) {
-            console.error('QR code generation error:', error);
-            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコード生成に失敗しました</p>';
-        }
-    }
 
-    /**
-     * Toggle QR Code display
-     */
-    toggleQRCode() {
-        const qrCodeContainer = document.getElementById('qrCodeContainer');
-        const qrToggleButton = document.getElementById('qrToggleButton');
-        
-        if (!qrCodeContainer || !qrToggleButton) return;
-        
-        if (qrCodeContainer.style.display === 'none' || qrCodeContainer.style.display === '') {
-            qrCodeContainer.style.display = 'block';
-            qrToggleButton.textContent = '📱 隠す';
-        } else {
-            qrCodeContainer.style.display = 'none';
-            qrToggleButton.textContent = '📱 QR';
-        }
-    }
 
     /**
      * Copy share URL to clipboard

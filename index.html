@@ -23,60 +23,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pyodide@0.24.1/pyodide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <!-- Fallback for QRCode library -->
-    <script>
-        // Check if QRCode loaded, if not load alternative
-        window.addEventListener('load', function() {
-            if (typeof QRCode === 'undefined') {
-                console.log('Primary QRCode library failed, loading alternative...');
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
-                script.onload = function() {
-                    console.log('Alternative QRCode library loaded');
-                    // Create QRCode wrapper for compatibility
-                    if (typeof QRCode === 'undefined' && typeof qrcode !== 'undefined') {
-                        window.QRCode = {
-                            toCanvas: function(text, options, callback) {
-                                try {
-                                    const qr = qrcode(0, 'M');
-                                    qr.addData(text);
-                                    qr.make();
-                                    
-                                    const canvas = document.createElement('canvas');
-                                    const size = options.width || 200;
-                                    canvas.width = size;
-                                    canvas.height = size;
-                                    
-                                    const ctx = canvas.getContext('2d');
-                                    const moduleSize = size / qr.getModuleCount();
-                                    
-                                    for (let row = 0; row < qr.getModuleCount(); row++) {
-                                        for (let col = 0; col < qr.getModuleCount(); col++) {
-                                            ctx.fillStyle = qr.isDark(row, col) ? 
-                                                (options.color?.dark || '#000000') : 
-                                                (options.color?.light || '#ffffff');
-                                            ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
-                                        }
-                                    }
-                                    
-                                    callback(null, canvas);
-                                } catch (error) {
-                                    callback(error);
-                                }
-                            }
-                        };
-                    }
-                };
-                script.onerror = function() {
-                    console.error('Failed to load alternative QRCode library');
-                };
-                document.head.appendChild(script);
-            } else {
-                console.log('Primary QRCode library loaded successfully');
-            }
-        });
-    </script>
 </head>
 <body>
     <!-- Header -->
@@ -158,14 +104,6 @@
                 <input type="text" id="shareUrl" readonly placeholder="共有URLをここに表示します">
                 <a href="#" id="shareUrlLink" target="_blank" style="display: none; margin-left: 8px; color: #3498db; text-decoration: none;">🔗 開く</a>
                 <button class="copy-button share-copy-button">📋 コピー</button>
-                <button class="copy-button qr-toggle-button" id="qrToggleButton" style="display: none;">📱 QR</button>
-            </div>
-            <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
-                <div class="qr-code-header">
-                    <span>QRコード</span>
-                    <small>スマートフォンでスキャンしてアクセス</small>
-                </div>
-                <div class="qr-code-display" id="qrCodeDisplay"></div>
             </div>
         </div>
 

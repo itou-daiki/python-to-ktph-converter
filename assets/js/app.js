@@ -62,7 +62,6 @@ window.addEventListener('load', async function() {
         // Check external libraries
         console.log('External libraries verified:');
         console.log('- mermaid:', typeof mermaid !== 'undefined');
-        console.log('- QRCode:', typeof QRCode !== 'undefined');
         console.log('- pyodide:', typeof pyodide !== 'undefined');
         
     } catch (error) {
