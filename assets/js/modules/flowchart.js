@@ -389,6 +389,9 @@ class FlowchartGenerator {
         const flowchartDiv = document.getElementById('flowchart');
         
         try {
+            // Fix escaped newlines in the mermaid code
+            mermaidCode = mermaidCode.replace(/\\n/g, '\n');
+            
             console.log('Rendering flowchart with code:', mermaidCode);
             
             if (typeof mermaid === 'undefined') {
