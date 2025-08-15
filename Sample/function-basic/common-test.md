@@ -4,13 +4,12 @@
 
 ```
 # 関数のサンプル
-○ greet(name)
-｜ 表示する("こんにちは、", name, "さん！")
-⎿ ○の定義終了
+def greet(name):
+⎿ 表示する("こんにちは、", name, "さん！")
 
-○ add_numbers(x, y)
+def add_numbers(x, y):
 ｜ result = x + y
-⎿ resultを戻り値として返す
+⎿ return result
 
 # 関数の呼び出し
 greet("太郎")
