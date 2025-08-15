@@ -190,6 +190,11 @@ class Converter {
             }
         }
         
+        // Handle multiple assignments in one line (Python: x = 1; y = 2 -> Common Test: x = 1, y = 2)
+        if (line.includes(';')) {
+            line = line.replace(/;\s*/g, ', ');
+        }
+        
         // Replace operators and functions
         line = this.replaceOperators(line);
         
@@ -393,6 +398,16 @@ class Converter {
             return `${arrayName} = [${value}] * len(${arrayName})`;
         }
         
+        // Handle multiple assignments in one line (Common Test: x = 1, y = 2 -> Python: x = 1; y = 2)
+        // Only convert comma-separated assignments, not function parameters
+        if (line.includes(',') && line.includes('=') && !line.startsWith('表示する(') && !line.includes('(')) {
+            // Simple heuristic: if line contains comma and equals sign but no function call
+            const assignmentPattern = /^[^()]*=.*,.*=[^()]*/;
+            if (assignmentPattern.test(line)) {
+                line = line.replace(/,\s*/g, '; ');
+            }
+        }
+        
         // Replace functions and operators back to Python
         line = this.replaceOperatorsReverse(line);
         
@@ -418,8 +433,13 @@ class Converter {
             .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
             .replace(/\brandom\.random\(\)/g, '乱数()')
             .replace(/\brandom\(\)/g, '乱数()')
+            .replace(/\*\*/g, '**')    // Keep ** as is for power operation (べき乗)
             .replace(/\/\//g, '÷')
-            .replace(/%/g, '％');
+            .replace(/%/g, '％')
+            // Logical operators - keep as English in Common Test notation
+            .replace(/\band\b/g, 'and')
+            .replace(/\bor\b/g, 'or') 
+            .replace(/\bnot\b/g, 'not');
     }
 
     /**
@@ -434,7 +454,12 @@ class Converter {
             .replace(/乱数\((\d+),\s*(\d+)\)/g, 'random.randint($1, $2)')
             .replace(/乱数\(\)/g, 'random.random()')
             .replace(/÷/g, '//')
-            .replace(/％/g, '%');
+            .replace(/％/g, '%')
+            // Logical operators remain the same (English in both notations)
+            .replace(/\band\b/g, 'and')
+            .replace(/\bor\b/g, 'or')
+            .replace(/\bnot\b/g, 'not');
+            // ** remains as ** for power operation (べき乗)
     }
 }
 
