@@ -5,16 +5,16 @@
 ```
 # 配列操作のサンプル
 Numbers = [10, 20, 30, 40, 50]
-表示する("配列の内容:", numbers)
-表示する("配列の長さ:", len(numbers))
+表示する("配列の内容:", Numbers)
+表示する("配列の長さ:", 要素数(Numbers))
 
 表示する("\n各要素を表示:")
-i を 0 から len(numbers)-1 まで 1 ずつ増やしながら繰り返す:
-⎿ 表示する("numbers[", i, "] = ", numbers[i])
+i を 0 から 要素数(Numbers)-1 まで 1 ずつ増やしながら繰り返す:
+⎿ 表示する("Numbers[", i, "] = ", Numbers[i])
 
 表示する("\n要素の合計を計算:")
 total = 0
-for num in numbers:
-⎿ total = total + num
+i を 0 から 要素数(Numbers)-1 まで 1 ずつ増やしながら繰り返す:
+⎿ total = total + Numbers[i]
 表示する("合計:", total)
 ```

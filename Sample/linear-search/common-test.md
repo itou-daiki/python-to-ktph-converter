@@ -5,17 +5,18 @@
 ```
 # 線形探索のサンプル
 Data = [5, 2, 8, 1, 9, 3]
-表示する("配列:", data)
+表示する("配列:", Data)
+表示する("探す値を入力してください: ")
 target = 【外部からの入力】
 
 found = False
 position = -1
 
-i を 0 から len(data)-1 まで 1 ずつ増やしながら繰り返す:
-｜ もし data[i] == target ならば:
+i を 0 から 要素数(Data)-1 まで 1 ずつ増やしながら繰り返す:
+｜ もし Data[i] == target ならば:
 ｜ ｜ found = True
 ｜ ｜ position = i
-⎿ ⎿ break
+｜ ⎿ 繰り返しを抜ける
 
 もし found ならば:
 ｜ 表示する("値 ", target, " は位置 ", position, " にあります")

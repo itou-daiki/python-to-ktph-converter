@@ -184,29 +184,50 @@ class Converter {
             const match = line.match(/for\s+(\w+)\s+in\s+range\((.*)\):/);
             if (match) {
                 const variable = match[1];
-                const params = match[2].split(',').map(p => p.trim());
+                // Apply operator replacement to parameters first
+                const rawParams = match[2];
+                const convertedParams = this.replaceOperators(rawParams);
+                const params = convertedParams.split(',').map(p => p.trim());
                 
                 if (params.length === 1) {
-                    // Check if params[0] is a number or variable
+                    // Check if params[0] is a number or variable/function
                     const param = params[0];
                     if (!isNaN(parseInt(param))) {
                         const end = parseInt(param) - 1;
                         return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        // If it's a variable, use the variable-1 format
+                        // If it's a variable or function call, use the converted format
                         return variable + ' を 0 から ' + param + '-1 まで 1 ずつ増やしながら繰り返す:';
                     }
                 } else if (params.length === 2) {
-                    const end = parseInt(params[1]) - 1;
-                    return variable + ' を ' + params[0] + ' から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
-                } else if (params.length === 3) {
-                    const step = parseInt(params[2]);
-                    if (step > 0) {
-                        const end = parseInt(params[1]) - 1;
-                        return variable + ' を ' + params[0] + ' から ' + end + ' まで ' + params[2] + ' ずつ増やしながら繰り返す:';
+                    const start = params[0];
+                    const end = params[1];
+                    if (!isNaN(parseInt(end))) {
+                        const endNum = parseInt(end) - 1;
+                        return variable + ' を ' + start + ' から ' + endNum + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        const end = parseInt(params[1]) + 1;
-                        return variable + ' を ' + params[0] + ' から ' + end + ' まで ' + Math.abs(step) + ' ずつ減らしながら繰り返す:';
+                        return variable + ' を ' + start + ' から ' + end + '-1 まで 1 ずつ増やしながら繰り返す:';
+                    }
+                } else if (params.length === 3) {
+                    const start = params[0];
+                    const end = params[1];
+                    const step = params[2];
+                    const stepNum = parseInt(step);
+                    
+                    if (stepNum > 0) {
+                        if (!isNaN(parseInt(end))) {
+                            const endNum = parseInt(end) - 1;
+                            return variable + ' を ' + start + ' から ' + endNum + ' まで ' + step + ' ずつ増やしながら繰り返す:';
+                        } else {
+                            return variable + ' を ' + start + ' から ' + end + '-1 まで ' + step + ' ずつ増やしながら繰り返す:';
+                        }
+                    } else {
+                        if (!isNaN(parseInt(end))) {
+                            const endNum = parseInt(end) + 1;
+                            return variable + ' を ' + start + ' から ' + endNum + ' まで ' + Math.abs(stepNum) + ' ずつ減らしながら繰り返す:';
+                        } else {
+                            return variable + ' を ' + start + ' から ' + end + '+1 まで ' + Math.abs(stepNum) + ' ずつ減らしながら繰り返す:';
+                        }
                     }
                 }
             }
