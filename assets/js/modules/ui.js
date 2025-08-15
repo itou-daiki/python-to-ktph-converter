@@ -118,16 +118,26 @@ class UIManager {
             this.pythonEditor.refresh();
             // Set size to null for both width and height to use CSS
             this.pythonEditor.setSize(null, null);
-            // Force scroll bars to appear if needed
-            this.pythonEditor.scrollTo(0, 0);
+            // Ensure scroll to end shows the last line properly
+            const lastLine = this.pythonEditor.lastLine();
+            const lastLineContent = this.pythonEditor.getLine(lastLine);
+            if (lastLineContent !== undefined) {
+                // Force CodeMirror to recalculate height and scroll properly
+                this.pythonEditor.scrollIntoView({line: lastLine, ch: 0}, 30);
+            }
             console.log('Python editor refreshed');
         }
         if (this.commonTestEditor) {
             this.commonTestEditor.refresh();
             // Set size to null for both width and height to use CSS
             this.commonTestEditor.setSize(null, null);
-            // Force scroll bars to appear if needed
-            this.commonTestEditor.scrollTo(0, 0);
+            // Ensure scroll to end shows the last line properly
+            const lastLine = this.commonTestEditor.lastLine();
+            const lastLineContent = this.commonTestEditor.getLine(lastLine);
+            if (lastLineContent !== undefined) {
+                // Force CodeMirror to recalculate height and scroll properly
+                this.commonTestEditor.scrollIntoView({line: lastLine, ch: 0}, 30);
+            }
             console.log('Common test editor refreshed');
         }
         
@@ -135,11 +145,15 @@ class UIManager {
         setTimeout(() => {
             if (this.pythonEditor) {
                 this.pythonEditor.refresh();
+                // Force height recalculation
+                this.pythonEditor.setSize(null, null);
             }
             if (this.commonTestEditor) {
                 this.commonTestEditor.refresh();
+                // Force height recalculation
+                this.commonTestEditor.setSize(null, null);
             }
-        }, 100);
+        }, 150);
     }
 
     /**
