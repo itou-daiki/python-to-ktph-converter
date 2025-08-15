@@ -183,8 +183,8 @@ function loadSampleCode(sampleKey) {
 }
 
 // Copy to clipboard
-function copyToClipboard(elementId) {
-    uiManager.copyToClipboard(elementId);
+function copyToClipboard(elementId, buttonElement) {
+    uiManager.copyToClipboard(elementId, buttonElement);
 }
 
 // Generate share URL
@@ -193,8 +193,8 @@ function shareCode() {
 }
 
 // Copy share URL
-function copyShareUrl() {
-    uiManager.copyShareUrl();
+function copyShareUrl(buttonElement) {
+    uiManager.copyShareUrl(buttonElement);
 }
 
 // Input dialog functions

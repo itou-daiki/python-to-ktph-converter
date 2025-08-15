@@ -247,27 +247,27 @@ class UIManager {
         // Share copy button
         const shareCopyBtn = document.querySelector('.share-copy-button');
         if (shareCopyBtn) {
-            shareCopyBtn.addEventListener('click', async () => {
+            shareCopyBtn.addEventListener('click', async (event) => {
                 console.log('Share copy button clicked');
-                await this.copyShareUrl();
+                await this.copyShareUrl(event.target);
             });
         }
 
         // Python copy button
         const pythonCopyBtn = document.querySelector('.python-copy-button');
         if (pythonCopyBtn) {
-            pythonCopyBtn.addEventListener('click', async () => {
+            pythonCopyBtn.addEventListener('click', async (event) => {
                 console.log('Python copy button clicked');
-                await this.copyToClipboard('pythonCode');
+                await this.copyToClipboard('pythonCode', event.target);
             });
         }
 
         // Common test copy button
         const commonCopyBtn = document.querySelector('.common-copy-button');
         if (commonCopyBtn) {
-            commonCopyBtn.addEventListener('click', async () => {
+            commonCopyBtn.addEventListener('click', async (event) => {
                 console.log('Common test copy button clicked');
-                await this.copyToClipboard('commonTestCode');
+                await this.copyToClipboard('commonTestCode', event.target);
             });
         }
 
@@ -309,7 +309,7 @@ class UIManager {
     /**
      * Copy text to clipboard
      */
-    async copyToClipboard(elementId) {
+    async copyToClipboard(elementId, buttonElement) {
         let text = '';
         if (elementId === 'pythonCode') {
             text = this.pythonEditor.getValue();
@@ -321,12 +321,13 @@ class UIManager {
             await navigator.clipboard.writeText(text);
             
             // Show feedback
-            const button = event.target;
-            const originalText = button.textContent;
-            button.textContent = 'コピー済み!';
-            setTimeout(() => {
-                button.textContent = originalText;
-            }, 2000);
+            if (buttonElement) {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = 'コピー済み!';
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                }, 2000);
+            }
         } catch (error) {
             console.error('Failed to copy text: ', error);
         }
@@ -793,7 +794,9 @@ else:
         const encodedString = encodeURIComponent(jsonString);
         console.log('Encoded string length:', encodedString.length);
         
-        const compressed = btoa(encodedString);
+        // Use Base64 encoding that can handle Unicode characters
+        const utf8Bytes = new TextEncoder().encode(jsonString);
+        const compressed = btoa(String.fromCharCode(...utf8Bytes));
         console.log('Compressed string length:', compressed.length);
         
         const url = window.location.origin + window.location.pathname + '#' + compressed;
@@ -803,7 +806,12 @@ else:
         
         // Test immediate decode to verify
         try {
-            const testDecode = JSON.parse(decodeURIComponent(atob(compressed)));
+            const binaryString = atob(compressed);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const testDecode = JSON.parse(new TextDecoder().decode(bytes));
             console.log('Test decode successful:', testDecode);
         } catch (e) {
             console.error('Test decode failed:', e);
@@ -813,18 +821,20 @@ else:
     /**
      * Copy share URL to clipboard
      */
-    async copyShareUrl() {
+    async copyShareUrl(buttonElement) {
         const shareUrl = document.getElementById('shareUrl');
         
         try {
             await navigator.clipboard.writeText(shareUrl.value);
             
-            const button = event.target;
-            const originalText = button.textContent;
-            button.textContent = 'コピー済み!';
-            setTimeout(() => {
-                button.textContent = originalText;
-            }, 2000);
+            const button = buttonElement || document.querySelector('.share-copy-button');
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = 'コピー済み!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }
         } catch (error) {
             console.error('Failed to copy share URL: ', error);
         }
@@ -843,10 +853,15 @@ else:
                 console.log('Compressed data:', compressed);
                 
                 // Decode the data
-                const decodedData = atob(compressed);
+                const binaryString = atob(compressed);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const decodedData = new TextDecoder().decode(bytes);
                 console.log('Decoded data:', decodedData);
                 
-                const data = JSON.parse(decodeURIComponent(decodedData));
+                const data = JSON.parse(decodedData);
                 console.log('Parsed data:', data);
                 
                 // Check if editors are available, wait if not
