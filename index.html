@@ -23,6 +23,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pyodide@0.24.1/pyodide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -104,6 +105,14 @@
                 <input type="text" id="shareUrl" readonly placeholder="共有URLをここに表示します">
                 <a href="#" id="shareUrlLink" target="_blank" style="display: none; margin-left: 8px; color: #3498db; text-decoration: none;">🔗 開く</a>
                 <button class="copy-button share-copy-button">📋 コピー</button>
+                <button class="copy-button qr-toggle-button" id="qrToggleButton" style="display: none;">📱 QR</button>
+            </div>
+            <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
+                <div class="qr-code-header">
+                    <span>QRコード</span>
+                    <small>スマートフォンでスキャンしてアクセス</small>
+                </div>
+                <div class="qr-code-display" id="qrCodeDisplay"></div>
             </div>
         </div>
 

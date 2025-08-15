@@ -112,3 +112,63 @@ button:active {
     border-radius: 4px;
     font-size: 14px;
 }
+
+/* QR Code Styles */
+.qr-toggle-button {
+    background: #9b59b6 !important;
+}
+
+.qr-toggle-button:hover {
+    background: #8e44ad !important;
+}
+
+.qr-code-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+}
+
+.qr-code-header {
+    margin-bottom: 15px;
+}
+
+.qr-code-header span {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.qr-code-header small {
+    display: block;
+    color: #7f8c8d;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.qr-code-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+}
+
+.qr-code-display canvas {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

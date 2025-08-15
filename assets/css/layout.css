@@ -141,6 +141,7 @@
     height: 100% !important;
     min-height: 400px;
     max-height: 100%;
+    overflow: hidden;
 }
 
 .CodeMirror-focused {
@@ -169,7 +170,7 @@
     overflow: auto !important;
     height: 100% !important;
     min-height: 400px !important;
-    padding-bottom: 30px !important;
+    padding-bottom: 50px !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -177,11 +178,11 @@
 .CodeMirror-sizer {
     position: relative !important;
     min-height: inherit !important;
-    padding-bottom: 30px !important;
+    padding-bottom: 50px !important;
 }
 
 .CodeMirror-lines {
-    padding: 4px 0 30px 0 !important;
+    padding: 4px 0 50px 0 !important;
     min-height: inherit !important;
 }
 
@@ -212,6 +213,28 @@
 .CodeMirror-scrollbar-filler,
 .CodeMirror-gutter-filler {
     background-color: white;
+}
+
+/* Additional CodeMirror scroll fixes */
+.CodeMirror-cursors {
+    z-index: 3;
+}
+
+.CodeMirror-cursor {
+    border-left: 1px solid #f8f8f0;
+}
+
+/* Ensure last line is always visible */
+.CodeMirror-code {
+    padding-bottom: 50px !important;
+}
+
+/* Force scroll container to account for padding */
+.CodeMirror .CodeMirror-scroll {
+    margin-bottom: -50px !important;
+    padding-bottom: 50px !important;
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 /* Output Styles */

@@ -35,11 +35,20 @@ class UIManager {
             indentWithTabs: false,
             lineWrapping: true,
             placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: Infinity, // Show all lines for better scrolling
+            viewportMargin: 50, // Show extra lines above/below viewport
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
             autoCloseTags: true,
-            height: 'auto' // Auto height adjustment
+            height: 'auto', // Auto height adjustment
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete',
+                'End': function(cm) {
+                    // Custom End key behavior to ensure last line is visible
+                    const lastLine = cm.lastLine();
+                    cm.setCursor(lastLine, cm.getLine(lastLine).length);
+                    cm.scrollIntoView(null, 50);
+                }
+            }
         });
         console.log('Python editor created:', !!this.pythonEditor);
 
@@ -50,10 +59,19 @@ class UIManager {
             lineNumbers: true,
             lineWrapping: true,
             placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: Infinity, // Show all lines for better scrolling
+            viewportMargin: 50, // Show extra lines above/below viewport
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
-            height: 'auto' // Auto height adjustment
+            height: 'auto', // Auto height adjustment
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete',
+                'End': function(cm) {
+                    // Custom End key behavior to ensure last line is visible
+                    const lastLine = cm.lastLine();
+                    cm.setCursor(lastLine, cm.getLine(lastLine).length);
+                    cm.scrollIntoView(null, 50);
+                }
+            }
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
@@ -118,42 +136,56 @@ class UIManager {
             this.pythonEditor.refresh();
             // Set size to null for both width and height to use CSS
             this.pythonEditor.setSize(null, null);
-            // Ensure scroll to end shows the last line properly
+            // Force scrollbar recalculation
+            this.pythonEditor.getScrollInfo();
+            // Ensure the last line is visible by scrolling to end then back to position
             const lastLine = this.pythonEditor.lastLine();
-            const lastLineContent = this.pythonEditor.getLine(lastLine);
-            if (lastLineContent !== undefined) {
-                // Force CodeMirror to recalculate height and scroll properly
-                this.pythonEditor.scrollIntoView({line: lastLine, ch: 0}, 30);
+            if (lastLine > 0) {
+                this.pythonEditor.scrollIntoView({line: lastLine, ch: 0}, 50);
+                // Give a moment then scroll back to top for better UX
+                setTimeout(() => {
+                    this.pythonEditor.scrollTo(null, 0);
+                }, 100);
             }
-            console.log('Python editor refreshed');
+            console.log('Python editor refreshed with enhanced scrolling');
         }
         if (this.commonTestEditor) {
             this.commonTestEditor.refresh();
             // Set size to null for both width and height to use CSS
             this.commonTestEditor.setSize(null, null);
-            // Ensure scroll to end shows the last line properly
+            // Force scrollbar recalculation
+            this.commonTestEditor.getScrollInfo();
+            // Ensure the last line is visible by scrolling to end then back to position
             const lastLine = this.commonTestEditor.lastLine();
-            const lastLineContent = this.commonTestEditor.getLine(lastLine);
-            if (lastLineContent !== undefined) {
-                // Force CodeMirror to recalculate height and scroll properly
-                this.commonTestEditor.scrollIntoView({line: lastLine, ch: 0}, 30);
+            if (lastLine > 0) {
+                this.commonTestEditor.scrollIntoView({line: lastLine, ch: 0}, 50);
+                // Give a moment then scroll back to top for better UX
+                setTimeout(() => {
+                    this.commonTestEditor.scrollTo(null, 0);
+                }, 100);
             }
-            console.log('Common test editor refreshed');
+            console.log('Common test editor refreshed with enhanced scrolling');
         }
         
-        // Additional refresh after a short delay to ensure proper rendering
+        // Additional refresh with forced recalculation
         setTimeout(() => {
             if (this.pythonEditor) {
                 this.pythonEditor.refresh();
-                // Force height recalculation
                 this.pythonEditor.setSize(null, null);
+                // Force CodeMirror to recalculate viewport
+                this.pythonEditor.operation(() => {
+                    this.pythonEditor.refresh();
+                });
             }
             if (this.commonTestEditor) {
                 this.commonTestEditor.refresh();
-                // Force height recalculation
                 this.commonTestEditor.setSize(null, null);
+                // Force CodeMirror to recalculate viewport
+                this.commonTestEditor.operation(() => {
+                    this.commonTestEditor.refresh();
+                });
             }
-        }, 150);
+        }, 200);
     }
 
     /**
@@ -321,6 +353,14 @@ class UIManager {
             });
         }
 
+        // QR toggle button
+        const qrToggleBtn = document.getElementById('qrToggleButton');
+        if (qrToggleBtn) {
+            qrToggleBtn.addEventListener('click', () => {
+                this.toggleQRCode();
+            });
+        }
+
         // Enter key in input dialog (remove existing listener first to prevent duplicates)
         const userInput = document.getElementById('userInput');
         userInput.removeEventListener('keypress', this.handleUserInputKeypress);
@@ -398,6 +438,23 @@ class UIManager {
         const shareUrlLink = document.getElementById('shareUrlLink');
         if (shareUrlLink) {
             shareUrlLink.style.display = 'none';
+        }
+        
+        // Hide QR code elements
+        const qrToggleButton = document.getElementById('qrToggleButton');
+        if (qrToggleButton) {
+            qrToggleButton.style.display = 'none';
+            qrToggleButton.textContent = '📱 QR';
+        }
+        
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        if (qrCodeContainer) {
+            qrCodeContainer.style.display = 'none';
+        }
+        
+        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
+        if (qrCodeDisplay) {
+            qrCodeDisplay.innerHTML = '';
         }
     }
 
@@ -881,6 +938,15 @@ else:
             shareUrlLink.style.display = 'inline'; // Show the link
         }
         
+        // Show QR button
+        const qrToggleButton = document.getElementById('qrToggleButton');
+        if (qrToggleButton) {
+            qrToggleButton.style.display = 'inline-block';
+        }
+        
+        // Generate QR Code
+        this.generateQRCode(url);
+        
         // Test immediate decode to verify
         try {
             // Convert back from URL-safe Base64
@@ -902,6 +968,70 @@ else:
             console.log('Test decode successful:', testDecode);
         } catch (e) {
             console.error('Test decode failed:', e);
+        }
+    }
+
+    /**
+     * Generate QR Code for the given URL
+     */
+    generateQRCode(url) {
+        const qrCodeDisplay = document.getElementById('qrCodeDisplay');
+        if (!qrCodeDisplay) {
+            console.error('QR code display element not found');
+            return;
+        }
+        
+        // Clear previous QR code
+        qrCodeDisplay.innerHTML = '';
+        
+        // Check if QRCode library is available
+        if (typeof QRCode === 'undefined') {
+            console.error('QRCode library not loaded');
+            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコードライブラリが読み込まれていません</p>';
+            return;
+        }
+        
+        try {
+            // Generate QR code as canvas
+            QRCode.toCanvas(url, {
+                width: 200,
+                height: 200,
+                margin: 2,
+                color: {
+                    dark: '#2c3e50',
+                    light: '#ffffff'
+                },
+                errorCorrectionLevel: 'M'
+            }, (error, canvas) => {
+                if (error) {
+                    console.error('QR code generation failed:', error);
+                    qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコード生成エラー</p>';
+                } else {
+                    qrCodeDisplay.appendChild(canvas);
+                    console.log('QR code generated successfully');
+                }
+            });
+        } catch (error) {
+            console.error('QR code generation error:', error);
+            qrCodeDisplay.innerHTML = '<p style="color: #e74c3c;">QRコード生成に失敗しました</p>';
+        }
+    }
+
+    /**
+     * Toggle QR Code display
+     */
+    toggleQRCode() {
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        const qrToggleButton = document.getElementById('qrToggleButton');
+        
+        if (!qrCodeContainer || !qrToggleButton) return;
+        
+        if (qrCodeContainer.style.display === 'none' || qrCodeContainer.style.display === '') {
+            qrCodeContainer.style.display = 'block';
+            qrToggleButton.textContent = '📱 隠す';
+        } else {
+            qrCodeContainer.style.display = 'none';
+            qrToggleButton.textContent = '📱 QR';
         }
     }
 
