@@ -11,9 +11,9 @@
 }
 
 .info-section .panel-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2c3e50;
     padding: 16px 20px;
-    border-bottom: none;
+    border-bottom: 1px solid #e1e8ed;
     font-weight: 600;
     color: #ffffff;
     margin: 0;
@@ -34,12 +34,11 @@
 }
 
 .note-item {
-    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+    background: #f8f9fa;
     padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #e8ecf0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .note-item:hover {
@@ -57,9 +56,11 @@
 }
 
 .note-item h4::before {
-    content: '💡';
+    content: '▸';
     margin-right: 8px;
-    font-size: 16px;
+    font-size: 14px;
+    color: #3498db;
+    font-weight: bold;
 }
 
 .note-item p {
@@ -70,15 +71,14 @@
 }
 
 .note-item code {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #ffffff;
-    padding: 3px 8px;
-    border-radius: 6px;
+    background: #e9ecef;
+    color: #2c3e50;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 12px;
     font-weight: 500;
-    border: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
 }
 
 /* Comparison Table */
@@ -89,11 +89,11 @@
 }
 
 .comparison-category {
-    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
     padding: 20px;
-    border: 1px solid #e8ecf0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e1e8ed;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     margin-bottom: 16px;
 }
 
@@ -117,12 +117,12 @@
 }
 
 .comparison-category th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2c3e50;
     padding: 12px 16px;
     text-align: left;
     font-weight: 600;
     color: #ffffff;
-    border: none;
+    border: 1px solid #dee2e6;
 }
 
 .comparison-category td {
@@ -149,16 +149,15 @@
 }
 
 .comparison-category code {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 6px;
+    background: #e9ecef;
+    color: #2c3e50;
+    padding: 3px 6px;
+    border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 12px;
     font-weight: 500;
     white-space: nowrap;
-    border: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
 }
 
 /* Responsive Design */
@@ -200,7 +199,7 @@
 
 /* Ensure consistent styling across browsers */
 .info-section .panel-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: #2c3e50 !important;
     color: #ffffff !important;
 }
 
@@ -209,15 +208,15 @@
 }
 
 .note-item {
-    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%) !important;
+    background: #f8f9fa !important;
 }
 
 .comparison-category {
-    background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%) !important;
+    background: #f8f9fa !important;
 }
 
 .comparison-category th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: #2c3e50 !important;
     color: #ffffff !important;
 }
 
@@ -235,9 +234,9 @@
 }
 
 .info-section code {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: #ffffff !important;
-    border: none !important;
+    background: #e9ecef !important;
+    color: #2c3e50 !important;
+    border: 1px solid #dee2e6 !important;
 }
 
 .comparison-category td {
