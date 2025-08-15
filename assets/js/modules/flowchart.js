@@ -111,12 +111,12 @@ class FlowchartGenerator {
 
             if (line.startsWith('if ')) {
                 // Handle if statement with branching
-                mermaidCode += `    ${currentNode}{"${nodeText}"}\\n`;
+                mermaidCode += `    ${currentNode}{"${nodeText}"}\n`;
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
                     for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\\n`;
+                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
                     }
                 }
 
@@ -133,7 +133,7 @@ class FlowchartGenerator {
                         const ifResult = this.parseCodeStructure(ifLines, 0, nodeCounter, true);
                         mermaidCode += ifResult.mermaidCode;
                         if (ifResult.firstNode) {
-                            mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\\n`;
+                            mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\n`;
                         }
                         if (ifResult.lastNode) {
                             branchEndNodes.push(ifResult.lastNode);
@@ -155,7 +155,7 @@ class FlowchartGenerator {
                         const elseResult = this.parseCodeStructure(elseLines, 0, nodeCounter, true);
                         mermaidCode += elseResult.mermaidCode;
                         if (elseResult.firstNode) {
-                            mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\\n`;
+                            mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\n`;
                         }
                         if (elseResult.lastNode) {
                             branchEndNodes.push(elseResult.lastNode);
@@ -175,12 +175,12 @@ class FlowchartGenerator {
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
-                mermaidCode += `    ${currentNode}{"${nodeText}"}\\n`;
+                mermaidCode += `    ${currentNode}{"${nodeText}"}\n`;
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
                     for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\\n`;
+                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
                     }
                 }
 
@@ -192,10 +192,10 @@ class FlowchartGenerator {
                     const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
                     mermaidCode += loopResult.mermaidCode;
                     if (loopResult.firstNode) {
-                        mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\\n`;
+                        mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\n`;
                         if (loopResult.lastNode) {
                             // Loop back to condition
-                            mermaidCode += `    ${loopResult.lastNode} --> ${currentNode}\\n`;
+                            mermaidCode += `    ${loopResult.lastNode} --> ${currentNode}\n`;
                         }
                     }
                 }
@@ -207,15 +207,15 @@ class FlowchartGenerator {
             } else {
                 // Regular statement
                 if (line.includes('print(') || line.includes('input(')) {
-                    mermaidCode += `    ${currentNode}[["${nodeText}"]]\\n`;  // I/O shape
+                    mermaidCode += `    ${currentNode}[["${nodeText}"]]\n`;  // I/O shape
                 } else {
-                    mermaidCode += `    ${currentNode}["${nodeText}"]\\n`;  // Process shape
+                    mermaidCode += `    ${currentNode}["${nodeText}"]\n`;  // Process shape
                 }
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
                     for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\\n`;
+                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
                     }
                 }
                 
