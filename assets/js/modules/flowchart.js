@@ -75,7 +75,7 @@ class FlowchartGenerator {
         let mermaidCode = '';
         let i = startIndex;
         let firstNode = null;
-        let lastNode = null;
+        let lastNodes = []; // Can have multiple last nodes for merging
         let previousNode = null;
 
         while (i < lines.length) {
@@ -110,6 +110,8 @@ class FlowchartGenerator {
                 const ifBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
                 const elseIndex = this.findElseStatement(lines, i, indentLevel);
                 
+                let branchLastNodes = [];
+
                 // Process if block (Yes branch)
                 if (i + 1 < ifBlockEnd) {
                     const ifResult = this.parseCodeStructure(lines.slice(i + 1, elseIndex || ifBlockEnd), 0, nodeCounter, true);
@@ -118,7 +120,7 @@ class FlowchartGenerator {
                         mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\n`;
                     }
                     if (ifResult.lastNode) {
-                        lastNode = ifResult.lastNode;
+                        branchLastNodes.push(ifResult.lastNode);
                     }
                 }
 
@@ -132,23 +134,21 @@ class FlowchartGenerator {
                             mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\n`;
                         }
                         if (elseResult.lastNode) {
-                            // Merge both branches
-                            const mergeNode = 'N' + (++nodeCounter.value);
-                            mermaidCode += `    ${mergeNode}[ ]\n`;
-                            mermaidCode += `    ${lastNode} --> ${mergeNode}\n`;
-                            mermaidCode += `    ${elseResult.lastNode} --> ${mergeNode}\n`;
-                            lastNode = mergeNode;
+                            branchLastNodes.push(elseResult.lastNode);
                         }
                     } else {
-                        // No else block, just continue with No branch
-                        lastNode = currentNode;
+                        // Empty else block
+                        branchLastNodes.push(currentNode);
                     }
                     i = elseBlockEnd - 1;
                 } else {
-                    // No else block
-                    lastNode = lastNode || currentNode;
+                    // No else block - the No branch goes to after the if
+                    branchLastNodes.push(currentNode);
                     i = ifBlockEnd - 1;
                 }
+
+                // Store multiple last nodes for potential merging
+                lastNodes = branchLastNodes;
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
@@ -172,7 +172,7 @@ class FlowchartGenerator {
                     }
                 }
                 
-                lastNode = currentNode;
+                lastNodes = [currentNode];
                 i = loopBlockEnd - 1;
 
             } else {
@@ -183,21 +183,29 @@ class FlowchartGenerator {
                     mermaidCode += `    ${currentNode}[${nodeText}]\n`;  // Process shape
                 }
                 
+                // Connect from previous node(s)
                 if (previousNode) {
                     mermaidCode += `    ${previousNode} --> ${currentNode}\n`;
+                } else if (lastNodes.length > 1) {
+                    // Multiple previous nodes (from if-else branches)
+                    for (const lastNode of lastNodes) {
+                        mermaidCode += `    ${lastNode} --> ${currentNode}\n`;
+                    }
+                } else if (lastNodes.length === 1) {
+                    mermaidCode += `    ${lastNodes[0]} --> ${currentNode}\n`;
                 }
                 
-                lastNode = currentNode;
+                lastNodes = [currentNode];
             }
 
-            previousNode = lastNode;
+            previousNode = lastNodes.length === 1 ? lastNodes[0] : null;
             i++;
         }
 
         return {
             mermaidCode: mermaidCode,
             firstNode: firstNode,
-            lastNode: lastNode,
+            lastNode: lastNodes.length > 0 ? lastNodes[0] : null,
             nodeId: nodeCounter.value
         };
     }
