@@ -10,7 +10,7 @@ print("配列の長さ:", len(numbers))
 
 print("\n各要素を表示:")
 for i in range(len(numbers)):
-    print(f"numbers[{i}] = {numbers[i]}")
+    print("numbers[" + str(i) + "] = " + str(numbers[i]))
 
 print("\n要素の合計を計算:")
 total = 0

@@ -50,7 +50,7 @@ print("Hello, World!")
 # 変数と計算
 name = "Python"
 age = 32
-print(f"{name}は{age}歳です")
+print(name + "は" + str(age) + "歳です")
 
 # リスト操作
 numbers = [1, 2, 3, 4, 5]
@@ -91,9 +91,9 @@ message = '今日は良い天気です'
 # 文字列結合
 full_name = "姓: " + "田中" + ", 名: " + "花子"
 
-# f-string（推奨）
+# 文字列結合
 age = 20
-greeting = f"私は{age}歳です"</code></pre>
+greeting = "私は" + str(age) + "歳です"</code></pre>
                     </div>
 
                     <div class="syntax-item">
@@ -140,16 +140,16 @@ if age >= 18 and has_license:
                         <h4>繰り返し（for文）</h4>
                         <pre><code># range()を使った繰り返し
 for i in range(5):
-    print(f"回数: {i}")
+    print("回数: " + str(i))
 
 # リストの要素を順番に処理
 fruits = ["りんご", "バナナ", "オレンジ"]
 for fruit in fruits:
-    print(f"果物: {fruit}")
+    print("果物: " + fruit)
 
 # enumerate()でインデックスも取得
 for index, fruit in enumerate(fruits):
-    print(f"{index}: {fruit}")</code></pre>
+    print(str(index) + ": " + fruit)</code></pre>
                     </div>
 
                     <div class="syntax-item">
@@ -157,7 +157,7 @@ for index, fruit in enumerate(fruits):
                         <pre><code># while文の基本
 count = 0
 while count < 5:
-    print(f"カウント: {count}")
+    print("カウント: " + str(count))
     count += 1
 
 # 無限ループとbreak
@@ -165,7 +165,7 @@ while True:
     user_input = input("終了するには'q'を入力: ")
     if user_input == 'q':
         break
-    print(f"入力: {user_input}")</code></pre>
+    print("入力: " + user_input)</code></pre>
                     </div>
                 </div>
             </div>
@@ -177,7 +177,7 @@ while True:
                         <h4>関数の定義と呼び出し</h4>
                         <pre><code># 基本的な関数
 def greet(name):
-    return f"こんにちは、{name}さん"
+    return "こんにちは、" + name + "さん"
 
 # 関数の呼び出し
 message = greet("太郎")
@@ -195,7 +195,7 @@ result = calculate_area(5, 3)</code></pre>
                         <h4>デフォルト引数</h4>
                         <pre><code># デフォルト値を持つ引数
 def introduce(name, age=20, city="東京"):
-    return f"{name}です。{age}歳、{city}在住です。"
+    return name + "です。" + str(age) + "歳、" + city + "在住です。"
 
 # 様々な呼び出し方
 print(introduce("田中"))

@@ -18,7 +18,7 @@ for i in range(len(data)):
         break
 
 if found:
-    print(f"値 {target} は位置 {position} にあります")
+    print("値 " + str(target) + " は位置 " + str(position) + " にあります")
 else:
-    print(f"値 {target} は見つかりませんでした")
+    print("値 " + str(target) + " は見つかりませんでした")
 ```

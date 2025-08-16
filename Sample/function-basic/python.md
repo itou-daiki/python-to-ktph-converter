@@ -5,7 +5,7 @@
 ```python
 # 関数のサンプル
 def greet(name):
-    print(f"こんにちは、{name}さん！")
+    print("こんにちは、" + name + "さん！")
 
 def add_numbers(x, y):
     result = x + y
@@ -17,8 +17,8 @@ greet("花子")
 
 # 戻り値のある関数の呼び出し
 sum_result = add_numbers(5, 3)
-print(f"5 + 3 = {sum_result}")
+print("5 + 3 = " + str(sum_result))
 
 # 直接値を表示
-print(f"10 + 20 = {add_numbers(10, 20)}")
+print("10 + 20 = " + str(add_numbers(10, 20)))
 ```
