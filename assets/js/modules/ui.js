@@ -33,7 +33,7 @@ class UIManager {
             matchBrackets: true,
             indentUnit: 4,
             indentWithTabs: false,
-            lineWrapping: true,
+            lineWrapping: false,
             placeholder: 'Pythonコードを入力してください...',
             viewportMargin: 50, // Show extra lines above/below viewport
             scrollbarStyle: 'native',
@@ -57,7 +57,7 @@ class UIManager {
             mode: 'commontest',
             theme: 'material-darker',
             lineNumbers: true,
-            lineWrapping: true,
+            lineWrapping: false,
             placeholder: '共通テスト用プログラム表記を入力してください...',
             viewportMargin: 50, // Show extra lines above/below viewport
             scrollbarStyle: 'native',

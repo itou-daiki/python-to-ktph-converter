@@ -141,7 +141,8 @@
     height: 100% !important;
     min-height: 400px;
     max-height: 100%;
-    overflow: hidden;
+    overflow: visible !important;
+    position: relative;
 }
 
 .CodeMirror-focused {
@@ -168,9 +169,12 @@
 
 .CodeMirror-scroll {
     overflow: auto !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
     height: 100% !important;
     min-height: 400px !important;
-    padding-bottom: 50px !important;
+    padding-bottom: 20px !important;
+    padding-right: 20px !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -178,11 +182,13 @@
 .CodeMirror-sizer {
     position: relative !important;
     min-height: inherit !important;
-    padding-bottom: 50px !important;
+    padding-bottom: 20px !important;
+    padding-right: 20px !important;
+    overflow: visible !important;
 }
 
 .CodeMirror-lines {
-    padding: 4px 0 50px 0 !important;
+    padding: 4px 0 20px 0 !important;
     min-height: inherit !important;
 }
 
@@ -190,6 +196,7 @@
 .CodeMirror-hscrollbar {
     outline: none;
     display: block !important;
+    z-index: 6 !important;
 }
 
 .CodeMirror-vscrollbar {
@@ -202,12 +209,17 @@
     bottom: 0 !important;
     left: 0 !important;
     height: 18px !important;
+    right: 18px !important;
 }
 
 .CodeMirror-scrollbar-filler {
     background-color: #f5f5f5;
     width: 18px !important;
     height: 18px !important;
+    display: block !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    right: 0 !important;
 }
 
 .CodeMirror-scrollbar-filler,
@@ -226,15 +238,18 @@
 
 /* Ensure last line is always visible */
 .CodeMirror-code {
-    padding-bottom: 50px !important;
+    padding-bottom: 20px !important;
+    padding-right: 20px !important;
 }
 
 /* Force scroll container to account for padding */
 .CodeMirror .CodeMirror-scroll {
-    margin-bottom: -50px !important;
-    padding-bottom: 50px !important;
-    overflow-x: auto;
-    overflow-y: auto;
+    margin-bottom: 0 !important;
+    margin-right: 0 !important;
+    padding-bottom: 20px !important;
+    padding-right: 20px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
 }
 
 /* Output Styles */
