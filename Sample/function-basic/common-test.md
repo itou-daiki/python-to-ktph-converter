@@ -4,10 +4,10 @@
 
 ```
 # 関数のサンプル
-def greet(name):
-⎿ 表示する("こんにちは、", name, "さん！")
+関数 greet(name):
+⎿ 表示する("こんにちは、" + name + "さん！")
 
-def add_numbers(x, y):
+関数 add_numbers(x, y):
 ｜ result = x + y
 ⎿ return result
 
@@ -17,8 +17,8 @@ greet("花子")
 
 # 戻り値のある関数の呼び出し
 sum_result = add_numbers(5, 3)
-表示する("5 + 3 = ", sum_result)
+表示する("5 + 3 = " + sum_result)
 
 # 直接値を表示
-表示する("10 + 20 = ", add_numbers(10, 20))
+表示する("10 + 20 = " + add_numbers(10, 20))
 ```
