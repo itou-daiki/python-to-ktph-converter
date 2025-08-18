@@ -30,6 +30,7 @@ class UIManager {
             mode: 'python',
             theme: 'material-darker',
             lineNumbers: true,
+            lineNumberFormatter: function(line) { return line; },
             matchBrackets: true,
             indentUnit: 4,
             indentWithTabs: false,
@@ -40,6 +41,7 @@ class UIManager {
             autoCloseBrackets: true,
             autoCloseTags: true,
             height: 'auto', // Auto height adjustment
+            gutters: ["CodeMirror-linenumbers"],
             extraKeys: {
                 'Ctrl-Space': 'autocomplete',
                 'End': function(cm) {
@@ -57,12 +59,14 @@ class UIManager {
             mode: 'commontest',
             theme: 'material-darker',
             lineNumbers: true,
+            lineNumberFormatter: function(line) { return line; },
             lineWrapping: false,
             placeholder: '共通テスト用プログラム表記を入力してください...',
             viewportMargin: 50, // Show extra lines above/below viewport
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
             height: 'auto', // Auto height adjustment
+            gutters: ["CodeMirror-linenumbers"],
             extraKeys: {
                 'Ctrl-Space': 'autocomplete',
                 'End': function(cm) {
@@ -75,14 +79,21 @@ class UIManager {
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
+        // Force line numbers to be visible
+        setTimeout(() => {
+            this.forceLineNumbers();
+        }, 50);
+        
         // Refresh editors to ensure proper sizing
         setTimeout(() => {
             this.refreshEditors();
+            this.forceLineNumbers();
         }, 100);
         
         // Additional refresh after layout stabilizes
         setTimeout(() => {
             this.refreshEditors();
+            this.forceLineNumbers();
         }, 500);
         
         // Also refresh on window resize
@@ -126,6 +137,48 @@ class UIManager {
         setTimeout(() => {
             this.testEditors();
         }, 200);
+    }
+
+    /**
+     * Force line numbers to be visible
+     */
+    forceLineNumbers() {
+        if (this.pythonEditor) {
+            // Force line numbers option
+            this.pythonEditor.setOption('lineNumbers', true);
+            // Force refresh of gutters
+            this.pythonEditor.refresh();
+            console.log('Python editor line numbers forced');
+        }
+        if (this.commonTestEditor) {
+            // Force line numbers option
+            this.commonTestEditor.setOption('lineNumbers', true);
+            // Force refresh of gutters
+            this.commonTestEditor.refresh();
+            console.log('Common test editor line numbers forced');
+        }
+        
+        // Additional DOM manipulation to ensure gutters are visible
+        setTimeout(() => {
+            const pythonGutters = document.querySelector('#pythonEditor .CodeMirror-gutters');
+            const commonTestGutters = document.querySelector('#commonTestEditor .CodeMirror-gutters');
+            
+            if (pythonGutters) {
+                pythonGutters.style.display = 'block';
+                pythonGutters.style.visibility = 'visible';
+                console.log('Python gutters forced visible');
+            } else {
+                console.warn('Python gutters not found');
+            }
+            
+            if (commonTestGutters) {
+                commonTestGutters.style.display = 'block';
+                commonTestGutters.style.visibility = 'visible';
+                console.log('Common test gutters forced visible');
+            } else {
+                console.warn('Common test gutters not found');
+            }
+        }, 100);
     }
 
     /**

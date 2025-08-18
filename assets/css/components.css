@@ -101,7 +101,7 @@ button:active {
 
 .url-row {
     display: grid;
-    grid-template-columns: 100px 80px 1fr auto auto;
+    grid-template-columns: 80px 1fr auto auto;
     gap: 10px;
     align-items: center;
     margin-top: 15px;
