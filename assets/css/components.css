@@ -99,19 +99,75 @@ button:active {
     z-index: 1;
 }
 
-.share-url,
-.python-tutor-url {
-    display: flex;
+.url-row {
+    display: grid;
+    grid-template-columns: 100px 180px 1fr auto auto;
     gap: 10px;
-    margin-top: 10px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e1e8ed;
 }
 
-.share-url input,
-.python-tutor-url input {
+.url-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+    text-align: center;
+}
+
+.url-generate-button {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 180px;
+    height: 42px;
+}
+
+.url-generate-button:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.url-row input {
     flex: 1;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    background: white;
+    height: 42px;
+    box-sizing: border-box;
+}
+
+.url-copy-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 100px;
+    height: 42px;
+}
+
+.url-copy-button:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
