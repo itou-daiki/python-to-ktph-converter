@@ -170,21 +170,21 @@
     }
 
     .url-generate-button {
-        font-size: 12px;
-        padding: 8px 12px;
-        height: 36px;
+        font-size: 10px;
+        padding: 6px 8px;
+        height: 28px;
         min-width: auto;
     }
 
     .url-copy-button {
-        font-size: 11px;
-        padding: 6px 10px;
-        height: 32px;
+        font-size: 10px;
+        padding: 6px 8px;
+        height: 28px;
         min-width: auto;
     }
 
     .url-row input {
-        height: 36px;
-        font-size: 13px;
+        height: 28px;
+        font-size: 12px;
     }
 }

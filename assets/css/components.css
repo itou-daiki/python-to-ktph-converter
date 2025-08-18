@@ -101,7 +101,7 @@ button:active {
 
 .url-row {
     display: grid;
-    grid-template-columns: 100px 180px 1fr auto auto;
+    grid-template-columns: 100px 80px 1fr auto auto;
     gap: 10px;
     align-items: center;
     margin-top: 15px;
@@ -123,14 +123,14 @@ button:active {
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-width: 180px;
-    height: 42px;
+    min-width: 80px;
+    height: 32px;
 }
 
 .url-generate-button:hover {
@@ -141,13 +141,14 @@ button:active {
 
 .url-row input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 13px;
     background: white;
-    height: 42px;
+    height: 32px;
     box-sizing: border-box;
+    min-width: 0;
 }
 
 .url-copy-button {
@@ -155,14 +156,14 @@ button:active {
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-width: 100px;
-    height: 42px;
+    min-width: 80px;
+    height: 32px;
 }
 
 .url-copy-button:hover {
