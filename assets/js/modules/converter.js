@@ -123,10 +123,37 @@ class Converter {
     /**
      * Convert individual line from Python to Common Test
      */
+    /**
+     * Handle Python tuple assignment (e.g., a, b = 100, 200 -> a = 100, b = 200)
+     */
+    convertTupleAssignment(line) {
+        // Match pattern: variable1, variable2, ... = value1, value2, ...
+        const tupleMatch = line.match(/^(\w+(?:\s*,\s*\w+)+)\s*=\s*(.+)$/);
+        if (tupleMatch) {
+            const variables = tupleMatch[1].split(',').map(v => v.trim());
+            const values = tupleMatch[2].split(',').map(v => v.trim());
+            
+            // Convert to Common Test format: a = 100, b = 200
+            if (variables.length === values.length) {
+                const assignments = variables.map((variable, index) => 
+                    `${variable} = ${values[index]}`
+                );
+                return assignments.join(', ');
+            }
+        }
+        return null;
+    }
+
     convertLine(line) {
         // import random - skip this line
         if (line.startsWith('import random')) {
             return '';
+        }
+        
+        // Handle Python tuple assignment first (e.g., a, b = 100, 200)
+        const tupleResult = this.convertTupleAssignment(line);
+        if (tupleResult !== null) {
+            return tupleResult;
         }
         
         // Function definition
@@ -395,7 +422,44 @@ class Converter {
     /**
      * Convert individual line from Common Test to Python
      */
+    /**
+     * Handle Common Test multiple assignment (e.g., a = 100, b = 200 -> a, b = 100, 200)
+     */
+    convertCommonTestTupleAssignment(line) {
+        // Match pattern: variable1 = value1, variable2 = value2, ...
+        const multipleAssignmentMatch = line.match(/^(\w+\s*=\s*[^,]+(?:\s*,\s*\w+\s*=\s*[^,]+)+)$/);
+        if (multipleAssignmentMatch) {
+            const assignments = line.split(',').map(a => a.trim());
+            const variables = [];
+            const values = [];
+            
+            // Parse each assignment
+            for (const assignment of assignments) {
+                const eqMatch = assignment.match(/^(\w+)\s*=\s*(.+)$/);
+                if (eqMatch) {
+                    variables.push(eqMatch[1]);
+                    values.push(eqMatch[2]);
+                } else {
+                    // If parsing fails, return null to indicate no conversion
+                    return null;
+                }
+            }
+            
+            // Convert to Python tuple assignment format: a, b = 100, 200
+            if (variables.length > 1 && variables.length === values.length) {
+                return `${variables.join(', ')} = ${values.join(', ')}`;
+            }
+        }
+        return null;
+    }
+
     convertLineToPython(line) {
+        // Handle Common Test multiple assignment first (e.g., a = 100, b = 200)
+        const tupleResult = this.convertCommonTestTupleAssignment(line);
+        if (tupleResult !== null) {
+            return tupleResult;
+        }
+        
         // Function definition (関数 function_name(): -> def function_name():)
         if (line.startsWith('関数 ')) {
             // Match pattern: 関数 function_name(parameters):
