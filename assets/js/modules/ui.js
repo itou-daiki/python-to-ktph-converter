@@ -28,7 +28,7 @@ class UIManager {
         console.log('Creating Python editor...');
         this.pythonEditor = CodeMirror(pythonContainer, {
             mode: 'python',
-            theme: 'default',
+            theme: 'material-darker',
             lineNumbers: true,
             matchBrackets: true,
             indentUnit: 4,
@@ -47,7 +47,7 @@ class UIManager {
         console.log('Creating Common Test editor...');
         this.commonTestEditor = CodeMirror(commonTestContainer, {
             mode: 'commontest',
-            theme: 'default',
+            theme: 'material-darker',
             lineNumbers: true,
             lineWrapping: false,
             placeholder: '共通テスト用プログラム表記を入力してください...',
@@ -162,8 +162,22 @@ class UIManager {
                     pythonGutters.style.display = 'block';
                     pythonGutters.style.visibility = 'visible';
                     pythonGutters.style.opacity = '1';
-                    pythonGutters.style.width = 'auto';
-                    pythonGutters.style.minWidth = '30px';
+                    pythonGutters.style.width = '40px';
+                    pythonGutters.style.minWidth = '40px';
+                    pythonGutters.style.backgroundColor = '#263238';
+                    pythonGutters.style.borderRight = '1px solid #37474f';
+                    
+                    // Force line numbers style
+                    const lineNumbers = pythonGutters.querySelectorAll('.CodeMirror-linenumber');
+                    lineNumbers.forEach(line => {
+                        line.style.color = '#90a4ae';
+                        line.style.display = 'inline-block';
+                        line.style.visibility = 'visible';
+                        line.style.opacity = '1';
+                        line.style.fontSize = '13px';
+                        line.style.fontFamily = 'Consolas, Monaco, monospace';
+                    });
+                    
                     console.log('Python gutters forced visible (attempt', attempt + 1, ')');
                 } else {
                     console.warn('Python gutters not found (attempt', attempt + 1, ')');
@@ -178,8 +192,22 @@ class UIManager {
                     commonTestGutters.style.display = 'block';
                     commonTestGutters.style.visibility = 'visible';
                     commonTestGutters.style.opacity = '1';
-                    commonTestGutters.style.width = 'auto';
-                    commonTestGutters.style.minWidth = '30px';
+                    commonTestGutters.style.width = '40px';
+                    commonTestGutters.style.minWidth = '40px';
+                    commonTestGutters.style.backgroundColor = '#263238';
+                    commonTestGutters.style.borderRight = '1px solid #37474f';
+                    
+                    // Force line numbers style
+                    const lineNumbers = commonTestGutters.querySelectorAll('.CodeMirror-linenumber');
+                    lineNumbers.forEach(line => {
+                        line.style.color = '#90a4ae';
+                        line.style.display = 'inline-block';
+                        line.style.visibility = 'visible';
+                        line.style.opacity = '1';
+                        line.style.fontSize = '13px';
+                        line.style.fontFamily = 'Consolas, Monaco, monospace';
+                    });
+                    
                     console.log('Common test gutters forced visible (attempt', attempt + 1, ')');
                 } else {
                     console.warn('Common test gutters not found (attempt', attempt + 1, ')');
