@@ -28,28 +28,18 @@ class UIManager {
         console.log('Creating Python editor...');
         this.pythonEditor = CodeMirror(pythonContainer, {
             mode: 'python',
-            theme: 'material-darker',
+            theme: 'default',
             lineNumbers: true,
-            lineNumberFormatter: function(line) { return line; },
             matchBrackets: true,
             indentUnit: 4,
             indentWithTabs: false,
             lineWrapping: false,
             placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: 50, // Show extra lines above/below viewport
+            viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
-            autoCloseTags: true,
-            height: 'auto', // Auto height adjustment
-            gutters: ["CodeMirror-linenumbers"],
             extraKeys: {
-                'Ctrl-Space': 'autocomplete',
-                'End': function(cm) {
-                    // Custom End key behavior to ensure last line is visible
-                    const lastLine = cm.lastLine();
-                    cm.setCursor(lastLine, cm.getLine(lastLine).length);
-                    cm.scrollIntoView(null, 50);
-                }
+                'Ctrl-Space': 'autocomplete'
             }
         });
         console.log('Python editor created:', !!this.pythonEditor);
@@ -57,24 +47,15 @@ class UIManager {
         console.log('Creating Common Test editor...');
         this.commonTestEditor = CodeMirror(commonTestContainer, {
             mode: 'commontest',
-            theme: 'material-darker',
+            theme: 'default',
             lineNumbers: true,
-            lineNumberFormatter: function(line) { return line; },
             lineWrapping: false,
             placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: 50, // Show extra lines above/below viewport
+            viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
-            height: 'auto', // Auto height adjustment
-            gutters: ["CodeMirror-linenumbers"],
             extraKeys: {
-                'Ctrl-Space': 'autocomplete',
-                'End': function(cm) {
-                    // Custom End key behavior to ensure last line is visible
-                    const lastLine = cm.lastLine();
-                    cm.setCursor(lastLine, cm.getLine(lastLine).length);
-                    cm.scrollIntoView(null, 50);
-                }
+                'Ctrl-Space': 'autocomplete'
             }
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);

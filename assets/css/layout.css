@@ -160,10 +160,12 @@
 
 #pythonEditor .CodeMirror,
 #commonTestEditor .CodeMirror {
-    height: 100% !important;
+    height: calc(100% - 5px) !important;
     flex: 1;
     min-height: 400px;
     position: relative;
+    margin-right: 5px;
+    margin-bottom: 5px;
 }
 
 .CodeMirror-scroll {
@@ -172,8 +174,8 @@
     overflow-y: scroll !important;
     height: 100% !important;
     min-height: 400px !important;
-    padding-bottom: 20px !important;
-    padding-right: 20px !important;
+    padding-bottom: 10px !important;
+    padding-right: 10px !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -181,12 +183,12 @@
 .CodeMirror-sizer {
     position: relative !important;
     min-height: inherit !important;
-    padding-bottom: 20px !important;
-    padding-right: 20px !important;
+    padding-bottom: 10px !important;
+    padding-right: 10px !important;
 }
 
 .CodeMirror-lines {
-    padding: 4px 0 20px 0 !important;
+    padding: 4px 0 10px 0 !important;
     min-height: inherit !important;
 }
 
@@ -267,6 +269,29 @@
     opacity: 1 !important;
 }
 
+/* Default theme gutters styling */
+.cm-s-default .CodeMirror-gutters {
+    background-color: #f7f7f7 !important;
+    border-right: 1px solid #ddd !important;
+    color: #666 !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: auto !important;
+    min-width: 35px !important;
+    z-index: 1000 !important;
+}
+
+.cm-s-default .CodeMirror-linenumber {
+    background: transparent !important;
+    color: #666 !important;
+    padding: 0 8px 0 5px !important;
+    min-width: 30px !important;
+    text-align: right !important;
+    font-family: monospace !important;
+    font-size: 12px !important;
+}
+
 /* Extremely forceful override for material-darker theme */
 .cm-s-material-darker .CodeMirror-gutters {
     background-color: #2d3748 !important;
@@ -301,16 +326,16 @@
 
 /* Ensure last line is always visible */
 .CodeMirror-code {
-    padding-bottom: 20px !important;
-    padding-right: 20px !important;
+    padding-bottom: 5px !important;
+    padding-right: 5px !important;
 }
 
 /* Force scroll container to account for padding */
 .CodeMirror .CodeMirror-scroll {
     margin-bottom: 0 !important;
     margin-right: 0 !important;
-    padding-bottom: 20px !important;
-    padding-right: 20px !important;
+    padding-bottom: 5px !important;
+    padding-right: 5px !important;
     overflow-x: auto !important;
     overflow-y: auto !important;
 }
