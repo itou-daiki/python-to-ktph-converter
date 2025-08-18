@@ -99,13 +99,15 @@ button:active {
     z-index: 1;
 }
 
-.share-url {
+.share-url,
+.python-tutor-url {
     display: flex;
     gap: 10px;
     margin-top: 10px;
 }
 
-.share-url input {
+.share-url input,
+.python-tutor-url input {
     flex: 1;
     padding: 10px;
     border: 1px solid #ddd;

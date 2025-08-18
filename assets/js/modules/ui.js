@@ -337,6 +337,22 @@ class UIManager {
             });
         }
 
+        // Python Tutor generate button
+        const pythonTutorGenerateBtn = document.querySelector('.python-tutor-generate-button');
+        if (pythonTutorGenerateBtn) {
+            pythonTutorGenerateBtn.addEventListener('click', () => {
+                this.generatePythonTutorUrl();
+            });
+        }
+
+        // Python Tutor copy button
+        const pythonTutorCopyBtn = document.querySelector('.python-tutor-copy-button');
+        if (pythonTutorCopyBtn) {
+            pythonTutorCopyBtn.addEventListener('click', async (event) => {
+                await this.copyPythonTutorUrl(event.target);
+            });
+        }
+
         // Python copy button
         const pythonCopyBtn = document.querySelector('.python-copy-button');
         if (pythonCopyBtn) {
@@ -426,11 +442,18 @@ class UIManager {
         }
         document.getElementById('output').textContent = '';
         document.getElementById('shareUrl').value = '';
+        document.getElementById('pythonTutorUrl').value = '';
         
         // Hide the share URL link
         const shareUrlLink = document.getElementById('shareUrlLink');
         if (shareUrlLink) {
             shareUrlLink.style.display = 'none';
+        }
+        
+        // Hide the Python Tutor URL link
+        const pythonTutorLink = document.getElementById('pythonTutorLink');
+        if (pythonTutorLink) {
+            pythonTutorLink.style.display = 'none';
         }
         
     }
@@ -937,6 +960,71 @@ else:
             console.log('Test decode successful:', testDecode);
         } catch (e) {
             console.error('Test decode failed:', e);
+        }
+    }
+
+    /**
+     * Generate Python Tutor URL for visualization
+     */
+    generatePythonTutorUrl() {
+        const pythonCode = this.pythonEditor.getValue();
+        
+        console.log('generatePythonTutorUrl called');
+        console.log('Python code length:', pythonCode.length);
+        
+        if (!pythonCode.trim()) {
+            alert('Pythonコードが入力されていません');
+            return;
+        }
+        
+        // URL encode the Python code
+        const encodedCode = encodeURIComponent(pythonCode);
+        
+        // Generate Python Tutor URL with parameters
+        const pythonTutorUrl = `https://pythontutor.com/visualize.html#code=${encodedCode}&cumulative=false&py=3&curInstr=0&heapPrimitives=nevernest&mode=display&origin=opt-frontend.js&rawInputLstJSON=[]&textReferences=false`;
+        
+        // Set the URL in the input field
+        document.getElementById('pythonTutorUrl').value = pythonTutorUrl;
+        console.log('Python Tutor URL generated:', pythonTutorUrl.length, 'characters');
+        
+        // Update the link element to make URL clickable
+        const pythonTutorLink = document.getElementById('pythonTutorLink');
+        if (pythonTutorLink) {
+            pythonTutorLink.href = pythonTutorUrl;
+            pythonTutorLink.style.display = 'inline';
+        }
+        
+        // Check URL length
+        if (pythonTutorUrl.length > 2000) {
+            console.warn('Generated Python Tutor URL is very long:', pythonTutorUrl.length, 'characters');
+            alert('生成されたPython Tutor URLが非常に長くなっています。一部のブラウザで問題が発生する可能性があります。');
+        }
+    }
+
+    /**
+     * Copy Python Tutor URL to clipboard
+     */
+    async copyPythonTutorUrl(buttonElement) {
+        const pythonTutorUrl = document.getElementById('pythonTutorUrl');
+        
+        if (!pythonTutorUrl.value) {
+            alert('Python Tutor URLが生成されていません');
+            return;
+        }
+        
+        try {
+            await navigator.clipboard.writeText(pythonTutorUrl.value);
+            
+            const button = buttonElement || document.querySelector('.python-tutor-copy-button');
+            if (button) {
+                const originalText = button.textContent;
+                button.textContent = 'コピー済み!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Failed to copy Python Tutor URL: ', error);
         }
     }
 
