@@ -132,20 +132,24 @@ class UIManager {
         if (this.pythonEditor) {
             // Force line numbers option multiple times
             this.pythonEditor.setOption('lineNumbers', false);
-            this.pythonEditor.setOption('lineNumbers', true);
-            this.pythonEditor.setOption('gutters', ['CodeMirror-linenumbers']);
-            // Force complete refresh
-            this.pythonEditor.refresh();
-            console.log('Python editor line numbers forced');
+            setTimeout(() => {
+                this.pythonEditor.setOption('lineNumbers', true);
+                this.pythonEditor.setOption('gutters', ['CodeMirror-linenumbers']);
+                // Force complete refresh
+                this.pythonEditor.refresh();
+                console.log('Python editor line numbers forced');
+            }, 10);
         }
         if (this.commonTestEditor) {
             // Force line numbers option multiple times
             this.commonTestEditor.setOption('lineNumbers', false);
-            this.commonTestEditor.setOption('lineNumbers', true);
-            this.commonTestEditor.setOption('gutters', ['CodeMirror-linenumbers']);
-            // Force complete refresh
-            this.commonTestEditor.refresh();
-            console.log('Common test editor line numbers forced');
+            setTimeout(() => {
+                this.commonTestEditor.setOption('lineNumbers', true);
+                this.commonTestEditor.setOption('gutters', ['CodeMirror-linenumbers']);
+                // Force complete refresh
+                this.commonTestEditor.refresh();
+                console.log('Common test editor line numbers forced');
+            }, 10);
         }
         
         // Multiple attempts to force gutters visibility
