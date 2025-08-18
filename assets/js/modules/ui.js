@@ -79,7 +79,10 @@ class UIManager {
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
-        // Force line numbers to be visible
+        // Force line numbers to be visible immediately
+        this.forceLineNumbers();
+        
+        // Force line numbers multiple times with delays
         setTimeout(() => {
             this.forceLineNumbers();
         }, 50);
@@ -107,12 +110,14 @@ class UIManager {
         this.pythonEditor.on('focus', () => {
             setTimeout(() => {
                 this.pythonEditor.refresh();
+                this.forceLineNumbers();
             }, 50);
         });
         
         this.commonTestEditor.on('focus', () => {
             setTimeout(() => {
                 this.commonTestEditor.refresh();
+                this.forceLineNumbers();
             }, 50);
         });
         
@@ -144,41 +149,63 @@ class UIManager {
      */
     forceLineNumbers() {
         if (this.pythonEditor) {
-            // Force line numbers option
+            // Force line numbers option multiple times
+            this.pythonEditor.setOption('lineNumbers', false);
             this.pythonEditor.setOption('lineNumbers', true);
-            // Force refresh of gutters
+            this.pythonEditor.setOption('gutters', ['CodeMirror-linenumbers']);
+            // Force complete refresh
             this.pythonEditor.refresh();
             console.log('Python editor line numbers forced');
         }
         if (this.commonTestEditor) {
-            // Force line numbers option
+            // Force line numbers option multiple times
+            this.commonTestEditor.setOption('lineNumbers', false);
             this.commonTestEditor.setOption('lineNumbers', true);
-            // Force refresh of gutters
+            this.commonTestEditor.setOption('gutters', ['CodeMirror-linenumbers']);
+            // Force complete refresh
             this.commonTestEditor.refresh();
             console.log('Common test editor line numbers forced');
         }
         
-        // Additional DOM manipulation to ensure gutters are visible
-        setTimeout(() => {
-            const pythonGutters = document.querySelector('#pythonEditor .CodeMirror-gutters');
-            const commonTestGutters = document.querySelector('#commonTestEditor .CodeMirror-gutters');
-            
-            if (pythonGutters) {
-                pythonGutters.style.display = 'block';
-                pythonGutters.style.visibility = 'visible';
-                console.log('Python gutters forced visible');
-            } else {
-                console.warn('Python gutters not found');
-            }
-            
-            if (commonTestGutters) {
-                commonTestGutters.style.display = 'block';
-                commonTestGutters.style.visibility = 'visible';
-                console.log('Common test gutters forced visible');
-            } else {
-                console.warn('Common test gutters not found');
-            }
-        }, 100);
+        // Multiple attempts to force gutters visibility
+        for (let attempt = 0; attempt < 3; attempt++) {
+            setTimeout(() => {
+                const pythonGutters = document.querySelector('#pythonEditor .CodeMirror-gutters');
+                const commonTestGutters = document.querySelector('#commonTestEditor .CodeMirror-gutters');
+                
+                if (pythonGutters) {
+                    pythonGutters.style.display = 'block';
+                    pythonGutters.style.visibility = 'visible';
+                    pythonGutters.style.opacity = '1';
+                    pythonGutters.style.width = 'auto';
+                    pythonGutters.style.minWidth = '30px';
+                    console.log('Python gutters forced visible (attempt', attempt + 1, ')');
+                } else {
+                    console.warn('Python gutters not found (attempt', attempt + 1, ')');
+                    // Try to recreate the editor if gutters are missing
+                    if (attempt === 2 && this.pythonEditor) {
+                        this.pythonEditor.setOption('lineNumbers', true);
+                        this.pythonEditor.refresh();
+                    }
+                }
+                
+                if (commonTestGutters) {
+                    commonTestGutters.style.display = 'block';
+                    commonTestGutters.style.visibility = 'visible';
+                    commonTestGutters.style.opacity = '1';
+                    commonTestGutters.style.width = 'auto';
+                    commonTestGutters.style.minWidth = '30px';
+                    console.log('Common test gutters forced visible (attempt', attempt + 1, ')');
+                } else {
+                    console.warn('Common test gutters not found (attempt', attempt + 1, ')');
+                    // Try to recreate the editor if gutters are missing
+                    if (attempt === 2 && this.commonTestEditor) {
+                        this.commonTestEditor.setOption('lineNumbers', true);
+                        this.commonTestEditor.refresh();
+                    }
+                }
+            }, 100 * (attempt + 1));
+        }
     }
 
     /**
