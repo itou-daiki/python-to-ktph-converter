@@ -101,7 +101,7 @@ button:active {
 
 .url-row {
     display: grid;
-    grid-template-columns: 70px 1fr 60px 70px;
+    grid-template-columns: 100px 1fr 60px 70px;
     gap: 10px;
     align-items: center;
     margin-top: 15px;
@@ -129,7 +129,7 @@ button:active {
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
-    width: 70px;
+    width: 100px;
     height: 32px;
 }
 
