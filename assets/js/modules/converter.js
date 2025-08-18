@@ -172,6 +172,16 @@ class Converter {
             }
         }
         
+        // Return statement (return value -> value を返す)
+        if (line.startsWith('return ')) {
+            const value = line.substring(7).trim();
+            if (value) {
+                return value + ' を返す';
+            } else {
+                return 'を返す'; // for simple 'return' statements
+            }
+        }
+        
         // Variable assignment with input() - handle various patterns
         if (line.includes('input(')) {
             // Handle int(input("prompt")), str(input("prompt")), float(input("prompt")) etc.
@@ -473,6 +483,16 @@ class Converter {
                 } else {
                     return `def ${functionName}():`;
                 }
+            }
+        }
+        
+        // Return statement (value を返す -> return value)
+        if (line.endsWith(' を返す')) {
+            const value = line.substring(0, line.length - 4).trim();
+            if (value) {
+                return 'return ' + value;
+            } else {
+                return 'return'; // for simple return statements
             }
         }
         
