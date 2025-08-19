@@ -141,7 +141,7 @@
     height: 100% !important;
     min-height: 400px;
     max-height: 100%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .CodeMirror-focused {
@@ -152,7 +152,7 @@
 #commonTestEditor {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -168,9 +168,11 @@
 
 .CodeMirror-scroll {
     overflow: auto !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
     height: 100% !important;
     min-height: 400px !important;
-    padding-bottom: 50px !important;
+    padding-bottom: 20px !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -190,6 +192,9 @@
 .CodeMirror-hscrollbar {
     outline: none;
     display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1000;
 }
 
 .CodeMirror-vscrollbar {
@@ -213,6 +218,26 @@
 .CodeMirror-scrollbar-filler,
 .CodeMirror-gutter-filler {
     background-color: white;
+}
+
+/* Force scrollbars to be visible */
+.CodeMirror-vscrollbar > div {
+    background: #ccc !important;
+    border-radius: 3px !important;
+    width: 8px !important;
+    margin: 2px !important;
+}
+
+.CodeMirror-hscrollbar > div {
+    background: #ccc !important;
+    border-radius: 3px !important;
+    height: 8px !important;
+    margin: 2px !important;
+}
+
+.CodeMirror-vscrollbar:hover > div,
+.CodeMirror-hscrollbar:hover > div {
+    background: #999 !important;
 }
 
 /* Additional CodeMirror scroll fixes */
