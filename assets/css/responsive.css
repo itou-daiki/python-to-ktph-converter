@@ -45,13 +45,18 @@
     /* Bottom panels specific adjustments for mobile */
     .bottom-left .panel,
     .bottom-right .panel {
-        min-height: 300px;
+        min-height: 350px;
     }
 
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
-        min-height: 350px;
-        height: 400px;
+        min-height: 300px;
+        height: 350px;
+    }
+    
+    #flowchart,
+    #output {
+        min-height: 300px;
     }
 
     .controls {
@@ -111,6 +116,18 @@
     .panel {
         padding: 15px;
         min-height: 350px;
+    }
+    
+    #pythonEditor .CodeMirror,
+    #commonTestEditor .CodeMirror {
+        min-height: 300px;
+        height: 350px;
+    }
+    
+    #flowchart,
+    #output {
+        min-height: 300px;
+        height: 350px;
     }
 
     button {

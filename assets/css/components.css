@@ -44,7 +44,8 @@ button:active {
     background: #7f8c8d;
 }
 
-/* Panel Styles */
+
+/* Unified panel styling for all areas */
 .panel {
     background: white;
     border-radius: 8px;
@@ -53,7 +54,7 @@ button:active {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 0;
+    min-height: 350px;
     height: 100%;
 }
 
@@ -61,20 +62,21 @@ button:active {
 .bottom-left .panel,
 .bottom-right .panel {
     overflow: hidden;
-    padding: 12px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
+    min-height: 350px;
 }
 
-/* Ensure the content areas fill the available space within the panel */
+/* Ensure all content areas have consistent sizing */
 .bottom-left .panel #flowchart,
 .bottom-right .panel #output {
-    margin: 5px 0 0 0; /* Small top margin to separate from header */
-    border: 1px solid #ddd; /* Restore border for visual separation */
-    border-radius: 4px; /* Restore rounded corners */
+    margin: 5px 0 0 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     flex: 1;
-    min-height: 0; /* Allow flexbox to shrink */
-    max-height: calc(100% - 50px); /* Account for header, padding, and margin */
+    min-height: 300px;
+    height: calc(100% - 50px);
 }
 
 .panel-header {
