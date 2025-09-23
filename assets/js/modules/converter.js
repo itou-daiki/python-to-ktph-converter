@@ -498,13 +498,21 @@ class Converter {
         
         // Input - handle various patterns
         if (line.includes('【外部からの入力】')) {
-            // According to official specification: 【外部からの入力】 = int(input())
+            // Check if there's a prompt pattern in the context
+            // For now, use simple int(input()) but could be enhanced to detect prompts
             line = line.replace(/【外部からの入力】/g, 'int(input())');
         }
         
         // Display
         if (line.startsWith('表示する(')) {
-            const content = line.substring(5, line.length - 1);
+            let content = line.substring(5, line.length - 1);
+
+            // Handle string concatenation with variables - add str() where needed
+            // Look for patterns like "text " + variable or variable + " text"
+            content = content.replace(/(\w+)\s*\+\s*"([^"]*)"/g, 'str($1) + "$2"');
+            content = content.replace(/"([^"]*)"\s*\+\s*(\w+)/g, '"$1" + str($2)');
+            content = content.replace(/(\w+)\s*\+\s*(\w+)(?!\()/g, 'str($1) + str($2)');
+
             return 'print(' + content + ')';
         }
         
@@ -531,7 +539,30 @@ class Converter {
             return 'while ' + condition + ':';
         }
         
-        // For loop
+        // For loop - handle expression-based ranges like len(data)-1
+        const forMatchExpression = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*([^まで]+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
+        if (forMatchExpression) {
+            const variable = forMatchExpression[1];
+            const start = parseInt(forMatchExpression[2]);
+            const endExpression = forMatchExpression[3].trim();
+            const step = parseInt(forMatchExpression[4]);
+            const direction = forMatchExpression[5];
+
+            if (direction === '増やし') {
+                // For expressions like "len(data)-1", convert to range(start, endExpression+1, step)
+                if (endExpression.includes('-1')) {
+                    // Remove -1 and add +1 to convert back to Python range
+                    const baseExpression = endExpression.replace('-1', '');
+                    return `for ${variable} in range(${start}, ${baseExpression}):`;
+                } else {
+                    return `for ${variable} in range(${start}, ${endExpression} + 1, ${step}):`;
+                }
+            } else {
+                return `for ${variable} in range(${start}, ${endExpression} - 1, -${step}):`;
+            }
+        }
+
+        // For loop - original numeric ranges
         const forMatch = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*(\d+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
         if (forMatch) {
             const variable = forMatch[1];
@@ -539,7 +570,7 @@ class Converter {
             const end = parseInt(forMatch[3]);
             const step = parseInt(forMatch[4]);
             const direction = forMatch[5];
-            
+
             if (direction === '増やし') {
                 // Convert back to Python range: end value needs +1
                 return `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
@@ -570,11 +601,11 @@ class Converter {
         // Replace functions and operators back to Python
         line = this.replaceOperatorsReverse(line);
         
-        // Lowercase array names
+        // Lowercase array names - handle all occurrences, not just assignments
         const arrayMatch = line.match(/^([A-Z]\w*)\s*=/);
         if (arrayMatch) {
             const varName = arrayMatch[1];
-            line = line.replace(varName, varName[0].toLowerCase() + varName.slice(1));
+            line = line.replace(new RegExp('\\b' + varName + '\\b', 'g'), varName[0].toLowerCase() + varName.slice(1));
         }
         
         return line;
