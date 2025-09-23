@@ -587,7 +587,7 @@ class Converter {
         return line
             .replace(/\blen\(/g, '要素数(')
             .replace(/\bint\(/g, '整数(')
-            .replace(/\bstr\(/g, '')  // Remove str() completely for Common Test format
+            .replace(/\bstr\(([^)]+)\)/g, '$1')  // Remove str() function but keep the content
             .replace(/\bfloat\(/g, '実数(')
             .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
             .replace(/\brandom\.random\(\)/g, '乱数()')
