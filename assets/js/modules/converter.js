@@ -507,11 +507,17 @@ class Converter {
         if (line.startsWith('表示する(')) {
             let content = line.substring(5, line.length - 1);
 
+            // First replace functions and operators back to Python
+            content = this.replaceOperatorsReverse(content);
+
+            // Handle array indexing patterns: fix [arrayName][index] to [arrayName[index]]
+            content = content.replace(/(\w+)\[(\w+)\]/g, '$1[$2]');
+
             // Handle string concatenation with variables - add str() where needed
             // Look for patterns like "text " + variable or variable + " text"
-            content = content.replace(/(\w+)\s*\+\s*"([^"]*)"/g, 'str($1) + "$2"');
-            content = content.replace(/"([^"]*)"\s*\+\s*(\w+)/g, '"$1" + str($2)');
-            content = content.replace(/(\w+)\s*\+\s*(\w+)(?!\()/g, 'str($1) + str($2)');
+            content = content.replace(/([\w\[\]]+)\s*\+\s*"([^"]*)"/g, 'str($1) + "$2"');
+            content = content.replace(/"([^"]*)"\s*\+\s*([\w\[\]]+)/g, '"$1" + str($2)');
+            content = content.replace(/([\w\[\]]+)\s*\+\s*([\w\[\]]+)(?!\()/g, 'str($1) + str($2)');
 
             return 'print(' + content + ')';
         }
@@ -539,7 +545,7 @@ class Converter {
             return 'while ' + condition + ':';
         }
         
-        // For loop - handle expression-based ranges like len(data)-1
+        // For loop - handle expression-based ranges like 要素数(numbers)-1
         const forMatchExpression = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*([^まで]+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
         if (forMatchExpression) {
             const variable = forMatchExpression[1];
@@ -549,8 +555,17 @@ class Converter {
             const direction = forMatchExpression[5];
 
             if (direction === '増やし') {
-                // For expressions like "len(data)-1", convert to range(start, endExpression+1, step)
-                if (endExpression.includes('-1')) {
+                // Handle 要素数(variable)-1 pattern
+                if (endExpression.includes('要素数(') && endExpression.includes(')-1')) {
+                    // Extract the variable from 要素数(variable)-1
+                    const varMatch = endExpression.match(/要素数\(([^)]+)\)-1/);
+                    if (varMatch) {
+                        const arrayVar = varMatch[1];
+                        return `for ${variable} in range(len(${arrayVar})):`;
+                    }
+                }
+                // Handle other expressions
+                else if (endExpression.includes('-1')) {
                     // Remove -1 and add +1 to convert back to Python range
                     const baseExpression = endExpression.replace('-1', '');
                     return `for ${variable} in range(${start}, ${baseExpression}):`;
