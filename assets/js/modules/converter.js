@@ -601,12 +601,28 @@ class Converter {
             return 'while ' + convertedCondition + ':';
         }
         
+        // Helper function to simplify arithmetic expressions for reverse conversion
+        const reverseSimplifyExpression = (expr) => {
+            // Handle n-2+1 -> n-1, n+1+1 -> n+2, etc.
+            expr = expr.replace(/(\w+)-(\d+)\+1/g, (match, variable, num) => {
+                const result = parseInt(num) - 1;
+                return result > 0 ? `${variable}-${result}` : variable;
+            }); // n-2+1 -> n-1, n-1+1 -> n
+            expr = expr.replace(/(\w+)\+(\d+)\+1/g, (match, variable, num) => {
+                const result = parseInt(num) + 1;
+                return `${variable}+${result}`;
+            }); // n+1+1 -> n+2, n+2+1 -> n+3
+            expr = expr.replace(/(\w+)\+1\+1/g, '$1+2'); // n+1+1 -> n+2
+            expr = expr.replace(/(\w+)-1\+1/g, '$1'); // n-1+1 -> n
+            return expr;
+        };
+        
         // For loop - handle expression-based ranges like 要素数(numbers)-1
         const forMatchExpression = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*([^まで]+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
         if (forMatchExpression) {
             const variable = forMatchExpression[1];
             const start = parseInt(forMatchExpression[2]);
-            const endExpression = forMatchExpression[3].trim();
+            let endExpression = forMatchExpression[3].trim();
             const step = parseInt(forMatchExpression[4]);
             const direction = forMatchExpression[5];
 
@@ -626,7 +642,15 @@ class Converter {
                     const baseExpression = endExpression.replace('-1', '');
                     return `for ${variable} in range(${start}, ${baseExpression}):`;
                 } else {
-                    return `for ${variable} in range(${start}, ${endExpression} + 1, ${step}):`;
+                    // Add +1 to the end expression and simplify
+                    let pythonEndExpr = endExpression + ' + 1';
+                    pythonEndExpr = reverseSimplifyExpression(pythonEndExpr);
+                    
+                    if (step === 1) {
+                        return `for ${variable} in range(${start}, ${pythonEndExpr}):`;
+                    } else {
+                        return `for ${variable} in range(${start}, ${pythonEndExpr}, ${step}):`;
+                    }
                 }
             } else {
                 return `for ${variable} in range(${start}, ${endExpression} - 1, -${step}):`;
@@ -644,7 +668,11 @@ class Converter {
 
             if (direction === '増やし') {
                 // Convert back to Python range: end value needs +1
-                return `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
+                if (step === 1) {
+                    return `for ${variable} in range(${start}, ${end + 1}):`;
+                } else {
+                    return `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
+                }
             } else {
                 // For decreasing: end value needs -1
                 return `for ${variable} in range(${start}, ${end - 1}, -${step}):`;
