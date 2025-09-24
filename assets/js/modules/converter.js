@@ -252,16 +252,28 @@ class Converter {
                     }
                 } else if (params.length === 2) {
                     const start = params[0];
-                    const end = params[1];
+                    let end = params[1];
+                    
+                    // Handle numeric end values
                     if (!isNaN(parseInt(end))) {
                         const endNum = parseInt(end) - 1;
                         return variable + ' を ' + start + ' から ' + endNum + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        return variable + ' を ' + start + ' から ' + end + '-1 まで 1 ずつ増やしながら繰り返す:';
+                        // Handle expressions like n+1
+                        // Check if end is in the form variable+1
+                        const plusOneMatch = end.match(/^(\w+)\+1$/);
+                        if (plusOneMatch) {
+                            // n+1 becomes n (since Python's range(1, n+1) goes from 1 to n inclusive)
+                            const baseVar = plusOneMatch[1];
+                            return variable + ' を ' + start + ' から ' + baseVar + ' まで 1 ずつ増やしながら繰り返す:';
+                        } else {
+                            // For other expressions, subtract 1
+                            return variable + ' を ' + start + ' から ' + end + '-1 まで 1 ずつ増やしながら繰り返す:';
+                        }
                     }
                 } else if (params.length === 3) {
                     const start = params[0];
-                    const end = params[1];
+                    let end = params[1];
                     const step = params[2];
                     const stepNum = parseInt(step);
                     
@@ -270,7 +282,14 @@ class Converter {
                             const endNum = parseInt(end) - 1;
                             return variable + ' を ' + start + ' から ' + endNum + ' まで ' + step + ' ずつ増やしながら繰り返す:';
                         } else {
-                            return variable + ' を ' + start + ' から ' + end + '-1 まで ' + step + ' ずつ増やしながら繰り返す:';
+                            // Handle expressions like n+1 for 3-parameter range
+                            const plusOneMatch = end.match(/^(\w+)\+1$/);
+                            if (plusOneMatch) {
+                                const baseVar = plusOneMatch[1];
+                                return variable + ' を ' + start + ' から ' + baseVar + ' まで ' + step + ' ずつ増やしながら繰り返す:';
+                            } else {
+                                return variable + ' を ' + start + ' から ' + end + '-1 まで ' + step + ' ずつ増やしながら繰り返す:';
+                            }
                         }
                     } else {
                         if (!isNaN(parseInt(end))) {
