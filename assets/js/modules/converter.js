@@ -201,10 +201,8 @@ class Converter {
                 content = this.convertFStringToConcat(content);
             }
             
-            // Remove str() function calls from print content
-            content = content.replace(/str\([^)]+\)/g, function(match) {
-                return match.substring(4, match.length - 1); // Remove str( and )
-            });
+            // Replace operators and functions in content (including str() -> 文字列())
+            content = this.replaceOperators(content);
             
             return '表示する(' + content + ')';
         }
@@ -507,27 +505,16 @@ class Converter {
         if (line.startsWith('表示する(')) {
             let content = line.substring(5, line.length - 1);
 
-            // First replace functions and operators back to Python (but NOT 文字列())
-            // Handle 文字列() separately to avoid confusion
-            content = content
-                .replace(/要素数\(/g, 'len(')
-                .replace(/整数\(/g, 'int(')
-                .replace(/実数\(/g, 'float(')
-                .replace(/乱数\((\d+),\s*(\d+)\)/g, 'random.randint($1, $2)')
-                .replace(/乱数\(\)/g, 'random.random()')
-                .replace(/÷/g, '//')
-                .replace(/％/g, '%')
-                .replace(/\band\b/g, 'and')
-                .replace(/\bor\b/g, 'or')
-                .replace(/\bnot\b/g, 'not');
+            // Replace functions and operators back to Python (including 文字列() -> str())
+            content = this.replaceOperatorsReverse(content);
 
             // Handle array indexing patterns: fix [arrayName][index] to [arrayName[index]]
             content = content.replace(/(\w+)\[(\w+)\]/g, '$1[$2]');
 
-            // Handle string concatenation - add str() only when concatenating with strings
+            // Handle string concatenation - add str() only for non-str variables concatenated with strings
             // Pattern: "string" + variable
             content = content.replace(/"([^"]*)"\s*\+\s*([^"\s\+]+)/g, (match, p1, p2) => {
-                // Only add str() if p2 is not already a string or str() call
+                // Only add str() if p2 is not already a string literal or str() call
                 if (p2.startsWith('"') || p2.startsWith('str(')) {
                     return `"${p1}" + ${p2}`;
                 } else {
@@ -537,7 +524,7 @@ class Converter {
             
             // Pattern: variable + "string"
             content = content.replace(/([^"\s\+]+)\s*\+\s*"([^"]*)"/g, (match, p1, p2) => {
-                // Only add str() if p1 is not already a string or str() call
+                // Only add str() if p1 is not already a string literal or str() call
                 if (p1.startsWith('"') || p1.startsWith('str(')) {
                     return `${p1} + "${p2}"`;
                 } else {
@@ -659,7 +646,7 @@ class Converter {
         return line
             .replace(/\blen\(/g, '要素数(')
             .replace(/\bint\(/g, '整数(')
-            .replace(/\bstr\(([^)]+)\)/g, '$1')  // Remove str() function but keep the content
+            .replace(/\bstr\(/g, '文字列(')  // Convert str() to 文字列()
             .replace(/\bfloat\(/g, '実数(')
             .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
             .replace(/\brandom\.random\(\)/g, '乱数()')
