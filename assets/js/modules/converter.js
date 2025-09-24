@@ -514,10 +514,41 @@ class Converter {
             content = content.replace(/(\w+)\[(\w+)\]/g, '$1[$2]');
 
             // Handle string concatenation with variables - add str() where needed
+            // But avoid double str() wrapping by checking if already wrapped
             // Look for patterns like "text " + variable or variable + " text"
-            content = content.replace(/([\w\[\]]+)\s*\+\s*"([^"]*)"/g, 'str($1) + "$2"');
-            content = content.replace(/"([^"]*)"\s*\+\s*([\w\[\]]+)/g, '"$1" + str($2)');
-            content = content.replace(/([\w\[\]]+)\s*\+\s*([\w\[\]]+)(?!\()/g, 'str($1) + str($2)');
+            content = content.replace(/([\w\[\]]+)\s*\+\s*"([^"]*)"/g, (match, p1, p2) => {
+                // Check if p1 is already wrapped with str()
+                if (p1.startsWith('str(') && p1.endsWith(')')) {
+                    return `${p1} + "${p2}"`;
+                } else {
+                    return `str(${p1}) + "${p2}"`;
+                }
+            });
+            
+            content = content.replace(/"([^"]*)"\s*\+\s*([\w\[\]]+)/g, (match, p1, p2) => {
+                // Check if p2 is already wrapped with str()
+                if (p2.startsWith('str(') && p2.endsWith(')')) {
+                    return `"${p1}" + ${p2}`;
+                } else {
+                    return `"${p1}" + str(${p2})`;
+                }
+            });
+            
+            content = content.replace(/([\w\[\]]+)\s*\+\s*([\w\[\]]+)(?!\()/g, (match, p1, p2) => {
+                // Check if either p1 or p2 is already wrapped with str()
+                const p1Wrapped = p1.startsWith('str(') && p1.endsWith(')');
+                const p2Wrapped = p2.startsWith('str(') && p2.endsWith(')');
+                
+                if (p1Wrapped && p2Wrapped) {
+                    return `${p1} + ${p2}`;
+                } else if (p1Wrapped) {
+                    return `${p1} + str(${p2})`;
+                } else if (p2Wrapped) {
+                    return `str(${p1}) + ${p2}`;
+                } else {
+                    return `str(${p1}) + str(${p2})`;
+                }
+            });
 
             return 'print(' + content + ')';
         }
@@ -573,7 +604,7 @@ class Converter {
                     return `for ${variable} in range(${start}, ${endExpression} + 1, ${step}):`;
                 }
             } else {
-                return `for ${variable} in range(${start}, ${endExpression} - 1, -${step}):`;
+                return `for ${variable} in range(${start}, ${endExpression} - 1, -${step}):`; 
             }
         }
 
