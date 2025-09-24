@@ -538,13 +538,15 @@ class Converter {
         // If statement
         if (line.startsWith('もし ') && line.endsWith(' ならば:')) {
             const condition = line.substring(3, line.length - 6);
-            return 'if ' + condition + ':';
+            const convertedCondition = this.replaceOperatorsReverse(condition);
+            return 'if ' + convertedCondition + ':';
         }
         
         // Elif statement
         if (line.startsWith('そうでなくもし ') && line.endsWith(' ならば:')) {
             const condition = line.substring(8, line.length - 6);
-            return 'elif ' + condition + ':';
+            const convertedCondition = this.replaceOperatorsReverse(condition);
+            return 'elif ' + convertedCondition + ':';
         }
         
         // Else statement
@@ -555,7 +557,8 @@ class Converter {
         // While loop
         if (line.endsWith(' の間繰り返す:')) {
             const condition = line.substring(0, line.length - 8);
-            return 'while ' + condition + ':';
+            const convertedCondition = this.replaceOperatorsReverse(condition);
+            return 'while ' + convertedCondition + ':';
         }
         
         // For loop - handle expression-based ranges like 要素数(numbers)-1
@@ -645,7 +648,7 @@ class Converter {
     replaceOperators(line) {
         return line
             .replace(/\blen\(/g, '要素数(')
-            .replace(/\bint\(/g, '整数(')
+            .replace(/\bint\(/g, '整数(')  // This should only match int( function calls
             .replace(/\bstr\(/g, '文字列(')  // Convert str() to 文字列()
             .replace(/\bfloat\(/g, '実数(')
             .replace(/\brandom\.randint\((\d+),\s*(\d+)\)/g, '乱数($1,$2)')
