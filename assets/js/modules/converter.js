@@ -230,6 +230,22 @@ class Converter {
             return condition + ' の間繰り返す:';
         }
         
+        // Helper function to simplify arithmetic expressions
+        const simplifyExpression = (expr) => {
+            // Handle n-1-1 -> n-2, n+1-1 -> n, etc.
+            expr = expr.replace(/(\w+)\+1-1/g, '$1');  // n+1-1 -> n
+            expr = expr.replace(/(\w+)-1-1/g, '$1-2'); // n-1-1 -> n-2
+            expr = expr.replace(/(\w+)\+(\d+)-1/g, (match, variable, num) => {
+                const result = parseInt(num) - 1;
+                return result > 0 ? `${variable}+${result}` : variable;
+            }); // n+2-1 -> n+1, n+1-1 -> n
+            expr = expr.replace(/(\w+)-(\d+)-1/g, (match, variable, num) => {
+                const result = parseInt(num) + 1;
+                return `${variable}-${result}`;
+            }); // n-1-1 -> n-2, n-2-1 -> n-3
+            return expr;
+        };
+        
         // for loop with range
         if (line.startsWith('for ') && line.includes(' in range(')) {
             const match = line.match(/for\s+(\w+)\s+in\s+range\((.*)\):/);
@@ -248,7 +264,9 @@ class Converter {
                         return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
                         // If it's a variable or function call, use the converted format
-                        return variable + ' を 0 から ' + param + '-1 まで 1 ずつ増やしながら繰り返す:';
+                        let endExpr = param + '-1';
+                        endExpr = simplifyExpression(endExpr);
+                        return variable + ' を 0 から ' + endExpr + ' まで 1 ずつ増やしながら繰り返す:';
                     }
                 } else if (params.length === 2) {
                     const start = params[0];
@@ -259,16 +277,17 @@ class Converter {
                         const endNum = parseInt(end) - 1;
                         return variable + ' を ' + start + ' から ' + endNum + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        // Handle expressions like n+1
-                        // Check if end is in the form variable+1
+                        // Handle expressions like n+1, n-1, etc.
                         const plusOneMatch = end.match(/^(\w+)\+1$/);
                         if (plusOneMatch) {
                             // n+1 becomes n (since Python's range(1, n+1) goes from 1 to n inclusive)
                             const baseVar = plusOneMatch[1];
                             return variable + ' を ' + start + ' から ' + baseVar + ' まで 1 ずつ増やしながら繰り返す:';
                         } else {
-                            // For other expressions, subtract 1
-                            return variable + ' を ' + start + ' から ' + end + '-1 まで 1 ずつ増やしながら繰り返す:';
+                            // For other expressions, subtract 1 and simplify
+                            let endExpr = end + '-1';
+                            endExpr = simplifyExpression(endExpr);
+                            return variable + ' を ' + start + ' から ' + endExpr + ' まで 1 ずつ増やしながら繰り返す:';
                         }
                     }
                 } else if (params.length === 3) {
@@ -288,7 +307,9 @@ class Converter {
                                 const baseVar = plusOneMatch[1];
                                 return variable + ' を ' + start + ' から ' + baseVar + ' まで ' + step + ' ずつ増やしながら繰り返す:';
                             } else {
-                                return variable + ' を ' + start + ' から ' + end + '-1 まで ' + step + ' ずつ増やしながら繰り返す:';
+                                let endExpr = end + '-1';
+                                endExpr = simplifyExpression(endExpr);
+                                return variable + ' を ' + start + ' から ' + endExpr + ' まで ' + step + ' ずつ増やしながら繰り返す:';
                             }
                         }
                     } else {
