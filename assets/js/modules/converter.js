@@ -195,15 +195,20 @@ class Converter {
         // print statement - handle f-strings
         if (line.startsWith('print(')) {
             let content = line.substring(6, line.length - 1);
-            
+
             // Convert f-strings to concatenation format
             if (content.startsWith('f"') || content.startsWith("f'")) {
                 content = this.convertFStringToConcat(content);
             }
-            
-            // Replace operators and functions in content (including str() -> 文字列())
+
+            // Remove str() used for string concatenation (e.g., str(i + 1) + "text" -> i + 1 + "text")
+            // Match str(...) followed by + or in the middle of concatenation
+            content = content.replace(/str\(([^)]+)\)\s*\+/g, '$1 +');
+            content = content.replace(/\+\s*str\(([^)]+)\)/g, '+ $1');
+
+            // Replace operators and functions in content (including remaining str() -> 文字列())
             content = this.replaceOperators(content);
-            
+
             return '表示する(' + content + ')';
         }
         
@@ -246,6 +251,16 @@ class Converter {
             return expr;
         };
         
+        // for ... in ... (iteration over collection)
+        if (line.startsWith('for ') && line.includes(' in ') && !line.includes(' in range(')) {
+            const match = line.match(/for\s+(\w+)\s+in\s+(\w+):/);
+            if (match) {
+                const variable = match[1];
+                const collection = match[2];
+                return `${collection}の各要素${variable}について繰り返す:`;
+            }
+        }
+
         // for loop with range
         if (line.startsWith('for ') && line.includes(' in range(')) {
             const match = line.match(/for\s+(\w+)\s+in\s+range\((.*)\):/);
@@ -551,26 +566,54 @@ class Converter {
             // Handle array indexing patterns: fix [arrayName][index] to [arrayName[index]]
             content = content.replace(/(\w+)\[(\w+)\]/g, '$1[$2]');
 
-            // Handle string concatenation - add str() only for non-str variables concatenated with strings
-            // Pattern: "string" + variable
-            content = content.replace(/"([^"]*)"\s*\+\s*([^"\s\+]+)/g, (match, p1, p2) => {
-                // Only add str() if p2 is not already a string literal or str() call
-                if (p2.startsWith('"') || p2.startsWith('str(')) {
-                    return `"${p1}" + ${p2}`;
+            // Handle string concatenation - add str() for non-string expressions
+            // Split by + operator and wrap non-string parts with str()
+            const parts = [];
+            let currentPart = '';
+            let inString = false;
+            let depth = 0;
+
+            for (let i = 0; i < content.length; i++) {
+                const char = content[i];
+
+                if (char === '"' && (i === 0 || content[i-1] !== '\\')) {
+                    inString = !inString;
+                    currentPart += char;
+                } else if (char === '(' && !inString) {
+                    depth++;
+                    currentPart += char;
+                } else if (char === ')' && !inString) {
+                    depth--;
+                    currentPart += char;
+                } else if (char === '+' && !inString && depth === 0) {
+                    // Found a + operator at the top level
+                    const trimmed = currentPart.trim();
+                    if (trimmed) {
+                        parts.push(trimmed);
+                    }
+                    currentPart = '';
                 } else {
-                    return `"${p1}" + str(${p2})`;
+                    currentPart += char;
                 }
-            });
-            
-            // Pattern: variable + "string"
-            content = content.replace(/([^"\s\+]+)\s*\+\s*"([^"]*)"/g, (match, p1, p2) => {
-                // Only add str() if p1 is not already a string literal or str() call
-                if (p1.startsWith('"') || p1.startsWith('str(')) {
-                    return `${p1} + "${p2}"`;
-                } else {
-                    return `str(${p1}) + "${p2}"`;
-                }
-            });
+            }
+
+            // Add the last part
+            if (currentPart.trim()) {
+                parts.push(currentPart.trim());
+            }
+
+            // Check if we have multiple parts (string concatenation)
+            if (parts.length > 1) {
+                const wrappedParts = parts.map(part => {
+                    // Don't wrap if it's already a string literal or str() call
+                    if (part.startsWith('"') || part.startsWith("'") || part.startsWith('str(')) {
+                        return part;
+                    }
+                    // Wrap with str()
+                    return `str(${part})`;
+                });
+                content = wrappedParts.join(' + ');
+            }
 
             return 'print(' + content + ')';
         }
@@ -601,6 +644,14 @@ class Converter {
             return 'while ' + convertedCondition + ':';
         }
         
+        // For ... in ... (iteration over collection)
+        const forInMatch = line.match(/(\w+)の各要素(\w+)について繰り返す:/);
+        if (forInMatch) {
+            const collection = forInMatch[1];
+            const variable = forInMatch[2];
+            return `for ${variable} in ${collection}:`;
+        }
+
         // Helper function to simplify arithmetic expressions for reverse conversion
         const reverseSimplifyExpression = (expr) => {
             // Handle n-2+1 -> n-1, n+1+1 -> n+2, etc.

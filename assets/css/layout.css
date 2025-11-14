@@ -174,7 +174,7 @@
     overflow-y: auto !important;
     height: 100% !important;
     min-height: 300px !important;
-    padding-bottom: 20px !important;
+    padding-bottom: 60px !important;
     box-sizing: border-box;
     position: relative;
 }
@@ -182,11 +182,11 @@
 .CodeMirror-sizer {
     position: relative !important;
     min-height: inherit !important;
-    padding-bottom: 50px !important;
+    padding-bottom: 60px !important;
 }
 
 .CodeMirror-lines {
-    padding: 4px 0 50px 0 !important;
+    padding: 4px 0 60px 0 !important;
     min-height: inherit !important;
 }
 
@@ -253,15 +253,7 @@
 
 /* Ensure last line is always visible */
 .CodeMirror-code {
-    padding-bottom: 50px !important;
-}
-
-/* Force scroll container to account for padding */
-.CodeMirror .CodeMirror-scroll {
-    margin-bottom: -50px !important;
-    padding-bottom: 50px !important;
-    overflow-x: auto;
-    overflow-y: auto;
+    padding-bottom: 60px !important;
 }
 
 /* Output Styles - Unified with editors */
@@ -273,6 +265,7 @@
     background: #fafafa;
     min-height: 300px;
     padding: 8px;
+    padding-bottom: 60px;
     box-sizing: border-box;
     height: 100%;
 }
@@ -282,6 +275,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 8px;
+    padding-bottom: 60px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
     overflow: auto;
