@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>変換の可逆性テスト</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-case {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .test-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .code-block {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .code-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary h2 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        .summary-stats {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .summary-stats .pass-count {
+            color: #28a745;
+        }
+        .summary-stats .fail-count {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Python ⇄ 共通テスト用プログラム表記 変換の可逆性テスト</h1>
+
+    <div class="summary" id="summary"></div>
+
+    <div id="test-results"></div>
+
+    <script src="assets/js/modules/converter.js"></script>
+    <script>
+        const converter = new Converter();
+
+        const testCases = [
+            {
+                name: "基本的な出力文",
+                python: 'print("Hello, World!")',
+                expectedCommonTest: '表示する("Hello, World!")'
+            },
+            {
+                name: "変数への入力",
+                python: 'x = int(input())',
+                expectedCommonTest: 'x = 【外部からの入力】'
+            },
+            {
+                name: "if文の基本",
+                python: `if x > 0:
+    print("Positive")`,
+                expectedCommonTest: `もし x > 0 ならば:
+⎿ 表示する("Positive")`
+            },
+            {
+                name: "if-else文",
+                python: `if x > 0:
+    print("Positive")
+else:
+    print("Not positive")`,
+                expectedCommonTest: `もし x > 0 ならば:
+｜ 表示する("Positive")
+そうでなければ:
+⎿ 表示する("Not positive")`
+            },
+            {
+                name: "for文 range(n)",
+                python: `for i in range(5):
+    print(i)`,
+                expectedCommonTest: `i を 0 から 4 まで 1 ずつ増やしながら繰り返す:
+⎿ 表示する(i)`
+            },
+            {
+                name: "for文 range(start, end)",
+                python: `for i in range(1, 11):
+    print(i)`,
+                expectedCommonTest: `i を 1 から 10 まで 1 ずつ増やしながら繰り返す:
+⎿ 表示する(i)`
+            },
+            {
+                name: "for文 range(start, end, step)",
+                python: `for i in range(0, 10, 2):
+    print(i)`,
+                expectedCommonTest: `i を 0 から 9 まで 2 ずつ増やしながら繰り返す:
+⎿ 表示する(i)`
+            },
+            {
+                name: "while文",
+                python: `while x > 0:
+    print(x)`,
+                expectedCommonTest: `x > 0 の間繰り返す:
+⎿ 表示する(x)`
+            },
+            {
+                name: "関数定義",
+                python: `def greet(name):
+    print("Hello")`,
+                expectedCommonTest: `関数 greet(name):
+⎿ 表示する("Hello")`
+            },
+            {
+                name: "return文",
+                python: `def add(a, b):
+    return a + b`,
+                expectedCommonTest: `関数 add(a, b):
+⎿ a + b を返す`
+            },
+            {
+                name: "整数除算演算子",
+                python: 'result = 10 // 3',
+                expectedCommonTest: 'result = 10 ÷ 3'
+            },
+            {
+                name: "剰余演算子",
+                python: 'remainder = 10 % 3',
+                expectedCommonTest: 'remainder = 10 ％ 3'
+            },
+            {
+                name: "len関数",
+                python: 'length = len(array)',
+                expectedCommonTest: 'length = 要素数(array)'
+            },
+            {
+                name: "int関数",
+                python: 'num = int(value)',
+                expectedCommonTest: 'num = 整数(value)'
+            },
+            {
+                name: "str関数",
+                python: 'text = str(value)',
+                expectedCommonTest: 'text = 文字列(value)'
+            },
+            {
+                name: "タプル代入 (Python → 共通テスト)",
+                python: 'a, b = 100, 200',
+                expectedCommonTest: 'a = 100, b = 200'
+            },
+            {
+                name: "複数代入 (共通テスト → Python)",
+                commonTest: 'a = 100, b = 200',
+                expectedPython: 'a, b = 100, 200'
+            },
+            {
+                name: "ネストしたif文",
+                python: `if x > 0:
+    if y > 0:
+        print("Both positive")`,
+                expectedCommonTest: `もし x > 0 ならば:
+｜ もし y > 0 ならば:
+⎿ ⎿ 表示する("Both positive")`
+            },
+            {
+                name: "for文の中のif文",
+                python: `for i in range(5):
+    if i > 2:
+        print(i)`,
+                expectedCommonTest: `i を 0 から 4 まで 1 ずつ増やしながら繰り返す:
+｜ もし i > 2 ならば:
+⎿ ⎿ 表示する(i)`
+            },
+            {
+                name: "配列の要素数を使ったfor文",
+                python: `for i in range(len(numbers)):
+    print(numbers[i])`,
+                expectedCommonTest: `i を 0 から 要素数(numbers)-1 まで 1 ずつ増やしながら繰り返す:
+⎿ 表示する(numbers[i])`
+            }
+        ];
+
+        let passCount = 0;
+        let failCount = 0;
+        const results = [];
+
+        testCases.forEach(testCase => {
+            let status = 'pass';
+            let originalCode, convertedCode, reversedCode;
+            let conversionMatch = true;
+            let reversibilityMatch = true;
+
+            if (testCase.python && testCase.expectedCommonTest) {
+                // Python → 共通テスト のテスト
+                originalCode = testCase.python;
+                convertedCode = converter.pythonToCommonTest(testCase.python);
+                reversedCode = converter.commonTestToPython(convertedCode);
+
+                // 変換結果が期待値と一致するかチェック
+                conversionMatch = convertedCode.trim() === testCase.expectedCommonTest.trim();
+
+                // 可逆性チェック (逆変換が元に戻るか)
+                reversibilityMatch = reversedCode.trim() === testCase.python.trim();
+
+                if (!conversionMatch || !reversibilityMatch) {
+                    status = 'fail';
+                }
+            } else if (testCase.commonTest && testCase.expectedPython) {
+                // 共通テスト → Python のテスト
+                originalCode = testCase.commonTest;
+                convertedCode = converter.commonTestToPython(testCase.commonTest);
+                reversedCode = converter.pythonToCommonTest(convertedCode);
+
+                // 変換結果が期待値と一致するかチェック
+                conversionMatch = convertedCode.trim() === testCase.expectedPython.trim();
+
+                // 可逆性チェック
+                reversibilityMatch = reversedCode.trim() === testCase.commonTest.trim();
+
+                if (!conversionMatch || !reversibilityMatch) {
+                    status = 'fail';
+                }
+            }
+
+            if (status === 'pass') {
+                passCount++;
+            } else {
+                failCount++;
+            }
+
+            results.push({
+                name: testCase.name,
+                status,
+                originalCode,
+                convertedCode,
+                reversedCode,
+                conversionMatch,
+                reversibilityMatch
+            });
+        });
+
+        // 結果を表示
+        const summaryDiv = document.getElementById('summary');
+        summaryDiv.innerHTML = `
+            <h2>テスト結果サマリー</h2>
+            <div class="summary-stats">
+                <span class="pass-count">✓ ${passCount} 成功</span> /
+                <span class="fail-count">✗ ${failCount} 失敗</span> /
+                <span>合計 ${passCount + failCount} テスト</span>
+            </div>
+        `;
+
+        const resultsDiv = document.getElementById('test-results');
+        results.forEach(result => {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+
+            let statusMessage = '';
+            if (!result.conversionMatch) {
+                statusMessage += '変換が期待値と一致しません。 ';
+            }
+            if (!result.reversibilityMatch) {
+                statusMessage += '可逆性がありません（逆変換が元に戻りません）。';
+            }
+
+            testDiv.innerHTML = `
+                <div class="test-name">${result.name}</div>
+                <div class="test-content">
+                    <div>
+                        <div class="code-label">元のコード</div>
+                        <div class="code-block">${escapeHtml(result.originalCode)}</div>
+                    </div>
+                    <div>
+                        <div class="code-label">変換結果</div>
+                        <div class="code-block">${escapeHtml(result.convertedCode)}</div>
+                    </div>
+                    <div>
+                        <div class="code-label">逆変換結果</div>
+                        <div class="code-block">${escapeHtml(result.reversedCode)}</div>
+                    </div>
+                </div>
+                <div class="status ${result.status}">
+                    ${result.status === 'pass' ? '✓ 成功' : '✗ 失敗: ' + statusMessage}
+                </div>
+            `;
+
+            resultsDiv.appendChild(testDiv);
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
