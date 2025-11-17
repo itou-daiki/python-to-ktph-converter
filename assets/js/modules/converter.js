@@ -620,14 +620,14 @@ class Converter {
         
         // If statement
         if (line.startsWith('もし ') && line.endsWith(' ならば:')) {
-            const condition = line.substring(3, line.length - 6);
+            const condition = line.substring(3, line.length - 5);
             const convertedCondition = this.replaceOperatorsReverse(condition);
             return 'if ' + convertedCondition + ':';
         }
-        
+
         // Elif statement
         if (line.startsWith('そうでなくもし ') && line.endsWith(' ならば:')) {
-            const condition = line.substring(8, line.length - 6);
+            const condition = line.substring(8, line.length - 5);
             const convertedCondition = this.replaceOperatorsReverse(condition);
             return 'elif ' + convertedCondition + ':';
         }
