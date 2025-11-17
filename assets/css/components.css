@@ -71,12 +71,7 @@ button:active {
 /* Ensure all content areas have consistent sizing */
 .bottom-left .panel #flowchart,
 .bottom-right .panel #output {
-    margin: 5px 0 0 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    flex: 1;
-    min-height: 300px;
-    height: calc(100% - 50px);
+    margin-top: 8px;
 }
 
 .panel-header {
