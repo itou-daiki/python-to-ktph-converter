@@ -39,12 +39,14 @@
     }
     
     .panel {
+        padding: 12px;
         min-height: 350px;
     }
-    
+
     /* Bottom panels specific adjustments for mobile */
     .bottom-left .panel,
     .bottom-right .panel {
+        padding: 12px;
         min-height: 350px;
     }
 
@@ -114,7 +116,7 @@
     }
 
     .panel {
-        padding: 15px;
+        padding: 12px;
         min-height: 350px;
     }
     
@@ -128,7 +130,7 @@
     #output {
         min-height: 300px;
         height: 350px;
-        padding: 15px;
+        padding: 10px;
         padding-bottom: 60px;
     }
 
