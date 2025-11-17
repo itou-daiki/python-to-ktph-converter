@@ -201,12 +201,7 @@ class Converter {
                 content = this.convertFStringToConcat(content);
             }
 
-            // Remove str() used for string concatenation (e.g., str(i + 1) + "text" -> i + 1 + "text")
-            // Match str(...) followed by + or in the middle of concatenation
-            content = content.replace(/str\(([^)]+)\)\s*\+/g, '$1 +');
-            content = content.replace(/\+\s*str\(([^)]+)\)/g, '+ $1');
-
-            // Replace operators and functions in content (including remaining str() -> 文字列())
+            // Replace operators and functions in content (str() -> 文字列())
             content = this.replaceOperators(content);
 
             return '表示する(' + content + ')';
@@ -272,13 +267,17 @@ class Converter {
                 const params = convertedParams.split(',').map(p => p.trim());
                 
                 if (params.length === 1) {
-                    // Check if params[0] is a number or variable/function
+                    // Check if params[0] is a simple number or an expression/variable
                     const param = params[0];
-                    if (!isNaN(parseInt(param))) {
+                    // Check if param contains operators (indicating it's an expression)
+                    const hasOperators = /[+\-*÷％]/.test(param);
+
+                    if (!hasOperators && !isNaN(parseInt(param)) && param === String(parseInt(param))) {
+                        // Simple integer literal
                         const end = parseInt(param) - 1;
                         return variable + ' を 0 から ' + end + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        // If it's a variable or function call, use the converted format
+                        // Expression or variable - subtract 1 and simplify
                         let endExpr = param + '-1';
                         endExpr = simplifyExpression(endExpr);
                         return variable + ' を 0 から ' + endExpr + ' まで 1 ずつ増やしながら繰り返す:';
@@ -286,14 +285,17 @@ class Converter {
                 } else if (params.length === 2) {
                     const start = params[0];
                     let end = params[1];
-                    
-                    // Handle numeric end values
-                    if (!isNaN(parseInt(end))) {
+
+                    // Check if end contains operators
+                    const hasOperators = /[+\-*÷％]/.test(end);
+
+                    // Handle simple numeric end values
+                    if (!hasOperators && !isNaN(parseInt(end)) && end === String(parseInt(end))) {
                         const endNum = parseInt(end) - 1;
                         return variable + ' を ' + start + ' から ' + endNum + ' まで 1 ずつ増やしながら繰り返す:';
                     } else {
-                        // Handle expressions like n+1, n-1, etc.
-                        const plusOneMatch = end.match(/^(\w+)\+1$/);
+                        // Handle expressions like n+1, n-1, 4+1, etc.
+                        const plusOneMatch = end.match(/^(\w+|\d+)\+1$/);
                         if (plusOneMatch) {
                             // n+1 becomes n (since Python's range(1, n+1) goes from 1 to n inclusive)
                             const baseVar = plusOneMatch[1];
@@ -310,14 +312,17 @@ class Converter {
                     let end = params[1];
                     const step = params[2];
                     const stepNum = parseInt(step);
-                    
+
+                    // Check if end contains operators
+                    const hasOperators = /[+\-*÷％]/.test(end);
+
                     if (stepNum > 0) {
-                        if (!isNaN(parseInt(end))) {
+                        if (!hasOperators && !isNaN(parseInt(end)) && end === String(parseInt(end))) {
                             const endNum = parseInt(end) - 1;
                             return variable + ' を ' + start + ' から ' + endNum + ' まで ' + step + ' ずつ増やしながら繰り返す:';
                         } else {
                             // Handle expressions like n+1 for 3-parameter range
-                            const plusOneMatch = end.match(/^(\w+)\+1$/);
+                            const plusOneMatch = end.match(/^(\w+|\d+)\+1$/);
                             if (plusOneMatch) {
                                 const baseVar = plusOneMatch[1];
                                 return variable + ' を ' + start + ' から ' + baseVar + ' まで ' + step + ' ずつ増やしながら繰り返す:';
@@ -328,7 +333,7 @@ class Converter {
                             }
                         }
                     } else {
-                        if (!isNaN(parseInt(end))) {
+                        if (!hasOperators && !isNaN(parseInt(end)) && end === String(parseInt(end))) {
                             const endNum = parseInt(end) + 1;
                             return variable + ' を ' + start + ' から ' + endNum + ' まで ' + Math.abs(stepNum) + ' ずつ減らしながら繰り返す:';
                         } else {
