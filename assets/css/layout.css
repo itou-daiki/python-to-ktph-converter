@@ -263,10 +263,9 @@
     border-radius: 4px;
     overflow: auto;
     background: #fafafa;
-    min-height: 300px;
+    min-height: 0;
     padding: 12px;
     box-sizing: border-box;
-    height: 100%;
 }
 
 #output {
@@ -279,9 +278,8 @@
     overflow: auto;
     background: #f8f8f8;
     white-space: pre-wrap;
-    min-height: 300px;
+    min-height: 0;
     box-sizing: border-box;
-    height: 100%;
 }
 
 /* Mermaid diagram styles */

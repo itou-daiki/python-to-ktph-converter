@@ -58,7 +58,7 @@
     
     #flowchart,
     #output {
-        min-height: 300px;
+        min-height: 0;
     }
 
     .controls {
@@ -128,8 +128,7 @@
     
     #flowchart,
     #output {
-        min-height: 300px;
-        height: 350px;
+        min-height: 0;
         padding: 10px;
     }
 
