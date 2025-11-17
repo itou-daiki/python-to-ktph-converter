@@ -52,13 +52,13 @@
 
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
-        min-height: 300px;
-        height: 350px;
+        min-height: 0;
     }
-    
+
     #flowchart,
     #output {
         min-height: 0;
+        padding-bottom: 16px;
     }
 
     .controls {
@@ -122,14 +122,14 @@
     
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
-        min-height: 300px;
-        height: 350px;
+        min-height: 0;
     }
-    
+
     #flowchart,
     #output {
         min-height: 0;
         padding: 10px;
+        padding-bottom: 16px;
     }
 
     button {
