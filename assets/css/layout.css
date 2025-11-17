@@ -139,9 +139,7 @@
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
-    height: 100% !important;
-    min-height: 400px;
-    max-height: 100%;
+    min-height: 0;
     overflow: visible;
 }
 
@@ -156,15 +154,12 @@
     overflow: visible;
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
 #pythonEditor .CodeMirror,
 #commonTestEditor .CodeMirror {
-    height: 100% !important;
     flex: 1;
-    min-height: 300px;
-    max-height: none;
+    min-height: 0;
     position: relative;
 }
 
@@ -172,8 +167,7 @@
     overflow: auto !important;
     overflow-x: auto !important;
     overflow-y: auto !important;
-    height: 100% !important;
-    min-height: 300px !important;
+    min-height: 0 !important;
     padding-bottom: 60px !important;
     box-sizing: border-box;
     position: relative;
@@ -265,6 +259,7 @@
     background: #fafafa;
     min-height: 0;
     padding: 12px;
+    padding-bottom: 20px;
     box-sizing: border-box;
 }
 
@@ -273,6 +268,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 12px;
+    padding-bottom: 20px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
     overflow: auto;
