@@ -1,7 +1,9 @@
-/* Main Styles */
+/* Main Styles - Tailwind Compatible */
 :root {
-    /* Color Variables */
-    --primary-color: #3498db;
+    /* Color Variables - Based on #1e90ff (dodgerblue) */
+    --primary-color: #1e90ff;
+    --primary-dark: #1873cc;
+    --primary-light: #4fa3ff;
     --secondary-bg: #ffffff;
     --panel-bg: #ffffff;
     --header-bg: #f8f9fa;
@@ -15,194 +17,56 @@
 
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
+/* Only apply minimal base styles that Tailwind doesn't cover */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, -apple-system, BlinkMacSystemFont;
 }
 
+/* Container - Tailwind handles most of this but keeping for backward compatibility */
 .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
+    /* Tailwind will override with container class */
 }
 
-/* Header Styles */
-header {
-    background: #2c3e50;
-    color: white;
-    padding: 20px 0;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+/* CodeMirror specific styles that need to work with the layout */
+.CodeMirror {
+    height: 100% !important;
 }
 
-h1 {
-    font-size: 24px;
-    margin-bottom: 10px;
+/* Ensure proper stacking context for modals */
+.overlay {
+    z-index: 40;
 }
 
-/* Controls */
-.controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin: 20px 0;
-    flex-wrap: wrap;
+.input-dialog {
+    z-index: 50;
 }
 
-.direction-selector {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+.loading-overlay {
+    z-index: 100;
 }
 
-.direction-selector select,
-.sample-selector select {
-    padding: 8px 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    background: white;
-    cursor: pointer;
+/* Smooth transitions for interactive elements */
+button, a, input, select {
+    transition: all 0.2s ease-in-out;
 }
 
-.sample-selector {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
+/* Focus styles for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
-.sample-selector label {
-    font-weight: bold;
-    color: #2c3e50;
-    font-size: 14px;
-}
-
-.sample-selector select {
-    min-width: 150px;
-}
-
-.load-sample-button {
-    background: #9b59b6;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.load-sample-button:hover {
-    background: #8e44ad;
-}
-
-/* Footer Styles */
-.main-footer {
-    background: #2c3e50;
-    color: white;
-    padding: 40px 20px 20px;
-    margin-top: 40px;
-}
-
-.footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 40px;
-    align-items: start;
-}
-
-.footer-links h3 {
-    color: #ecf0f1;
-    margin-bottom: 20px;
-    font-size: 20px;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-}
-
-.detail-links {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.detail-link {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px;
-    background: rgba(52, 152, 219, 0.1);
-    border-radius: 8px;
-    text-decoration: none;
-    color: #ecf0f1;
-    transition: all 0.3s ease;
-    border-left: 4px solid #3498db;
-}
-
-.detail-link:hover {
-    background: rgba(52, 152, 219, 0.2);
-    transform: translateX(5px);
-    border-left-color: #2ecc71;
-}
-
-.link-icon {
-    font-size: 24px;
-    min-width: 32px;
-    text-align: center;
-}
-
-.link-content strong {
-    display: block;
-    color: #ecf0f1;
-    margin-bottom: 5px;
-    font-size: 16px;
-}
-
-.link-content small {
-    display: block;
-    color: #bdc3c7;
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.footer-info {
-    text-align: right;
-    padding-top: 20px;
-}
-
-.footer-info p {
-    margin: 5px 0;
-    color: #bdc3c7;
-    font-size: 14px;
-}
-
-/* Responsive Footer */
-@media (max-width: 768px) {
-    .footer-content {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-    
-    .footer-info {
-        text-align: center;
-        padding-top: 0;
-    }
-    
-    .detail-link {
-        padding: 12px;
-    }
-    
-    .link-content strong {
-        font-size: 15px;
-    }
-    
-    .link-content small {
-        font-size: 12px;
+/* Print styles */
+@media print {
+    header,
+    footer,
+    .controls,
+    button {
+        display: none !important;
     }
 }
