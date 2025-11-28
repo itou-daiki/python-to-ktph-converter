@@ -1,38 +1,150 @@
-/* Layout Styles - Tailwind Compatible */
-
-/* Main content grid - keeping for CodeMirror integration */
+/* Layout Styles */
 .main-content {
-    /* Grid is now handled by Tailwind classes in HTML */
+    display: grid;
+    grid-template-columns: 1fr 100px 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 15px;
+    height: calc(100vh - 200px);
+    min-height: 700px;
+    overflow: hidden;
+    align-items: stretch;
 }
 
-/* Grid positioning classes for backwards compatibility */
+.top-left {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.conversion-controls {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.convert-button-right,
+.convert-button-left {
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.convert-button-right:hover,
+.convert-button-left:hover {
+    background: #229954;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.convert-button-right:active,
+.convert-button-left:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Conversion Controls Action Buttons */
+.conversion-controls .run-button,
+.conversion-controls .clear-button {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 80px;
+    height: 30px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    writing-mode: horizontal-tb;
+}
+
+.conversion-controls .run-button {
+    background: #e74c3c;
+}
+
+.conversion-controls .run-button:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.conversion-controls .clear-button:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.conversion-controls .run-button:active,
+.conversion-controls .clear-button:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.top-right {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.bottom-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.bottom-right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+/* Ensure all grid items stretch to full height and have equal dimensions */
 .top-left,
 .top-right,
 .bottom-left,
 .bottom-right {
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    min-height: 350px;
 }
 
-.conversion-controls {
-    /* Now handled by Tailwind flex classes */
-}
-
-/* CodeMirror Styles - Essential for editor functionality */
+/* CodeMirror Styles */
 .CodeMirror {
     flex: 1;
     border: 1px solid #ddd;
-    border-radius: 0.5rem;
+    border-radius: 4px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 14px;
     min-height: 0;
     overflow: visible;
-    height: 100% !important;
 }
 
 .CodeMirror-focused {
-    border-color: #1e90ff;
-    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+    border-color: #3498db;
 }
 
 #pythonEditor,
@@ -51,7 +163,6 @@
     position: relative;
 }
 
-/* CodeMirror scroll fixes */
 .CodeMirror-scroll {
     overflow: auto !important;
     overflow-x: auto !important;
@@ -71,7 +182,6 @@
     min-height: inherit !important;
 }
 
-/* Scrollbar styles */
 .CodeMirror-vscrollbar,
 .CodeMirror-hscrollbar {
     outline: none;
@@ -104,7 +214,7 @@
     background-color: white;
 }
 
-/* Custom scrollbar styling */
+/* Force scrollbars to be visible */
 .CodeMirror-vscrollbar > div {
     background: #ccc !important;
     border-radius: 3px !important;
@@ -138,15 +248,32 @@
     padding-bottom: 0 !important;
 }
 
-/* Output Styles */
+/* Output Styles - Unified with editors */
 #flowchart {
     flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: auto;
+    background: #fafafa;
     min-height: 0;
+    padding: 12px;
+    padding-bottom: 20px;
+    box-sizing: border-box;
 }
 
 #output {
     flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    padding-bottom: 20px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    overflow: auto;
+    background: #f8f8f8;
+    white-space: pre-wrap;
     min-height: 0;
+    box-sizing: border-box;
 }
 
 /* Mermaid diagram styles */
