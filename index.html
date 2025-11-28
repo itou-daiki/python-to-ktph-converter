@@ -73,18 +73,18 @@
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_100px_1fr] gap-4 mb-6" style="height: 800px; max-height: 800px;">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_100px_1fr] grid-rows-2 gap-4 mb-6" style="min-height: 700px;">
             <!-- Top Left: Python Code -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" style="height: 400px;">
-                <div class="bg-gradient-to-r from-primary to-primary-light text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[350px]">
+                <div class="bg-gradient-to-r from-primary to-primary-light text-white px-4 py-3 flex justify-between items-center">
                     <span class="font-bold text-lg">Python</span>
                     <button class="copy-button python-copy-button bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded transition-all text-sm">📋</button>
                 </div>
-                <div id="pythonEditor" class="flex-1 overflow-hidden"></div>
+                <div id="pythonEditor" class="flex-1"></div>
             </div>
 
             <!-- Conversion Controls -->
-            <div class="flex flex-row lg:flex-col justify-center items-center gap-3 lg:gap-4 py-4" style="grid-row: 1 / 3;">
+            <div class="flex flex-row lg:flex-col justify-center items-center gap-3 lg:gap-4 py-4">
                 <button class="convert-button-right bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white w-12 h-12 rounded-full font-bold text-xl shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200" onclick="convertPythonToCommon()">→</button>
                 <button class="convert-button-left bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white w-12 h-12 rounded-full font-bold text-xl shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200" onclick="convertCommonToPython()">←</button>
                 <button class="run-button bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">実行</button>
@@ -92,25 +92,25 @@
             </div>
 
             <!-- Top Right: Common Test Notation -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" style="height: 400px;">
-                <div class="bg-gradient-to-r from-primary to-primary-light text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[350px]">
+                <div class="bg-gradient-to-r from-primary to-primary-light text-white px-4 py-3 flex justify-between items-center">
                     <span class="font-bold text-lg">共通テスト用プログラム表記</span>
                     <button class="copy-button common-copy-button bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded transition-all text-sm">📋</button>
                 </div>
-                <div id="commonTestEditor" class="flex-1 overflow-hidden"></div>
+                <div id="commonTestEditor" class="flex-1"></div>
             </div>
 
             <!-- Bottom Left: Flowchart -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" style="height: 380px;">
-                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[350px]">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3">
                     <span class="font-bold text-lg">フローチャート</span>
                 </div>
                 <div id="flowchart" class="flex-1 overflow-auto bg-gray-50 p-3"></div>
             </div>
 
             <!-- Bottom Right: Execution Output -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col" style="height: 380px;">
-                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[350px] lg:col-start-3">
+                <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-3 flex justify-between items-center">
                     <span class="font-bold text-lg">実行結果</span>
                     <button class="copy-button bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded transition-all text-sm" onclick="clearOutput()">クリア</button>
                 </div>
@@ -124,13 +124,13 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-[100px_1fr_60px_100px] gap-3 items-center bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <button class="url-generate-button share-generate-button bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-2 rounded-lg text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">URL生成</button>
-                    <input type="text" id="shareUrl" readonly placeholder="easyCode用URLをここに表示します" class="min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                    <input type="text" id="shareUrl" readonly placeholder="easyCode用URLをここに表示します" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
                     <a href="#" id="shareUrlLink" target="_blank" class="hidden text-primary hover:text-primary-dark text-xs text-center no-underline">🔗開く</a>
                     <button class="url-copy-button share-copy-button bg-primary hover:bg-primary-dark text-white font-semibold px-3 py-2 rounded-lg text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">📋 コピー</button>
                 </div>
                 <div class="grid grid-cols-[100px_1fr_60px_100px] gap-3 items-center bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <button class="url-generate-button python-tutor-generate-button bg-green-500 hover:bg-green-600 text-white font-semibold px-3 py-2 rounded-lg text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">PythonTutor</button>
-                    <input type="text" id="pythonTutorUrl" readonly placeholder="Python Tutor用URLをここに表示します" class="min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                    <input type="text" id="pythonTutorUrl" readonly placeholder="Python Tutor用URLをここに表示します" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
                     <a href="#" id="pythonTutorLink" target="_blank" class="hidden text-primary hover:text-primary-dark text-xs text-center no-underline">🔗開く</a>
                     <button class="url-copy-button python-tutor-copy-button bg-primary hover:bg-primary-dark text-white font-semibold px-3 py-2 rounded-lg text-xs transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">📋 コピー</button>
                 </div>
