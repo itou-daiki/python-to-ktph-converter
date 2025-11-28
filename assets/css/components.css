@@ -1,45 +1,171 @@
-/* Component Styles - Tailwind Compatible */
+/* Button Styles */
+button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
 
-/* Button base styles are mostly handled by Tailwind, keeping only essential overrides */
+button:hover {
+    background: #2980b9;
+}
 
-/* Panel styles for backwards compatibility with existing layout.css */
+button:active {
+    transform: translateY(1px);
+}
+
+.convert-button {
+    background: #27ae60;
+}
+
+.convert-button:hover {
+    background: #229954;
+}
+
+.run-button {
+    background: #e74c3c;
+}
+
+.run-button:hover {
+    background: #c0392b;
+}
+
+.copy-button {
+    background: #95a5a6;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.copy-button:hover {
+    background: #7f8c8d;
+}
+
+
+/* Unified panel styling for all areas */
 .panel {
-    /* Most styling is now in Tailwind classes in HTML */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 350px;
+    height: 100%;
+}
+
+/* Special handling for bottom panels (flowchart and output) */
+.bottom-left .panel,
+.bottom-right .panel {
+    overflow: hidden;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 350px;
+}
+
+/* Ensure all content areas have consistent sizing */
+.bottom-left .panel #flowchart,
+.bottom-right .panel #output {
+    margin-top: 8px;
 }
 
 .panel-header {
-    /* Most styling is now in Tailwind classes in HTML */
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #2c3e50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* CodeMirror integration with panels */
-#pythonEditor .CodeMirror,
-#commonTestEditor .CodeMirror {
-    border: 1px solid #ddd;
-    border-radius: 0.5rem;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 14px;
-}
-
-#pythonEditor .CodeMirror:focus-within,
-#commonTestEditor .CodeMirror:focus-within {
-    border-color: #1e90ff;
-    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
-}
-
-/* Share section specific styles */
+/* Share Section */
 .share-section {
-    /* Mostly handled by Tailwind now */
+    margin-top: 40px;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    clear: both;
+    position: relative;
+    z-index: 1;
 }
 
-/* Backward compatibility for any custom components */
-.copy-button {
-    cursor: pointer;
-    user-select: none;
+.url-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 60px 70px;
+    gap: 10px;
+    align-items: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e1e8ed;
 }
 
-.url-generate-button,
-.url-copy-button {
+.url-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+    text-align: center;
+}
+
+.url-generate-button {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-weight: 600;
     cursor: pointer;
-    user-select: none;
+    transition: all 0.3s ease;
     white-space: nowrap;
+    width: 100px;
+    height: 32px;
 }
+
+.url-generate-button:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.url-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+    height: 32px;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.url-copy-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    width: 70px;
+    height: 32px;
+}
+
+.url-copy-button:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+

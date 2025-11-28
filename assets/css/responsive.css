@@ -1,88 +1,209 @@
-/* Responsive Design - Tailwind Compatible */
-
-/* Most responsive styling is now handled by Tailwind utility classes in HTML */
-/* Keeping only essential overrides for specific components */
-
-@media (max-width: 1024px) {
-    /* Main content grid adjustments for tablet */
-    .main-content {
-        min-height: auto !important;
-    }
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
-    /* CodeMirror mobile adjustments */
+    .main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto 1fr 1fr 1fr;
+        height: auto;
+        gap: 15px;
+    }
+    
+    .top-left { 
+        grid-column: 1; 
+        grid-row: 1; 
+    }
+    
+    .conversion-controls {
+        grid-column: 1; 
+        grid-row: 2;
+        flex-direction: row;
+        justify-content: center;
+        padding: 15px;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+    
+    .top-right { 
+        grid-column: 1; 
+        grid-row: 3; 
+    }
+    
+    .bottom-left { 
+        grid-column: 1; 
+        grid-row: 4; 
+    }
+    
+    .bottom-right { 
+        grid-column: 1; 
+        grid-row: 5; 
+    }
+    
+    .panel {
+        padding: 12px;
+        min-height: 350px;
+    }
+
+    /* Bottom panels specific adjustments for mobile */
+    .bottom-left .panel,
+    .bottom-right .panel {
+        padding: 12px;
+        min-height: 350px;
+    }
+
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
+        min-height: 0;
+    }
+
+    #flowchart,
+    #output {
+        min-height: 0;
+        padding-bottom: 16px;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .direction-selector,
+    .sample-selector {
+        margin-bottom: 10px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sample-selector select {
+        min-width: 120px;
+        max-width: 200px;
+    }
+
+    .sample-selector label {
         font-size: 13px;
     }
 
-    /* Conversion controls mobile layout */
-    .conversion-controls {
-        flex-direction: row !important;
-        flex-wrap: wrap;
+    .load-sample-button {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 
-    /* URL row mobile adjustments */
+    h1 {
+        font-size: 20px;
+    }
+
+    /* URL sharing responsive design */
     .url-row {
-        grid-template-columns: 1fr !important;
-        gap: 0.5rem;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .url-label {
+        font-size: 14px;
+        margin-bottom: 5px;
     }
 
     .url-generate-button,
     .url-copy-button {
         width: 100%;
+        min-width: auto;
     }
 }
 
 @media (max-width: 480px) {
-    /* Container adjustments for small mobile */
     .container {
-        padding: 0.5rem !important;
+        padding: 10px;
     }
 
-    /* Button size adjustments */
-    .convert-button-right,
-    .convert-button-left {
-        width: 2.5rem !important;
-        height: 2.5rem !important;
-        font-size: 1rem !important;
+    .panel {
+        padding: 12px;
+        min-height: 350px;
     }
-
-    /* CodeMirror small mobile adjustments */
+    
     #pythonEditor .CodeMirror,
     #commonTestEditor .CodeMirror {
-        font-size: 12px;
+        min-height: 0;
     }
 
-    /* Input dialog mobile */
+    #flowchart,
+    #output {
+        min-height: 0;
+        padding: 10px;
+        padding-bottom: 16px;
+    }
+
+    button {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .copy-button {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .convert-button-right,
+    .convert-button-left {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .conversion-controls {
+        gap: 12px;
+        padding: 10px;
+        flex-wrap: wrap;
+    }
+
+    .conversion-controls .run-button,
+    .conversion-controls .clear-button {
+        width: 55px;
+        height: 28px;
+        font-size: 11px;
+    }
+
     .input-dialog {
-        width: 90% !important;
+        width: 90%;
         max-width: 400px;
-        padding: 1rem !important;
     }
 
     .input-dialog input {
         width: 100%;
     }
-}
 
-/* Print styles */
-@media print {
-    .conversion-controls,
-    .controls,
-    button,
-    .copy-button {
-        display: none !important;
+    .sample-selector {
+        flex-direction: column;
+        gap: 8px;
     }
 
-    .main-content {
-        display: block !important;
-        height: auto !important;
+    .sample-selector select {
+        width: 100%;
+        min-width: auto;
     }
 
-    .panel {
-        page-break-inside: avoid;
-        margin-bottom: 1rem;
+    /* URL sharing mobile responsive design */
+    .url-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 15px;
+    }
+
+    .url-generate-button {
+        font-size: 10px;
+        padding: 6px 8px;
+        height: 28px;
+        min-width: auto;
+    }
+
+    .url-copy-button {
+        font-size: 10px;
+        padding: 6px 8px;
+        height: 28px;
+        min-width: auto;
+    }
+
+    .url-row input {
+        height: 28px;
+        font-size: 12px;
     }
 }
