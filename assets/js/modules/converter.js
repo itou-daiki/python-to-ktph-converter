@@ -368,7 +368,16 @@ class Converter {
             const capitalizedName = arrayName[0].toUpperCase() + arrayName.slice(1);
             line = line.replace(fillMatch[0], capitalizedName + 'のすべての値を' + value + 'にする');
         }
-        
+
+        // Array append method (e.g., array.append(value) -> array配列に要素を追加する(value))
+        const appendMatch = line.match(/(\w+)\.append\(([^)]+)\)/);
+        if (appendMatch) {
+            const arrayName = appendMatch[1];
+            const value = appendMatch[2];
+            const capitalizedName = arrayName[0].toUpperCase() + arrayName.slice(1);
+            line = line.replace(appendMatch[0], capitalizedName + '配列に要素を追加する(' + value + ')');
+        }
+
         return line;
     }
 
@@ -742,7 +751,16 @@ class Converter {
             const value = arrayFillMatch[2];
             return `${arrayName} = [${value}] * len(${arrayName})`;
         }
-        
+
+        // Array append method (e.g., array配列に要素を追加する(value) -> array.append(value))
+        const appendMatch = line.match(/(\w+)配列に要素を追加する\(([^)]+)\)/);
+        if (appendMatch) {
+            const arrayName = appendMatch[1];
+            const value = appendMatch[2];
+            const lowercaseName = arrayName[0].toLowerCase() + arrayName.slice(1);
+            return `${lowercaseName}.append(${value})`;
+        }
+
         // Handle multiple assignments in one line (Common Test: x = 1, y = 2 -> Python: x = 1; y = 2)
         // Only convert comma-separated assignments, not function parameters
         if (line.includes(',') && line.includes('=') && !line.startsWith('表示する(') && !line.includes('(')) {
