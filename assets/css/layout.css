@@ -181,6 +181,17 @@
     min-height: inherit !important;
 }
 
+#pythonEditor .python-indent-guide {
+    border-left: 1px solid rgba(176, 190, 197, 0.42);
+    box-sizing: border-box;
+    margin-left: -1px;
+}
+
+#pythonEditor .python-indent-guide-active {
+    border-left-color: rgba(100, 181, 246, 0.95);
+    background: rgba(100, 181, 246, 0.08);
+}
+
 .CodeMirror-vscrollbar,
 .CodeMirror-hscrollbar {
     outline: none;
