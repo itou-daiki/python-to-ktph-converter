@@ -4,6 +4,8 @@
 class Converter {
     constructor() {
         this.indentStack = [0];
+        this.pythonToCommonArrayNames = new Map();
+        this.commonToPythonArrayNames = new Map();
         console.log('Converter initialized');
     }
 
@@ -38,6 +40,7 @@ class Converter {
         const lines = pythonCode.split('\n');
         const result = [];
         this.indentStack = [0];
+        this.pythonToCommonArrayNames = this.collectPythonArrayNames(lines);
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -121,6 +124,108 @@ class Converter {
     }
 
     /**
+     * Collect Python list variables that should be represented as arrays in
+     * Common Test notation. Common Test convention uses capitalized array names.
+     */
+    collectPythonArrayNames(lines) {
+        const names = new Map();
+        for (const line of lines) {
+            const match = line.trim().match(/^([A-Za-z_]\w*)\s*=\s*\[/);
+            if (!match) continue;
+
+            const pythonName = match[1];
+            const commonName = pythonName[0].toUpperCase() + pythonName.slice(1);
+            names.set(pythonName, commonName);
+        }
+        return names;
+    }
+
+    /**
+     * Collect Common Test array variables that should be normalized back to
+     * Python's lowercase style.
+     */
+    collectCommonArrayNames(lines) {
+        const names = new Map();
+        for (const line of lines) {
+            const trimmed = line.trim().replace(/^[｜⎿\s]+/, '');
+            const match = trimmed.match(/^([A-Z]\w*)\s*=\s*\[/);
+            if (!match) continue;
+
+            const commonName = match[1];
+            const pythonName = commonName[0].toLowerCase() + commonName.slice(1);
+            names.set(commonName, pythonName);
+        }
+        return names;
+    }
+
+    /**
+     * Replace identifiers outside string literals.
+     */
+    replaceIdentifiersOutsideStrings(text, replacements) {
+        if (!replacements || replacements.size === 0) {
+            return text;
+        }
+
+        const replaceSegment = (segment) => {
+            let result = segment;
+            const entries = Array.from(replacements.entries()).sort((a, b) => b[0].length - a[0].length);
+            for (const [from, to] of entries) {
+                const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                result = result.replace(new RegExp(`\\b${escaped}\\b`, 'g'), to);
+            }
+            return result;
+        };
+
+        let result = '';
+        let segment = '';
+        let quote = null;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const previous = text[i - 1];
+
+            if ((char === '"' || char === "'") && previous !== '\\') {
+                if (!quote) {
+                    result += replaceSegment(segment);
+                    segment = '';
+                    quote = char;
+                    result += char;
+                    continue;
+                }
+
+                if (quote === char) {
+                    quote = null;
+                    result += char;
+                    continue;
+                }
+            }
+
+            if (quote) {
+                result += char;
+            } else {
+                segment += char;
+            }
+        }
+
+        result += replaceSegment(segment);
+        return result;
+    }
+
+    convertPythonExpression(text) {
+        return this.replaceIdentifiersOutsideStrings(
+            this.replaceOperators(text),
+            this.pythonToCommonArrayNames
+        );
+    }
+
+    convertCommonExpression(text) {
+        return this.replaceIdentifiersOutsideStrings(
+            this.replaceOperatorsReverse(text),
+            this.commonToPythonArrayNames
+        );
+    }
+
+    /**
      * Convert individual line from Python to Common Test
      */
     /**
@@ -174,7 +279,7 @@ class Converter {
         
         // Return statement (return value -> value を返す)
         if (line.startsWith('return ')) {
-            const value = line.substring(7).trim();
+            const value = this.convertPythonExpression(line.substring(7).trim());
             if (value) {
                 return value + ' を返す';
             } else {
@@ -202,20 +307,20 @@ class Converter {
             }
 
             // Replace operators and functions in content (str() -> 文字列())
-            content = this.replaceOperators(content);
+            content = this.convertPythonExpression(content);
 
             return '表示する(' + content + ')';
         }
         
         // if statement
         if (line.startsWith('if ')) {
-            const condition = line.substring(3, line.length - 1);
+            const condition = this.convertPythonExpression(line.substring(3, line.length - 1));
             return 'もし ' + condition + ' ならば:';
         }
         
         // elif statement
         if (line.startsWith('elif ')) {
-            const condition = line.substring(5, line.length - 1);
+            const condition = this.convertPythonExpression(line.substring(5, line.length - 1));
             return 'そうでなくもし ' + condition + ' ならば:';
         }
         
@@ -226,7 +331,7 @@ class Converter {
         
         // while loop
         if (line.startsWith('while ')) {
-            const condition = line.substring(6, line.length - 1);
+            const condition = this.convertPythonExpression(line.substring(6, line.length - 1));
             return condition + ' の間繰り返す:';
         }
         
@@ -251,7 +356,7 @@ class Converter {
             const match = line.match(/for\s+(\w+)\s+in\s+(\w+):/);
             if (match) {
                 const variable = match[1];
-                const collection = match[2];
+                const collection = this.convertPythonExpression(match[2]);
                 return `${collection}の各要素${variable}について繰り返す:`;
             }
         }
@@ -263,7 +368,7 @@ class Converter {
                 const variable = match[1];
                 // Apply operator replacement to parameters first
                 const rawParams = match[2];
-                const convertedParams = this.replaceOperators(rawParams);
+                const convertedParams = this.convertPythonExpression(rawParams);
                 const params = convertedParams.split(',').map(p => p.trim());
                 
                 if (params.length === 1) {
@@ -350,7 +455,7 @@ class Converter {
         }
         
         // Replace operators and functions
-        line = this.replaceOperators(line);
+        line = this.convertPythonExpression(line);
         
         // Array names (capitalize first letter if it's a list assignment)
         if (line.includes(' = [')) {
@@ -363,19 +468,17 @@ class Converter {
         // Array initialization patterns (e.g., array.fill(0))
         const fillMatch = line.match(/(\w+)\.fill\(([^)]+)\)/);
         if (fillMatch) {
-            const arrayName = fillMatch[1];
+            const arrayName = this.convertPythonExpression(fillMatch[1]);
             const value = fillMatch[2];
-            const capitalizedName = arrayName[0].toUpperCase() + arrayName.slice(1);
-            line = line.replace(fillMatch[0], capitalizedName + 'のすべての値を' + value + 'にする');
+            line = line.replace(fillMatch[0], arrayName + 'のすべての値を' + value + 'にする');
         }
 
         // Array append method (e.g., array.append(value) -> array配列に要素を追加する(value))
         const appendMatch = line.match(/(\w+)\.append\(([^)]+)\)/);
         if (appendMatch) {
-            const arrayName = appendMatch[1];
-            const value = appendMatch[2];
-            const capitalizedName = arrayName[0].toUpperCase() + arrayName.slice(1);
-            line = line.replace(appendMatch[0], capitalizedName + '配列に要素を追加する(' + value + ')');
+            const arrayName = this.convertPythonExpression(appendMatch[1]);
+            const value = this.convertPythonExpression(appendMatch[2]);
+            line = line.replace(appendMatch[0], arrayName + '配列に要素を追加する(' + value + ')');
         }
 
         return line;
@@ -388,6 +491,7 @@ class Converter {
         const lines = commonTestCode.split('\n');
         const result = [];
         let indentLevel = 0;
+        this.commonToPythonArrayNames = this.collectCommonArrayNames(lines);
         
         // Check if random function is used in the code
         const needsRandomImport = commonTestCode.includes('乱数()');
@@ -419,7 +523,10 @@ class Converter {
             }
             
             // Convert the line
-            const converted = this.convertLineToPython(trimmed);
+            const converted = this.replaceIdentifiersOutsideStrings(
+                this.convertLineToPython(trimmed),
+                this.commonToPythonArrayNames
+            );
             
             // Add indentation
             result.push('    '.repeat(indentLevel) + converted);
@@ -575,7 +682,7 @@ class Converter {
             let content = line.substring(5, line.length - 1);
 
             // Replace functions and operators back to Python (including 文字列() -> str())
-            content = this.replaceOperatorsReverse(content);
+            content = this.convertCommonExpression(content);
 
             // Handle array indexing patterns: fix [arrayName][index] to [arrayName[index]]
             content = content.replace(/(\w+)\[(\w+)\]/g, '$1[$2]');
@@ -635,14 +742,14 @@ class Converter {
         // If statement
         if (line.startsWith('もし ') && line.endsWith(' ならば:')) {
             const condition = line.substring(3, line.length - 5);
-            const convertedCondition = this.replaceOperatorsReverse(condition);
+            const convertedCondition = this.convertCommonExpression(condition);
             return 'if ' + convertedCondition + ':';
         }
 
         // Elif statement
         if (line.startsWith('そうでなくもし ') && line.endsWith(' ならば:')) {
             const condition = line.substring(8, line.length - 5);
-            const convertedCondition = this.replaceOperatorsReverse(condition);
+            const convertedCondition = this.convertCommonExpression(condition);
             return 'elif ' + convertedCondition + ':';
         }
         
@@ -654,7 +761,7 @@ class Converter {
         // While loop
         if (line.endsWith(' の間繰り返す:')) {
             const condition = line.substring(0, line.length - 8);
-            const convertedCondition = this.replaceOperatorsReverse(condition);
+            const convertedCondition = this.convertCommonExpression(condition);
             return 'while ' + convertedCondition + ':';
         }
         
@@ -697,7 +804,7 @@ class Converter {
                     // Extract the variable from 要素数(variable)-1
                     const varMatch = endExpression.match(/要素数\(([^)]+)\)-1/);
                     if (varMatch) {
-                        const arrayVar = varMatch[1];
+                        const arrayVar = this.replaceIdentifiersOutsideStrings(varMatch[1], this.commonToPythonArrayNames);
                         return `for ${variable} in range(len(${arrayVar})):`;
                     }
                 }
@@ -772,7 +879,7 @@ class Converter {
         }
         
         // Replace functions and operators back to Python
-        line = this.replaceOperatorsReverse(line);
+        line = this.convertCommonExpression(line);
         
         // Lowercase array names - handle all occurrences, not just assignments
         const arrayMatch = line.match(/^([A-Z]\w*)\s*=/);
