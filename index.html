@@ -12,14 +12,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/components.css?v=20260708-editor">
-    <link rel="stylesheet" href="assets/css/layout.css?v=20260708-editor">
-    <link rel="stylesheet" href="assets/css/editor.css?v=20260708-editor">
-    <link rel="stylesheet" href="assets/css/modal.css">
-    <link rel="stylesheet" href="assets/css/responsive.css">
-    <link rel="stylesheet" href="assets/css/commontest-highlight.css">
-    <link rel="stylesheet" href="assets/css/info-sections.css">
+    <link rel="stylesheet" href="assets/css/main.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/components.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/layout.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/editor.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/modal.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/responsive.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/commontest-highlight.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/info-sections.css?v=20260708-audit">
     
     <!-- External JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -34,7 +34,7 @@
 <body>
     <!-- Header -->
     <header>
-        <h1><a href="https://itou-daiki.github.io/python-to-ktph-converter/" style="color: inherit; text-decoration: none; font-size: 20px; text-align: center;">Python ⇄ 共通テスト用プログラム表記 変換ツール</a></h1>
+        <h1><a class="header-title-link" href="https://itou-daiki.github.io/python-to-ktph-converter/">Python ⇄ 共通テスト用プログラム表記 変換ツール</a></h1>
         <p>Created by Dit-Lab.(Daiki ITO)・Shinichi UEGAKI・Takumi MATSUSHIMA・Yuki AKIYOSHI</p>
     </header>
 
@@ -53,7 +53,7 @@
                     <option value="fibonacci">フィボナッチ数列</option>
                     <option value="prime-check">素数判定</option>
                 </select>
-                <button class="load-sample-button">読込</button>
+                <button class="load-sample-button" type="button">読込</button>
             </div>
         </div>
 
@@ -73,10 +73,10 @@
             
             <!-- Conversion Controls -->
             <div class="conversion-controls">
-                <button class="convert-button-right" onclick="convertPythonToCommon()">→</button>
-                <button class="convert-button-left" onclick="convertCommonToPython()">←</button>
-                <button class="run-button">実行</button>
-                <button class="clear-button">クリア</button>
+                <button class="convert-button-right" type="button" title="Pythonから共通テスト用プログラム表記へ変換">→</button>
+                <button class="convert-button-left" type="button" title="共通テスト用プログラム表記からPythonへ変換">←</button>
+                <button class="run-button" type="button">実行</button>
+                <button class="clear-button" type="button">クリア</button>
             </div>
             
             <!-- Top Right: Common Test Notation -->
@@ -103,7 +103,7 @@
             <div class="panel bottom-right">
                 <div class="panel-header">
                     <span>実行結果</span>
-                    <button class="copy-button" onclick="clearOutput()">クリア</button>
+                    <button class="copy-button output-clear-button" type="button">クリア</button>
                 </div>
                 <div id="output"></div>
             </div>
@@ -113,16 +113,16 @@
         <div class="share-section">
             <div class="panel-header">共有URL</div>
             <div class="url-row">
-                <button class="url-generate-button share-generate-button">URL生成</button>
+                <button class="url-generate-button share-generate-button" type="button">URL生成</button>
                 <input type="text" id="shareUrl" readonly placeholder="easyCode用URLをここに表示します">
-                <a href="#" id="shareUrlLink" target="_blank" style="display: none; width: 60px; color: #3498db; text-decoration: none; font-size: 10px; text-align: center;">🔗開く</a>
-                <button class="url-copy-button share-copy-button">📋 コピー</button>
+                <a class="url-open-link" href="#" id="shareUrlLink" target="_blank" hidden>🔗開く</a>
+                <button class="url-copy-button share-copy-button" type="button">📋 コピー</button>
             </div>
             <div class="url-row">
-                <button class="url-generate-button python-tutor-generate-button">PythonTutor</button>
+                <button class="url-generate-button python-tutor-generate-button" type="button">PythonTutor</button>
                 <input type="text" id="pythonTutorUrl" readonly placeholder="Python Tutor用URLをここに表示します">
-                <a href="#" id="pythonTutorLink" target="_blank" style="display: none; width: 60px; color: #3498db; text-decoration: none; font-size: 10px; text-align: center;">🔗開く</a>
-                <button class="url-copy-button python-tutor-copy-button">📋 コピー</button>
+                <a class="url-open-link" href="#" id="pythonTutorLink" target="_blank" hidden>🔗開く</a>
+                <button class="url-copy-button python-tutor-copy-button" type="button">📋 コピー</button>
             </div>
         </div>
 
@@ -238,15 +238,15 @@
 
     <!-- Modals and Overlays -->
     <!-- Input Dialog Overlay -->
-    <div class="overlay" id="overlay" onclick="closeInputDialog()"></div>
+    <div class="overlay" id="overlay"></div>
     
     <!-- Input Dialog -->
     <div class="input-dialog" id="inputDialog">
         <h3>入力</h3>
         <input type="text" id="userInput" placeholder="値を入力してください">
-        <div style="margin-top: 10px; text-align: right;">
-            <button onclick="submitInput()">OK</button>
-            <button onclick="closeInputDialog()">キャンセル</button>
+        <div class="input-dialog-actions">
+            <button class="input-submit-button" type="button">OK</button>
+            <button class="input-cancel-button" type="button">キャンセル</button>
         </div>
     </div>
 
@@ -286,11 +286,11 @@
     </footer>
 
     <!-- JavaScript Modules -->
-    <script src="assets/js/modules/commontest-mode.js?v=20260708"></script>
-    <script src="assets/js/modules/converter.js?v=20260708"></script>
-    <script src="assets/js/modules/executor.js?v=20260708"></script>
-    <script src="assets/js/modules/flowchart.js?v=20260708"></script>
-    <script src="assets/js/modules/ui.js?v=20260708-editor"></script>
-    <script src="assets/js/app.js?v=20260708"></script>
+    <script src="assets/js/modules/commontest-mode.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/converter.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/executor.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/flowchart.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/ui.js?v=20260708-audit"></script>
+    <script src="assets/js/app.js?v=20260708-audit"></script>
 </body>
 </html>

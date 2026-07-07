@@ -630,13 +630,25 @@ class FlowchartGenerator {
             console.log('Flowchart rendered successfully');
         } catch (error) {
             console.error('Error rendering flowchart:', error);
-            flowchartDiv.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: #666;">
-                    <p>フローチャート生成エラー:</p>
-                    <p style="font-size: 12px; margin-top: 10px;">${error.message}</p>
-                    <p style="font-size: 10px; margin-top: 10px;">コードを確認してください</p>
-                </div>
-            `;
+            flowchartDiv.innerHTML = '';
+
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'flowchart-error';
+
+            const title = document.createElement('p');
+            title.className = 'flowchart-error-title';
+            title.textContent = 'フローチャート生成エラー:';
+
+            const message = document.createElement('p');
+            message.className = 'flowchart-error-message';
+            message.textContent = error.message;
+
+            const hint = document.createElement('p');
+            hint.className = 'flowchart-error-hint';
+            hint.textContent = 'コードを確認してください';
+
+            errorContainer.append(title, message, hint);
+            flowchartDiv.appendChild(errorContainer);
         }
     }
 

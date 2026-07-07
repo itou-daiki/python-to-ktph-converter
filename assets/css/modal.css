@@ -31,6 +31,11 @@
     border-radius: 4px;
 }
 
+.input-dialog-actions {
+    margin-top: 10px;
+    text-align: right;
+}
+
 /* Loading Overlay */
 .loading-overlay {
     position: fixed;

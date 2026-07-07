@@ -786,47 +786,23 @@ class UIManager {
             });
         }
 
-        // Convert buttons (Python to Common and Common to Python)
-        const convertRightBtn = document.querySelector('.convert-button-right');
-        const convertLeftBtn = document.querySelector('.convert-button-left');
-        
-        // Convert buttons use onclick attributes in HTML, no event listeners needed
-
-        // Run button
-        const runBtn = document.querySelector('.run-button');
-        if (runBtn) {
-            // Remove any existing event listeners to prevent duplicates
-            runBtn.onclick = null;
-            runBtn.replaceWith(runBtn.cloneNode(true));
-            // Re-get the button reference after cloning
-            const newRunBtn = document.querySelector('.run-button');
-            newRunBtn.addEventListener('click', async () => {
-                await window.runCode();
-            });
-        }
-
-        // Clear button
-        const clearBtn = document.querySelector('.clear-button');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                this.clearAll();
-            });
-        }
+        this.bindClick('.convert-button-right', () => window.convertPythonToCommon());
+        this.bindClick('.convert-button-left', () => window.convertCommonToPython());
+        this.bindClick('.run-button', () => window.runCode());
+        this.bindClick('.clear-button', () => this.clearAll());
+        this.bindClick('.output-clear-button', () => this.clearOutput());
 
         // Load sample button
-        const loadSampleBtn = document.querySelector('.load-sample-button');
-        if (loadSampleBtn) {
-            loadSampleBtn.addEventListener('click', () => {
-                const sampleSelect = document.getElementById('sampleSelect');
-                const selectedSample = sampleSelect.value;
-                
-                if (selectedSample) {
-                    this.loadSampleCode(selectedSample);
-                } else {
-                    alert('サンプルを選択してください');
-                }
-            });
-        }
+        this.bindClick('.load-sample-button', () => {
+            const sampleSelect = document.getElementById('sampleSelect');
+            const selectedSample = sampleSelect ? sampleSelect.value : '';
+
+            if (selectedSample) {
+                this.loadSampleCode(selectedSample);
+            } else {
+                alert('サンプルを選択してください');
+            }
+        });
 
         // Sample selector change event
         const sampleSelect = document.getElementById('sampleSelect');
@@ -840,84 +816,51 @@ class UIManager {
         }
 
         // Share generate button
-        const shareGenerateBtn = document.querySelector('.share-generate-button');
-        if (shareGenerateBtn) {
-            shareGenerateBtn.addEventListener('click', () => {
-                this.shareCode();
-            });
-        }
-
-        // Share copy button
-        const shareCopyBtn = document.querySelector('.share-copy-button');
-        if (shareCopyBtn) {
-            shareCopyBtn.addEventListener('click', async (event) => {
-                await this.copyShareUrl(event.target);
-            });
-        }
-
-        // Python Tutor generate button
-        const pythonTutorGenerateBtn = document.querySelector('.python-tutor-generate-button');
-        if (pythonTutorGenerateBtn) {
-            pythonTutorGenerateBtn.addEventListener('click', () => {
-                this.generatePythonTutorUrl();
-            });
-        }
-
-        // Python Tutor copy button
-        const pythonTutorCopyBtn = document.querySelector('.python-tutor-copy-button');
-        if (pythonTutorCopyBtn) {
-            pythonTutorCopyBtn.addEventListener('click', async (event) => {
-                await this.copyPythonTutorUrl(event.target);
-            });
-        }
-
-        // Python copy button
-        const pythonCopyBtn = document.querySelector('.python-copy-button');
-        if (pythonCopyBtn) {
-            pythonCopyBtn.addEventListener('click', async (event) => {
-                await this.copyToClipboard('pythonCode', event.target);
-            });
-        }
-
-        // Common test copy button
-        const commonCopyBtn = document.querySelector('.common-copy-button');
-        if (commonCopyBtn) {
-            commonCopyBtn.addEventListener('click', async (event) => {
-                await this.copyToClipboard('commonTestCode', event.target);
-            });
-        }
-
-        // Format buttons
-        const pythonFormatBtn = document.querySelector('.python-format-button');
-        if (pythonFormatBtn) {
-            pythonFormatBtn.addEventListener('click', (event) => {
-                this.formatEditor('python', event.target);
-            });
-        }
-
-        const commonFormatBtn = document.querySelector('.common-format-button');
-        if (commonFormatBtn) {
-            commonFormatBtn.addEventListener('click', (event) => {
-                this.formatEditor('commontest', event.target);
-            });
-        }
-
+        this.bindClick('.share-generate-button', () => this.shareCode());
+        this.bindClick('.share-copy-button', (event) => this.copyShareUrl(event.currentTarget));
+        this.bindClick('.python-tutor-generate-button', () => this.generatePythonTutorUrl());
+        this.bindClick('.python-tutor-copy-button', (event) => this.copyPythonTutorUrl(event.currentTarget));
+        this.bindClick('.python-copy-button', (event) => this.copyToClipboard('pythonCode', event.currentTarget));
+        this.bindClick('.common-copy-button', (event) => this.copyToClipboard('commonTestCode', event.currentTarget));
+        this.bindClick('.python-format-button', (event) => this.formatEditor('python', event.currentTarget));
+        this.bindClick('.common-format-button', (event) => this.formatEditor('commontest', event.currentTarget));
+        this.bindClick('.input-submit-button', () => window.executor && window.executor.submitInput());
+        this.bindClick('.input-cancel-button', () => window.executor && window.executor.closeInputDialog());
+        this.bindClick('#overlay', () => window.executor && window.executor.closeInputDialog());
 
         // Enter key in input dialog (remove existing listener first to prevent duplicates)
         const userInput = document.getElementById('userInput');
-        userInput.removeEventListener('keypress', this.handleUserInputKeypress);
-        this.handleUserInputKeypress = (e) => {
-            if (e.key === 'Enter') {
-                if (window.executor) {
-                    window.executor.submitInput();
+        if (userInput) {
+            userInput.removeEventListener('keydown', this.handleUserInputKeydown);
+            this.handleUserInputKeydown = (e) => {
+                if (e.key === 'Enter') {
+                    if (window.executor) {
+                        window.executor.submitInput();
+                    }
+                    return;
                 }
-            }
-        };
-        userInput.addEventListener('keypress', this.handleUserInputKeypress);
-        
+                if (e.key === 'Escape') {
+                    if (window.executor) {
+                        window.executor.closeInputDialog();
+                    }
+                }
+            };
+            userInput.addEventListener('keydown', this.handleUserInputKeydown);
+        }
+
         // Hash change event listener for URL sharing
         window.addEventListener('hashchange', () => {
             this.loadFromUrl();
+        });
+    }
+
+    bindClick(selector, handler) {
+        const element = document.querySelector(selector);
+        if (!element) return;
+
+        element.addEventListener('click', async (event) => {
+            event.preventDefault();
+            await handler(event);
         });
     }
 
@@ -927,7 +870,11 @@ class UIManager {
     updatePanelLabels(direction) {
         const leftLabel = document.getElementById('leftPanelLabel');
         const rightLabel = document.getElementById('rightPanelLabel');
-        
+
+        if (!leftLabel || !rightLabel) {
+            return;
+        }
+
         if (direction === 'pythonToCommon') {
             leftLabel.textContent = 'Python';
             rightLabel.textContent = '共通テスト用プログラム表記';
@@ -947,7 +894,7 @@ class UIManager {
         } else if (elementId === 'commonTestCode') {
             text = this.commonTestEditor.getValue();
         }
-        
+
         const copied = await this.writeClipboardText(text);
         this.flashButton(buttonElement, copied ? 'コピー済み!' : 'コピー不可');
     }
@@ -1149,13 +1096,13 @@ class UIManager {
         // Hide the share URL link
         const shareUrlLink = document.getElementById('shareUrlLink');
         if (shareUrlLink) {
-            shareUrlLink.style.display = 'none';
+            shareUrlLink.hidden = true;
         }
         
         // Hide the Python Tutor URL link
         const pythonTutorLink = document.getElementById('pythonTutorLink');
         if (pythonTutorLink) {
-            pythonTutorLink.style.display = 'none';
+            pythonTutorLink.hidden = true;
         }
         
     }
@@ -1637,7 +1584,7 @@ else:
         const shareUrlLink = document.getElementById('shareUrlLink');
         if (shareUrlLink) {
             shareUrlLink.href = url;
-            shareUrlLink.style.display = 'inline'; // Show the link
+            shareUrlLink.hidden = false;
         }
         
         
@@ -1693,7 +1640,7 @@ else:
         const pythonTutorLink = document.getElementById('pythonTutorLink');
         if (pythonTutorLink) {
             pythonTutorLink.href = pythonTutorUrl;
-            pythonTutorLink.style.display = 'inline';
+            pythonTutorLink.hidden = false;
         }
         
         // Check URL length

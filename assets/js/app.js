@@ -74,7 +74,7 @@ window.addEventListener('load', async function() {
 });
 
 /**
- * Global functions for HTML onclick handlers
+ * Global functions kept for simple integrations and backwards compatibility.
  */
 
 // Convert Python to Common Test
@@ -240,9 +240,11 @@ function testApplication() {
         console.log('commonTestEditor:', !!window.uiManager.commonTestEditor);
     }
     
-    const convertBtn = document.querySelector('.convert-button');
+    const convertRightBtn = document.querySelector('.convert-button-right');
+    const convertLeftBtn = document.querySelector('.convert-button-left');
     const runBtn = document.querySelector('.run-button');
-    console.log('Convert button found:', !!convertBtn);
+    console.log('Convert right button found:', !!convertRightBtn);
+    console.log('Convert left button found:', !!convertLeftBtn);
     console.log('Run button found:', !!runBtn);
     
     return 'Test completed - check console for details';

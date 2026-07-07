@@ -118,13 +118,13 @@ builtins.input = custom_input
                 // Replace all occurrences with styled HTML span
                 processedOutput = processedOutput.replace(
                     new RegExp(inputPattern, 'g'),
-                    '<span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
+                    '<span class="execution-input-marker">' + inputPattern + '</span>'
                 );
                 
                 // Also handle cases with spaces
                 processedOutput = processedOutput.replace(
                     new RegExp(' ' + inputPattern, 'g'),
-                    ' <span style="color: #e74c3c; font-weight: bold;">' + inputPattern + '</span>'
+                    ' <span class="execution-input-marker">' + inputPattern + '</span>'
                 );
             }
             
