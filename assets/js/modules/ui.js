@@ -38,6 +38,7 @@ class UIManager {
             theme: 'material-darker',
             lineNumbers: true,
             matchBrackets: true,
+            styleActiveLine: true,
             indentUnit: 4,
             indentWithTabs: false,
             lineWrapping: false,
@@ -214,7 +215,8 @@ class UIManager {
 
         const indentUnit = editor.getOption('indentUnit') || 4;
         const cursor = editor.getCursor();
-        const activeIndentDepth = this.getPythonLineIndentDepth(editor, cursor.line, indentUnit);
+        const activeIndentDepth = this.getPythonActiveIndentDepth(editor, cursor.line, indentUnit);
+        const activeIndentScope = this.getPythonActiveIndentScope(editor, cursor.line, activeIndentDepth, indentUnit);
         const viewport = editor.getViewport ? editor.getViewport() : {
             from: editor.firstLine(),
             to: editor.lastLine() + 1
@@ -231,54 +233,99 @@ class UIManager {
                 const leadingWhitespace = line.match(/^[\t ]*/)[0];
                 if (!leadingWhitespace) continue;
 
-                const guideColumns = this.getPythonIndentGuideColumns(leadingWhitespace, indentUnit);
-                guideColumns.forEach((columnInfo) => {
-                    const isActive = columnInfo.depth <= activeIndentDepth;
-                    const cssClass = isActive
-                        ? 'python-indent-guide python-indent-guide-active'
-                        : 'python-indent-guide';
-                    const mark = editor.markText(
-                        {line: lineNo, ch: columnInfo.ch},
-                        {line: lineNo, ch: columnInfo.ch + 1},
-                        {
-                            className: cssClass,
-                            inclusiveLeft: false,
-                            inclusiveRight: false,
-                            clearWhenEmpty: true
-                        }
-                    );
-                    this.pythonIndentGuideMarks.push(mark);
-                });
+                const indentInfo = this.getPythonLineIndentInfo(editor, lineNo, indentUnit);
+                const isActiveScope = activeIndentScope
+                    && lineNo >= activeIndentScope.start
+                    && lineNo <= activeIndentScope.end
+                    && indentInfo.depth >= activeIndentDepth;
+                const classNames = ['python-leading-indent'];
+
+                if (isActiveScope) {
+                    classNames.push('python-leading-indent-active');
+                }
+                if (indentInfo.columns % indentUnit !== 0) {
+                    classNames.push('python-leading-indent-partial');
+                }
+
+                const mark = editor.markText(
+                    {line: lineNo, ch: 0},
+                    {line: lineNo, ch: leadingWhitespace.length},
+                    {
+                        className: classNames.join(' '),
+                        inclusiveLeft: false,
+                        inclusiveRight: false,
+                        clearWhenEmpty: true
+                    }
+                );
+                this.pythonIndentGuideMarks.push(mark);
             }
         });
     }
 
-    getPythonLineIndentDepth(editor, lineNo, indentUnit) {
+    getPythonActiveIndentDepth(editor, lineNo, indentUnit) {
+        const indentInfo = this.getPythonLineIndentInfo(editor, lineNo, indentUnit);
+        const line = editor.getLine(lineNo) || '';
+
+        if (indentInfo.depth > 0) {
+            return indentInfo.depth;
+        }
+
+        return this.isPythonBlockHeader(line.trim()) ? 1 : 0;
+    }
+
+    getPythonActiveIndentScope(editor, cursorLine, activeIndentDepth, indentUnit) {
+        if (!activeIndentDepth) return null;
+
+        let start = cursorLine;
+        let end = cursorLine;
+
+        while (start > editor.firstLine()) {
+            const previousLineNo = start - 1;
+            const previousLine = editor.getLine(previousLineNo) || '';
+            const previousTrimmed = previousLine.trim();
+            const previousIndentInfo = this.getPythonLineIndentInfo(editor, previousLineNo, indentUnit);
+
+            if (!previousTrimmed
+                || previousIndentInfo.depth >= activeIndentDepth
+                || (previousIndentInfo.depth === activeIndentDepth - 1 && this.isPythonBlockHeader(previousTrimmed))) {
+                start = previousLineNo;
+                continue;
+            }
+
+            break;
+        }
+
+        while (end < editor.lastLine()) {
+            const nextLineNo = end + 1;
+            const nextLine = editor.getLine(nextLineNo) || '';
+            const nextTrimmed = nextLine.trim();
+            const nextIndentInfo = this.getPythonLineIndentInfo(editor, nextLineNo, indentUnit);
+
+            if (!nextTrimmed || nextIndentInfo.depth >= activeIndentDepth) {
+                end = nextLineNo;
+                continue;
+            }
+
+            break;
+        }
+
+        return {start, end};
+    }
+
+    getPythonLineIndentInfo(editor, lineNo, indentUnit) {
         const line = editor.getLine(lineNo) || '';
         const leadingWhitespace = line.match(/^[\t ]*/)[0];
         const columns = this.getIndentColumnWidth(leadingWhitespace, indentUnit);
 
-        return Math.floor(columns / indentUnit);
+        return {
+            leadingWhitespace,
+            columns,
+            depth: Math.floor(columns / indentUnit)
+        };
     }
 
-    getPythonIndentGuideColumns(leadingWhitespace, indentUnit) {
-        const guideColumns = [];
-        let columns = 0;
-
-        for (let ch = 0; ch < leadingWhitespace.length; ch += 1) {
-            if (columns % indentUnit === 0) {
-                guideColumns.push({
-                    ch,
-                    depth: Math.floor(columns / indentUnit) + 1
-                });
-            }
-
-            columns += leadingWhitespace.charAt(ch) === '\t'
-                ? indentUnit - (columns % indentUnit || 0)
-                : 1;
-        }
-
-        return guideColumns;
+    isPythonBlockHeader(trimmedLine) {
+        return /^(if|elif|else|for|while|def|class|try|except|finally|with)\b.*:\s*(#.*)?$/.test(trimmedLine);
     }
 
     getIndentColumnWidth(leadingWhitespace, indentUnit) {

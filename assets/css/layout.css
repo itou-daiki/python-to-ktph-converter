@@ -181,15 +181,55 @@
     min-height: inherit !important;
 }
 
-#pythonEditor .python-indent-guide {
-    border-left: 1px solid rgba(176, 190, 197, 0.42);
-    box-sizing: border-box;
-    margin-left: -1px;
+#pythonEditor .CodeMirror {
+    font-size: 14.5px;
+    line-height: 1.55;
 }
 
-#pythonEditor .python-indent-guide-active {
-    border-left-color: rgba(100, 181, 246, 0.95);
-    background: rgba(100, 181, 246, 0.08);
+#pythonEditor .CodeMirror pre.CodeMirror-line,
+#pythonEditor .CodeMirror pre.CodeMirror-line-like {
+    tab-size: 4;
+}
+
+#pythonEditor .CodeMirror-activeline-background {
+    background: rgba(80, 119, 144, 0.18);
+}
+
+#pythonEditor .CodeMirror-activeline-gutter {
+    background: #1f3039;
+}
+
+#pythonEditor .CodeMirror-activeline-gutter .CodeMirror-linenumber {
+    color: #e2f0f7 !important;
+    font-weight: 700;
+}
+
+#pythonEditor .python-leading-indent {
+    background-image:
+        repeating-linear-gradient(
+            to right,
+            transparent 0 calc(4ch - 1px),
+            rgba(148, 163, 184, 0.56) calc(4ch - 1px) 4ch
+        ),
+        radial-gradient(circle, rgba(203, 213, 225, 0.32) 0 0.95px, transparent 1.15px);
+    background-position: 0 0, 0.48ch 55%;
+    background-repeat: repeat-x, repeat-x;
+    background-size: 4ch 100%, 1ch 100%;
+}
+
+#pythonEditor .python-leading-indent-active {
+    background-image:
+        repeating-linear-gradient(
+            to right,
+            transparent 0 calc(4ch - 2px),
+            rgba(96, 165, 250, 0.95) calc(4ch - 2px) 4ch
+        ),
+        radial-gradient(circle, rgba(147, 197, 253, 0.58) 0 1.05px, transparent 1.25px);
+    background-color: rgba(96, 165, 250, 0.08);
+}
+
+#pythonEditor .python-leading-indent-partial {
+    background-color: rgba(245, 158, 11, 0.12);
 }
 
 .CodeMirror-vscrollbar,
