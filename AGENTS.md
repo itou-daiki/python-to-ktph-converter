@@ -20,7 +20,7 @@ Python と共通テスト用プログラム表記を相互変換する、GitHub 
 3. UI は `index.html`、スタイルは `assets/css/`、アプリロジックは `assets/js/` と `assets/js/modules/` に分ける。
 4. サンプルを増やす場合は `Sample/samples.json` と対応する `Sample/<folder>/python.md` / `common-test.md` を同時に更新する。
 5. CodeMirror 補完は `assets/js/modules/ui.js` に集約されている。候補、キーバインド、整形処理を変更したらブラウザで確認する。
-6. 変換規則は `assets/js/modules/converter.js` と `共通テスト用プログラム表記.md` の整合を意識する。
+6. 変換規則は `assets/js/modules/converter.js` と `docs/reference/共通テスト用プログラム表記.md` の整合を意識する。
 
 ## テスト・確認
 ```bash
