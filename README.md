@@ -1,106 +1,136 @@
 # Python ⇄ 共通テスト用プログラム表記 変換ツール
 
-Pythonと日本の共通テスト用プログラム表記を相互に変換し、実行できるWebアプリケーションです。
+Python と日本の共通テスト用プログラム表記を相互に変換し、学習・確認に使える GitHub Pages 向け Web アプリケーションです。
 
 ## 主な機能
 
-### 双方向変換
-- **Python → 共通テスト用プログラム表記**: Pythonコードを共通テスト形式に変換
-- **共通テスト用プログラム表記 → Python**: 共通テスト形式をPythonコードに変換
-- ドロップダウンで変換方向を選択可能
+- Python → 共通テスト用プログラム表記の変換
+- 共通テスト用プログラム表記 → Python の変換
+- CodeMirror によるコード編集
+- コード整形ボタン
+- 入力中のオートコンプリート
+  - 候補表示
+  - 上下キーで候補選択
+  - Tab / Enter で決定
+- Pyodide による Python 実行
+- Mermaid によるフローチャート生成
+- サンプルコード読込
+- 共有 URL 生成
+- Python Tutor URL 生成
+- レスポンシブ表示
 
-### コード実行機能
-- **Python実行**: Pyodideを使用してブラウザ内でPythonコードを実行
-- **共通テスト用プログラム表記実行**: カスタムインタープリターで実行
-- 入力が必要な場合はダイアログが表示
-- 実行結果は右下のパネルに表示
+## 使い方
 
-### フローチャート生成
-- Mermaid.jsを使用してフローチャートを自動生成
-- 左下のパネルに表示
+1. 左側の Python エディタ、または右側の共通テスト用プログラム表記エディタにコードを入力します。
+2. `→` ボタンで Python から共通テスト表記へ変換します。
+3. `←` ボタンで共通テスト表記から Python へ変換します。
+4. `整形` ボタンで各エディタのコードを整えます。
+5. 入力中に補完候補が表示されます。上下キーで選び、Tab または Enter で確定します。
+6. `実行` ボタンで Python エディタの内容をブラウザ内で実行します。
+7. `URL生成` または `PythonTutor` で共有用 URL を生成します。
 
-### URL共有機能
-- 入力したコードをURLエンコードして共有可能
-- URLにアクセスすると自動的にコードが復元
-
-### その他の機能
-- **エディタ**: CodeMirrorを使用した高機能エディタ
-- **コピーボタン**: 各コードパネルにコピーボタン
-- **サンプルコード**: 二分探索のサンプルコード読み込み
-- **レスポンシブデザイン**: モバイル対応
-
-## 使用方法
-
-1. 左上のテキストエリアにPythonコードを入力
-2. 「変換」ボタンをクリックで共通テスト用プログラム表記に変換
-3. 「実行」ボタンで実行結果を確認
-4. 「共有URL生成」ボタンでコードを含むURLを生成
-
-## 対応する変換規則
+## 対応する主な変換規則
 
 ### 基本構造
+
 - `print("文字列")` → `表示する("文字列")`
-- `変数名 = input()` → `変数名 = 【外部からの入力】`
+- `input()` / `int(input())` → `【外部からの入力】`
+- `def 関数名(...):` → `関数 関数名(...):`
+- `return 値` → `値 を返す`
 
 ### 制御構造
+
 - `if 条件:` → `もし 条件 ならば:`
 - `elif 条件:` → `そうでなくもし 条件 ならば:`
 - `else:` → `そうでなければ:`
 - `while 条件:` → `条件 の間繰り返す:`
 - `for 変数 in range(...):` → `変数 を ... から ... まで ... ずつ増やしながら繰り返す:`
 
-### 演算子
-- `//` → `÷` (整数除算)
-- `%` → `％` (剰余)
+### 演算子・関数
+
+- `//` → `÷`
+- `%` → `％`
 - `len()` → `要素数()`
 - `int()` → `整数()`
+- `float()` → `実数()`
 - `str()` → `文字列()`
+- `random.random()` → `乱数()`
 
 ## プロジェクト構造
 
-```
+```text
 python-to-ktph-converter/
-├── index.html              # メインHTMLファイル
-├── README.md               # プロジェクト説明
-├── protocol.md             # 変換プロトコル仕様
-├── _config.yml             # GitHub Pages設定
+├── index.html
+├── python-overview.html
+├── commontest-overview.html
+├── test-reversibility.html
+├── README.md
+├── AGENTS.md
+├── CLAUDE.md
+├── 共通テスト用プログラム表記.md
+├── _config.yml
+├── Sample/
+│   ├── samples.json
+│   └── <sample-name>/
+│       ├── python.md
+│       └── common-test.md
 ├── assets/
-│   ├── css/                # スタイルシート
-│   │   ├── main.css        # メインスタイル
-│   │   ├── components.css  # コンポーネントスタイル
-│   │   ├── layout.css      # レイアウトスタイル
-│   │   ├── modal.css       # モーダルスタイル
-│   │   └── responsive.css  # レスポンシブデザイン
-│   └── js/                 # JavaScript
-│       ├── app.js          # メインアプリケーション
-│       └── modules/        # モジュール
-│           ├── converter.js    # 変換ロジック
-│           ├── executor.js     # 実行エンジン
-│           ├── flowchart.js    # フローチャート生成
-│           └── ui.js           # UI管理
-├── docs/
-│   └── api.md              # API仕様書
+│   ├── css/
+│   │   ├── main.css
+│   │   ├── components.css
+│   │   ├── layout.css
+│   │   ├── modal.css
+│   │   ├── responsive.css
+│   │   ├── commontest-highlight.css
+│   │   ├── detail-pages.css
+│   │   └── info-sections.css
+│   └── js/
+│       ├── app.js
+│       └── modules/
+│           ├── commontest-mode.js
+│           ├── converter.js
+│           ├── executor.js
+│           ├── flowchart.js
+│           └── ui.js
 └── .github/
     └── workflows/
-        └── deploy.yml      # GitHub Actions設定
+        └── deploy.yml
 ```
 
 ## 技術仕様
 
-- **フロントエンド**: HTML5, CSS3, JavaScript (ES6+)
-- **エディタ**: CodeMirror 5.65.13
-- **Python実行**: Pyodide 0.24.1
-- **フローチャート**: Mermaid.js 10.6.1
-- **アーキテクチャ**: モジュラー設計
-- **デプロイ**: GitHub Pages対応
+- フロントエンド: HTML5, CSS3, JavaScript
+- エディタ: CodeMirror 5.65.13
+- 補完: CodeMirror show-hint addon
+- Python 実行: Pyodide 0.24.1
+- フローチャート: Mermaid.js 10.6.1
+- デプロイ: GitHub Pages
 
-## GitHub Pagesでのデプロイ
+## 開発
 
-このプロジェクトはGitHub Pagesで直接デプロイできます：
+このアプリは静的ファイルだけで動作します。依存ライブラリは CDN から読み込むため、通常の開発に `npm install` やビルドは不要です。
 
-1. GitHubリポジトリの設定でPages機能を有効化
-2. ソースをmainブランチに設定
-3. `index.html`が自動的に提供されます
+```bash
+# ローカルサーバー
+python3 -m http.server 8765 --bind 127.0.0.1
+
+# JavaScript構文チェック
+node --check assets/js/app.js
+node --check assets/js/modules/converter.js
+node --check assets/js/modules/executor.js
+node --check assets/js/modules/flowchart.js
+node --check assets/js/modules/ui.js
+```
+
+ローカル確認は `http://127.0.0.1:8765/` を開いて行います。`Sample/` のコードは `fetch()` で読み込むため、`file://` で直接開く確認は避けてください。
+
+## GitHub Pages
+
+GitHub Pages でそのまま配信する前提です。
+
+- 相対パスで CSS/JS/サンプルを参照します。
+- サーバーサイド処理やビルド成果物は不要です。
+- CDN が読み込めるネットワーク環境で動作します。
 
 ## ライセンス
 
