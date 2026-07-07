@@ -26,14 +26,6 @@ input:focus-visible,
     outline-offset: 2px;
 }
 
-.convert-button {
-    background: #27ae60;
-}
-
-.convert-button:hover {
-    background: #229954;
-}
-
 .run-button {
     background: #e74c3c;
 }
@@ -137,6 +129,19 @@ input:focus-visible,
     color: #495057;
     font-size: 13px;
     text-align: center;
+}
+
+.url-open-link {
+    width: 60px;
+    color: #3498db;
+    text-decoration: none;
+    font-size: 10px;
+    text-align: center;
+}
+
+.url-open-link:hover {
+    color: #1d6fa5;
+    text-decoration: underline;
 }
 
 .url-generate-button {
