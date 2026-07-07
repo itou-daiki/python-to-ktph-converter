@@ -164,8 +164,27 @@ li.CodeMirror-hint-active {
     margin-left: 8px;
 }
 
+.autocomplete-kind {
+    display: inline-block;
+    color: #bae6fd;
+    background: rgba(14, 165, 233, 0.18);
+    border: 1px solid rgba(125, 211, 252, 0.28);
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 1;
+    margin-left: 8px;
+    padding: 2px 5px;
+    vertical-align: 1px;
+}
+
 li.CodeMirror-hint-active .autocomplete-detail {
     color: #dbeafe;
+}
+
+li.CodeMirror-hint-active .autocomplete-kind {
+    color: #eff6ff;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 /* Python indentation readability */

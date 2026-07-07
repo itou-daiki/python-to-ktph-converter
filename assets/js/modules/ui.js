@@ -334,16 +334,40 @@ class UIManager {
         if (!change || change.origin === 'complete') return false;
         if (!change.text || change.text.length !== 1) return false;
 
+        const context = this.getCompletionContext(cm);
+        if (context.suppress) return false;
+
         const inserted = change.text[0];
+        if (context.isPropertyAccess) return cm === this.pythonEditor;
+        if (this.shouldOpenAfterCompletionTrigger(inserted, context, cm)) return true;
         if (!/^[A-Za-z0-9_ぁ-んァ-ヶ一-龠々ー｜⎿【】.]$/.test(inserted)) {
             return false;
         }
-
-        const context = this.getCompletionContext(cm);
-        if (context.suppress) return false;
-        if (context.isPropertyAccess) return cm === this.pythonEditor;
         if (/[ぁ-んァ-ヶ一-龠々ー｜⎿【】]/.test(context.token)) return true;
         return context.token.length >= 2;
+    }
+
+    shouldOpenAfterCompletionTrigger(inserted, context, cm) {
+        const before = context.lineBeforeCursor.trim();
+        const mode = cm === this.commonTestEditor ? 'commontest' : 'python';
+
+        if (inserted === '.') {
+            return mode === 'python' && context.isPropertyAccess;
+        }
+
+        if (!/^[\s(=,]$/.test(inserted)) {
+            return false;
+        }
+
+        if (mode === 'python') {
+            return /^(if|elif|while|for|return|print|len|range|int|float|str|sum|max|min|input)\b/.test(before)
+                || /=$/.test(before)
+                || /\($/.test(before);
+        }
+
+        return /^(もし|そうでなくもし|表示する|要素数|整数|実数|文字列)\b/.test(before)
+            || /=$/.test(before)
+            || /（$|\($/.test(before);
     }
 
     showAutocomplete(cm) {
@@ -386,7 +410,8 @@ class UIManager {
         }
 
         const identifiers = this.getEditorIdentifiers(cm, context);
-        const completions = this.getCompletionList(mode, identifiers, context);
+        const analysis = this.getCompletionAnalysis(cm, mode, context);
+        const completions = this.getCompletionList(mode, identifiers, analysis, context);
         const filtered = this.filterAndRankCompletions(completions, context);
 
         return {
@@ -416,17 +441,26 @@ class UIManager {
             ? beforeToken.slice(0, -1).match(/([A-Za-z_]\w*|\]|\))\s*$/)
             : null;
         const isPropertyAccess = Boolean(propertyOwnerMatch);
+        const lineIndent = (line.match(/^\s*/) || [''])[0];
+        const lineBeforeCursor = line.slice(0, cursor.ch);
+        const lineAfterCursor = line.slice(cursor.ch);
 
         return {
             from: CodeMirror.Pos(cursor.line, start),
             to: CodeMirror.Pos(cursor.line, cursor.ch),
             token,
             line,
+            lineBeforeCursor,
+            lineAfterCursor,
+            lineBodyBeforeCursor: lineBeforeCursor.slice(lineIndent.length),
+            lineBodyAfterCursor: lineAfterCursor,
+            trimmedLine: line.trim(),
+            trimmedBeforeCursor: lineBeforeCursor.trim(),
             cursor,
             suppress,
             isPropertyAccess,
             propertyOwner: propertyOwnerMatch ? propertyOwnerMatch[1] : '',
-            lineIndent: (line.match(/^\s*/) || [''])[0],
+            lineIndent,
             commonBodyPrefix: this.getCommonBodyPrefix(line)
         };
     }
@@ -461,17 +495,215 @@ class UIManager {
             'return', 'True', 'False', 'None', 'import', 'from', 'as', 'break',
             'continue', 'class', 'try', 'except', 'finally', 'with', 'lambda',
             '表示する', '整数', '実数', '文字列', '要素数', '乱数', '関数',
-            'もし', 'ならば', 'そうでなくもし', 'そうでなければ'
+            'もし', 'ならば', 'そうでなくもし', 'そうでなければ',
+            'を', 'から', 'まで', 'ずつ', '増やしながら', '減らしながら',
+            '繰り返す', 'ずつ増やしながら繰り返す', 'ずつ減らしながら繰り返す',
+            'の間繰り返す', '返す'
         ].includes(value);
     }
 
-    getCompletionList(mode, identifiers, context) {
+    getCompletionAnalysis(cm, mode, context) {
+        const lines = (cm.getValue() || '').split('\n');
+        const variableMap = new Map();
+        const functionMap = new Map();
+
+        lines.forEach((line, lineNo) => {
+            if (mode === 'commontest') {
+                this.analyzeCommonTestCompletionLine(line, lineNo, variableMap, functionMap);
+            } else {
+                this.analyzePythonCompletionLine(line, lineNo, variableMap, functionMap);
+            }
+        });
+
+        const cursorLine = context ? context.cursor.line : lines.length - 1;
+        const variables = Array.from(variableMap.values())
+            .sort((a, b) => {
+                const distanceDiff = Math.abs(cursorLine - a.lastLine) - Math.abs(cursorLine - b.lastLine);
+                if (distanceDiff !== 0) return distanceDiff;
+                return b.count - a.count || a.name.localeCompare(b.name, 'ja');
+            });
+        const functions = Array.from(functionMap.values())
+            .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+
+        return {
+            variables,
+            variableMap,
+            functions,
+            lists: variables.filter((variable) => variable.type === 'list'),
+            numbers: variables.filter((variable) => variable.type === 'number'),
+            strings: variables.filter((variable) => variable.type === 'string'),
+            booleans: variables.filter((variable) => variable.type === 'boolean')
+        };
+    }
+
+    analyzePythonCompletionLine(line, lineNo, variableMap, functionMap) {
+        const trimmed = this.stripLineComment(line).trim();
+        if (!trimmed) return;
+
+        const functionMatch = trimmed.match(/^def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)/);
+        if (functionMatch) {
+            this.rememberFunction(functionMap, functionMatch[1], functionMatch[2], lineNo);
+            functionMatch[2]
+                .split(',')
+                .map((name) => name.trim())
+                .filter(Boolean)
+                .forEach((name) => this.rememberVariable(variableMap, name, 'value', lineNo));
+            return;
+        }
+
+        const forMatch = trimmed.match(/^for\s+([A-Za-z_]\w*)\s+in\s+(.+):$/);
+        if (forMatch) {
+            const iterable = forMatch[2].trim();
+            this.rememberVariable(variableMap, forMatch[1], iterable.startsWith('range(') ? 'number' : 'value', lineNo);
+
+            const iterableName = iterable.match(/^([A-Za-z_]\w*)$/);
+            if (iterableName) {
+                this.rememberVariable(variableMap, iterableName[1], 'list', lineNo);
+            }
+            return;
+        }
+
+        const appendMatch = trimmed.match(/^([A-Za-z_]\w*)\.append\s*\(/);
+        if (appendMatch) {
+            this.rememberVariable(variableMap, appendMatch[1], 'list', lineNo);
+        }
+
+        const tupleAssignmentMatch = trimmed.match(/^([A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)+)\s*=\s*(.+)$/);
+        if (tupleAssignmentMatch) {
+            tupleAssignmentMatch[1]
+                .split(',')
+                .map((name) => name.trim())
+                .forEach((name) => this.rememberVariable(variableMap, name, 'value', lineNo));
+            return;
+        }
+
+        const assignmentMatch = trimmed.match(/^([A-Za-z_]\w*)\s*=\s*(?!=)(.+)$/);
+        if (assignmentMatch) {
+            this.rememberVariable(
+                variableMap,
+                assignmentMatch[1],
+                this.inferPythonValueType(assignmentMatch[2]),
+                lineNo
+            );
+            return;
+        }
+
+        const augmentedAssignmentMatch = trimmed.match(/^([A-Za-z_]\w*)\s*(?:\+=|-=|\*=|\/=|%=)/);
+        if (augmentedAssignmentMatch) {
+            this.rememberVariable(variableMap, augmentedAssignmentMatch[1], 'number', lineNo);
+        }
+    }
+
+    analyzeCommonTestCompletionLine(line, lineNo, variableMap, functionMap) {
+        const trimmed = line.trim().replace(/^[｜⎿\s]+/, '');
+        if (!trimmed || trimmed.startsWith('#')) return;
+
+        const functionMatch = trimmed.match(/^関数\s+([A-Za-z_$ぁ-んァ-ヶ一-龠々ー][A-Za-z0-9_$ぁ-んァ-ヶ一-龠々ー]*)\s*\(([^)]*)\)/);
+        if (functionMatch) {
+            this.rememberFunction(functionMap, functionMatch[1], functionMatch[2], lineNo);
+            return;
+        }
+
+        const loopMatch = trimmed.match(/^([A-Za-z_$ぁ-んァ-ヶ一-龠々ー][A-Za-z0-9_$ぁ-んァ-ヶ一-龠々ー]*)\s+を\s+.+から\s+.+まで/);
+        if (loopMatch) {
+            this.rememberVariable(variableMap, loopMatch[1], 'number', lineNo);
+        }
+
+        const assignmentMatch = trimmed.match(/^([A-Za-z_$ぁ-んァ-ヶ一-龠々ー][A-Za-z0-9_$ぁ-んァ-ヶ一-龠々ー]*)\s*=\s*(.+)$/);
+        if (assignmentMatch) {
+            this.rememberVariable(
+                variableMap,
+                assignmentMatch[1],
+                this.inferCommonTestValueType(assignmentMatch[2], assignmentMatch[1]),
+                lineNo
+            );
+        }
+    }
+
+    stripLineComment(line) {
+        let quote = null;
+
+        for (let index = 0; index < line.length; index += 1) {
+            const char = line[index];
+            const previous = line[index - 1];
+
+            if ((char === '"' || char === "'") && previous !== '\\') {
+                quote = quote === char ? null : (quote || char);
+                continue;
+            }
+
+            if (char === '#' && !quote) {
+                return line.slice(0, index);
+            }
+        }
+
+        return line;
+    }
+
+    inferPythonValueType(expression) {
+        const value = expression.trim();
+        if (/^\[/.test(value) || /\.split\s*\(/.test(value) || /^list\s*\(/.test(value)) return 'list';
+        if (/^(?:int|float)\s*\(/.test(value) || /^[+-]?\d+(?:\.\d+)?$/.test(value)) return 'number';
+        if (/^(?:input|str)\s*\(/.test(value) || /^["']/.test(value)) return 'string';
+        if (/^(?:True|False)$/.test(value)) return 'boolean';
+        if (/^(?:len|sum|max|min)\s*\(/.test(value)) return 'number';
+        return 'value';
+    }
+
+    inferCommonTestValueType(expression, name) {
+        const value = expression.trim();
+        if (/^\[/.test(value) || /^[A-Z]/.test(name)) return 'list';
+        if (/^(?:整数|実数|要素数|乱数)\s*\(/.test(value) || /^[+-]?\d+(?:\.\d+)?$/.test(value)) return 'number';
+        if (/^(?:文字列)\s*\(/.test(value) || /^["']/.test(value) || value === '【外部からの入力】') return 'string';
+        return 'value';
+    }
+
+    rememberVariable(variableMap, name, type, lineNo) {
+        if (!name || this.isReservedIdentifier(name)) return;
+
+        const existing = variableMap.get(name) || {
+            name,
+            type: 'value',
+            count: 0,
+            firstLine: lineNo,
+            lastLine: lineNo
+        };
+
+        existing.count += 1;
+        existing.lastLine = lineNo;
+        existing.type = this.pickMoreSpecificCompletionType(existing.type, type);
+        variableMap.set(name, existing);
+    }
+
+    rememberFunction(functionMap, name, parameters, lineNo) {
+        if (!name || this.isReservedIdentifier(name)) return;
+
+        functionMap.set(name, {
+            name,
+            parameters,
+            lineNo
+        });
+    }
+
+    pickMoreSpecificCompletionType(currentType, nextType) {
+        const rank = {
+            value: 0,
+            boolean: 1,
+            string: 2,
+            number: 3,
+            list: 4
+        };
+
+        return (rank[nextType] || 0) >= (rank[currentType] || 0) ? nextType : currentType;
+    }
+
+    getCompletionList(mode, identifiers, analysis, context) {
         const base = mode === 'commontest'
-            ? this.getCommonTestCompletions(context)
-            : this.getPythonCompletions(context);
+            ? this.getCommonTestCompletions(context, analysis)
+            : this.getPythonCompletions(context, analysis);
 
         if (mode === 'python' && context.isPropertyAccess) {
-            return this.getPythonPropertyCompletions(context);
+            return this.getPythonPropertyCompletions(context, analysis);
         }
 
         const identifierCompletions = identifiers.map((identifier) => (
@@ -481,10 +713,14 @@ class UIManager {
             })
         ));
 
-        return base.concat(identifierCompletions);
+        const contextual = mode === 'commontest'
+            ? this.getCommonTestContextualCompletions(context, analysis)
+            : this.getPythonContextualCompletions(context, analysis);
+
+        return contextual.concat(base, identifierCompletions);
     }
 
-    getPythonCompletions() {
+    getPythonCompletions(context, analysis) {
         return [
             this.createCompletion('print()', 'print(__CURSOR__)', '出力', { aliases: ['display', '表示', '出力'] }),
             this.createCompletion('input()', 'input(__CURSOR__)', '入力', { aliases: ['nyuuryoku', '入力'] }),
@@ -493,14 +729,14 @@ class UIManager {
             this.createCompletion('len()', 'len(__CURSOR__)', '要素数', { aliases: ['length', '要素数'] }),
             this.createCompletion('range(n)', 'range(__CURSOR__)', '0からn-1'),
             this.createCompletion('range(start, end)', 'range(__CURSOR__, end)', '範囲指定'),
-            this.createCompletion('for i in range(n):', 'for i in range(__CURSOR__):\n__PY_BODY__', '回数繰り返し'),
-            this.createCompletion('for item in list:', 'for __CURSOR__ in list:\n__PY_BODY__', '配列を順に処理'),
-            this.createCompletion('while 条件:', 'while __CURSOR__:\n__PY_BODY__', '条件繰り返し'),
-            this.createCompletion('if 条件:', 'if __CURSOR__:\n__PY_BODY__', '条件分岐'),
-            this.createCompletion('elif 条件:', 'elif __CURSOR__:\n__PY_BODY__', '追加条件'),
-            this.createCompletion('else:', 'else:\n__PY_BODY__', 'その他'),
-            this.createCompletion('def 関数():', 'def __CURSOR__():\n__PY_BODY__', '関数定義'),
-            this.createCompletion('return', 'return __CURSOR__', '戻り値'),
+            this.createCompletion('for i in range(n):', 'for i in range(__CURSOR__):\n__PY_BODY__', '回数繰り返し', { replaceMode: 'lineBody' }),
+            this.createCompletion('for item in list:', 'for __CURSOR__ in list:\n__PY_BODY__', '配列を順に処理', { replaceMode: 'lineBody' }),
+            this.createCompletion('while 条件:', 'while __CURSOR__:\n__PY_BODY__', '条件繰り返し', { replaceMode: 'lineBody' }),
+            this.createCompletion('if 条件:', 'if __CURSOR__:\n__PY_BODY__', '条件分岐', { replaceMode: 'lineBody' }),
+            this.createCompletion('elif 条件:', 'elif __CURSOR__:\n__PY_BODY__', '追加条件', { replaceMode: 'lineBody' }),
+            this.createCompletion('else:', 'else:\n__PY_BODY__', 'その他', { replaceMode: 'lineBody' }),
+            this.createCompletion('def 関数():', 'def __CURSOR__():\n__PY_BODY__', '関数定義', { replaceMode: 'lineBody' }),
+            this.createCompletion('return', 'return __CURSOR__', '戻り値', { replaceMode: 'lineBody' }),
             this.createCompletion('break', 'break', '繰り返し終了'),
             this.createCompletion('continue', 'continue', '次の繰り返しへ'),
             this.createCompletion('True', 'True', '真'),
@@ -511,31 +747,166 @@ class UIManager {
             this.createCompletion('min()', 'min(__CURSOR__)', '最小'),
             this.createCompletion('sorted()', 'sorted(__CURSOR__)', '並べ替え'),
             this.createCompletion('enumerate()', 'enumerate(__CURSOR__)', '番号つき反復'),
-            this.createCompletion('import random', 'import random', '乱数モジュール'),
+            this.createCompletion('import random', 'import random', '乱数モジュール', { replaceMode: 'lineBody' }),
             this.createCompletion('random.randint()', 'random.randint(__CURSOR__, end)', '整数乱数'),
             this.createCompletion('random.random()', 'random.random()', '0以上1未満の乱数'),
             this.createCompletion('[]', '[__CURSOR__]', 'リスト'),
-            this.createCompletion('{}', '{__CURSOR__}', '辞書')
+            this.createCompletion('{}', '{__CURSOR__}', '辞書'),
+            ...this.getPythonLineCompletions(context, analysis)
         ];
     }
 
-    getPythonPropertyCompletions() {
-        return [
-            this.createCompletion('append()', 'append(__CURSOR__)', 'リストへ追加', { aliases: ['add', '追加'] }),
-            this.createCompletion('pop()', 'pop(__CURSOR__)', '要素を取り出す'),
-            this.createCompletion('sort()', 'sort()', 'リストを並べ替え'),
-            this.createCompletion('reverse()', 'reverse()', '逆順にする'),
-            this.createCompletion('insert()', 'insert(__CURSOR__, value)', '位置を指定して追加'),
-            this.createCompletion('remove()', 'remove(__CURSOR__)', '値を削除'),
-            this.createCompletion('count()', 'count(__CURSOR__)', '個数を数える'),
-            this.createCompletion('index()', 'index(__CURSOR__)', '位置を探す'),
-            this.createCompletion('strip()', 'strip()', '前後の空白削除'),
-            this.createCompletion('split()', 'split(__CURSOR__)', '文字列分割'),
-            this.createCompletion('join()', 'join(__CURSOR__)', '文字列結合')
-        ];
+    getPythonContextualCompletions(context, analysis) {
+        const completions = [];
+        const expressionContext = this.getPythonExpressionContext(context);
+        const canReplaceLine = this.isLineCompletionContext(context);
+
+        analysis.variables.forEach((variable) => {
+            completions.push(this.createCompletion(variable.name, variable.name, this.getVariableDetail(variable), {
+                aliases: [variable.name],
+                kind: 'context',
+                priority: -55
+            }));
+
+            if (expressionContext === 'print') {
+                completions.push(this.createCompletion(`print(${variable.name})`, variable.name, `${variable.name} を表示`, {
+                    aliases: [`p${variable.name}`, `表示${variable.name}`],
+                    kind: 'context',
+                    priority: -85
+                }));
+            } else if (canReplaceLine) {
+                completions.push(this.createCompletion(`print(${variable.name})`, `print(${variable.name})`, `${variable.name} を表示`, {
+                    aliases: [`p${variable.name}`, `表示${variable.name}`],
+                    kind: 'context',
+                    priority: -45,
+                    replaceMode: 'lineBody'
+                }));
+            }
+
+            if (variable.type === 'number' && canReplaceLine) {
+                completions.push(
+                    this.createCompletion(`if ${variable.name} == 0:`, `if ${variable.name} == 0:\n__PY_BODY____CURSOR__`, `${variable.name} を条件に分岐`, {
+                        aliases: [`if ${variable.name}`, `${variable.name} 条件`],
+                        kind: 'context',
+                        priority: -70,
+                        replaceMode: 'lineBody'
+                    }),
+                    this.createCompletion(`if ${variable.name} % 2 == 0:`, `if ${variable.name} % 2 == 0:\n__PY_BODY____CURSOR__`, `${variable.name} が偶数か判定`, {
+                        aliases: [`even ${variable.name}`, `${variable.name} 偶数`],
+                        kind: 'context',
+                        priority: -66,
+                        replaceMode: 'lineBody'
+                    })
+                );
+            }
+
+            if (variable.type === 'list') {
+                const itemName = this.getPreferredItemName(variable.name);
+                if (canReplaceLine) {
+                    completions.push(this.createCompletion(`for ${itemName} in ${variable.name}:`, `for ${itemName} in ${variable.name}:\n__PY_BODY____CURSOR__`, `${variable.name} を順に処理`, {
+                        aliases: [`for ${variable.name}`, `${variable.name} loop`],
+                        kind: 'context',
+                        priority: -80,
+                        replaceMode: 'lineBody'
+                    }));
+                }
+
+                completions.push(
+                    this.createCompletion(`${variable.name}.append()`, `${variable.name}.append(__CURSOR__)`, `${variable.name} に追加`, {
+                        aliases: [`add ${variable.name}`, `${variable.name} 追加`],
+                        kind: 'context',
+                        priority: -64
+                    }),
+                    this.createCompletion(`len(${variable.name})`, `len(${variable.name})`, `${variable.name} の要素数`, {
+                        aliases: [`length ${variable.name}`, `${variable.name} 要素数`],
+                        kind: 'context',
+                        priority: -62
+                    })
+                );
+            }
+        });
+
+        analysis.functions.forEach((fn) => {
+            completions.push(this.createCompletion(`${fn.name}()`, `${fn.name}(__CURSOR__)`, '定義済み関数', {
+                aliases: [fn.name, fn.parameters],
+                kind: 'context',
+                priority: -52
+            }));
+        });
+
+        return completions;
     }
 
-    getCommonTestCompletions() {
+    getPythonLineCompletions(context, analysis) {
+        if (!this.isLineCompletionContext(context)) return [];
+
+        const completions = [];
+        const loopVariable = this.getPreferredLoopVariable(analysis);
+        const limitName = analysis.numbers[0] ? analysis.numbers[0].name : 'n';
+
+        completions.push(
+            this.createCompletion(`for ${loopVariable} in range(${limitName}):`, `for ${loopVariable} in range(${limitName}):\n__PY_BODY____CURSOR__`, '文脈に合わせた回数繰り返し', {
+                aliases: ['for', 'loop', '繰り返し'],
+                kind: 'context',
+                priority: -58,
+                replaceMode: 'lineBody'
+            }),
+            this.createCompletion(`for ${loopVariable} in range(1, ${limitName} + 1):`, `for ${loopVariable} in range(1, ${limitName} + 1):\n__PY_BODY____CURSOR__`, '1からnまで繰り返し', {
+                aliases: ['for 1 n', 'range 1', '1から'],
+                kind: 'context',
+                priority: -56,
+                replaceMode: 'lineBody'
+            }),
+            this.createCompletion('if ...:', 'if __CURSOR__:\n__PY_BODY__', '条件分岐', {
+                aliases: ['if', '条件'],
+                kind: 'context',
+                priority: -50,
+                replaceMode: 'lineBody'
+            }),
+            this.createCompletion('print(...)', 'print(__CURSOR__)', '値を表示', {
+                aliases: ['print', '表示'],
+                kind: 'context',
+                priority: -44,
+                replaceMode: 'lineBody'
+            })
+        );
+
+        return completions;
+    }
+
+    getPythonPropertyCompletions(context, analysis) {
+        const owner = context.propertyOwner;
+        const variable = analysis.variableMap.get(owner);
+        const ownerType = variable ? variable.type : 'value';
+        const listPriority = ownerType === 'list' ? -80 : -20;
+        const stringPriority = ownerType === 'string' ? -80 : -10;
+        const listMethods = [
+            this.createCompletion('append()', 'append(__CURSOR__)', 'リストへ追加', { aliases: ['add', '追加'], priority: listPriority }),
+            this.createCompletion('pop()', 'pop(__CURSOR__)', '要素を取り出す', { priority: listPriority }),
+            this.createCompletion('sort()', 'sort()', 'リストを並べ替え', { priority: listPriority }),
+            this.createCompletion('reverse()', 'reverse()', '逆順にする', { priority: listPriority }),
+            this.createCompletion('insert()', 'insert(__CURSOR__, value)', '位置を指定して追加', { priority: listPriority }),
+            this.createCompletion('remove()', 'remove(__CURSOR__)', '値を削除', { priority: listPriority })
+        ];
+        const stringMethods = [
+            this.createCompletion('strip()', 'strip()', '前後の空白削除', { priority: stringPriority }),
+            this.createCompletion('split()', 'split(__CURSOR__)', '文字列分割', { priority: stringPriority }),
+            this.createCompletion('join()', 'join(__CURSOR__)', '文字列結合', { priority: stringPriority }),
+            this.createCompletion('replace()', 'replace(__CURSOR__, new)', '文字列置換', { priority: stringPriority }),
+            this.createCompletion('lower()', 'lower()', '小文字に変換', { priority: stringPriority }),
+            this.createCompletion('upper()', 'upper()', '大文字に変換', { priority: stringPriority })
+        ];
+        const sharedMethods = [
+            this.createCompletion('count()', 'count(__CURSOR__)', '個数を数える', { priority: Math.min(listPriority, stringPriority) + 4 }),
+            this.createCompletion('index()', 'index(__CURSOR__)', '位置を探す', { priority: Math.min(listPriority, stringPriority) + 4 })
+        ];
+
+        return ownerType === 'string'
+            ? stringMethods.concat(sharedMethods, listMethods)
+            : listMethods.concat(sharedMethods, stringMethods);
+    }
+
+    getCommonTestCompletions(context, analysis) {
         return [
             this.createCompletion('表示する()', '表示する(__CURSOR__)', '出力', { aliases: ['print', 'display', '出力'] }),
             this.createCompletion('【外部からの入力】', '【外部からの入力】', '入力', { aliases: ['input', '入力'] }),
@@ -545,18 +916,149 @@ class UIManager {
             this.createCompletion('文字列()', '文字列(__CURSOR__)', '文字列変換'),
             this.createCompletion('要素数()', '要素数(__CURSOR__)', '要素数', { aliases: ['len', 'length'] }),
             this.createCompletion('乱数()', '乱数()', '乱数'),
-            this.createCompletion('もし 条件 ならば:', 'もし __CURSOR__ ならば:\n__COMMON_BODY__', '条件分岐', { aliases: ['if'] }),
-            this.createCompletion('そうでなくもし 条件 ならば:', 'そうでなくもし __CURSOR__ ならば:\n__COMMON_BODY__', '追加条件', { aliases: ['elif'] }),
-            this.createCompletion('そうでなければ:', 'そうでなければ:\n__COMMON_BODY__', 'その他', { aliases: ['else'] }),
-            this.createCompletion('条件 の間繰り返す:', '__CURSOR__ の間繰り返す:\n__COMMON_BODY__', 'while相当'),
-            this.createCompletion('i を 0 から n まで繰り返す:', 'i を 0 から __CURSOR__ まで 1 ずつ増やしながら繰り返す:\n__COMMON_BODY__', 'for相当'),
-            this.createCompletion('i を n から 0 まで繰り返す:', 'i を __CURSOR__ から 0 まで 1 ずつ減らしながら繰り返す:\n__COMMON_BODY__', '逆順for相当'),
-            this.createCompletion('関数 関数名():', '関数 __CURSOR__():\n__COMMON_BODY__', '関数定義'),
-            this.createCompletion('値 を返す', '__CURSOR__ を返す', '戻り値'),
+            this.createCompletion('もし 条件 ならば:', 'もし __CURSOR__ ならば:\n__COMMON_BODY__', '条件分岐', { aliases: ['if'], replaceMode: 'lineBody' }),
+            this.createCompletion('そうでなくもし 条件 ならば:', 'そうでなくもし __CURSOR__ ならば:\n__COMMON_BODY__', '追加条件', { aliases: ['elif'], replaceMode: 'lineBody' }),
+            this.createCompletion('そうでなければ:', 'そうでなければ:\n__COMMON_BODY__', 'その他', { aliases: ['else'], replaceMode: 'lineBody' }),
+            this.createCompletion('条件 の間繰り返す:', '__CURSOR__ の間繰り返す:\n__COMMON_BODY__', 'while相当', { replaceMode: 'lineBody' }),
+            this.createCompletion('i を 0 から n まで繰り返す:', 'i を 0 から __CURSOR__ まで 1 ずつ増やしながら繰り返す:\n__COMMON_BODY__', 'for相当', { replaceMode: 'lineBody' }),
+            this.createCompletion('i を n から 0 まで繰り返す:', 'i を __CURSOR__ から 0 まで 1 ずつ減らしながら繰り返す:\n__COMMON_BODY__', '逆順for相当', { replaceMode: 'lineBody' }),
+            this.createCompletion('関数 関数名():', '関数 __CURSOR__():\n__COMMON_BODY__', '関数定義', { replaceMode: 'lineBody' }),
+            this.createCompletion('値 を返す', '__CURSOR__ を返す', '戻り値', { replaceMode: 'lineBody' }),
             this.createCompletion('break', 'break', '繰り返し終了'),
             this.createCompletion('｜', '｜ ', 'ブロック継続'),
-            this.createCompletion('⎿', '⎿ ', 'ブロック終了')
+            this.createCompletion('⎿', '⎿ ', 'ブロック終了'),
+            ...this.getCommonTestLineCompletions(context, analysis)
         ];
+    }
+
+    getCommonTestContextualCompletions(context, analysis) {
+        const completions = [];
+        const insideDisplay = /表示する\([^)]*$/.test(context.lineBeforeCursor);
+        const canReplaceLine = this.isLineCompletionContext(context);
+
+        analysis.variables.forEach((variable) => {
+            completions.push(this.createCompletion(variable.name, variable.name, this.getVariableDetail(variable), {
+                aliases: [variable.name],
+                kind: 'context',
+                priority: -55
+            }));
+
+            if (insideDisplay || canReplaceLine) {
+                completions.push(this.createCompletion(`表示する(${variable.name})`, insideDisplay ? variable.name : `表示する(${variable.name})`, `${variable.name} を表示`, {
+                    aliases: [`print ${variable.name}`, `表示${variable.name}`],
+                    kind: 'context',
+                    priority: insideDisplay ? -85 : -45,
+                    replaceMode: insideDisplay ? 'token' : 'lineBody'
+                }));
+            }
+
+            if (variable.type === 'number' && canReplaceLine) {
+                completions.push(this.createCompletion(`もし ${variable.name} == 0 ならば:`, `もし ${variable.name} == 0 ならば:\n__COMMON_BODY____CURSOR__`, `${variable.name} を条件に分岐`, {
+                    aliases: [`if ${variable.name}`, `${variable.name} 条件`],
+                    kind: 'context',
+                    priority: -70,
+                    replaceMode: 'lineBody'
+                }));
+            }
+
+            if (variable.type === 'list') {
+                completions.push(this.createCompletion(`要素数(${variable.name})`, `要素数(${variable.name})`, `${variable.name} の要素数`, {
+                    aliases: [`len ${variable.name}`, `${variable.name} 要素数`],
+                    kind: 'context',
+                    priority: -62
+                }));
+            }
+        });
+
+        analysis.functions.forEach((fn) => {
+            completions.push(this.createCompletion(`${fn.name}()`, `${fn.name}(__CURSOR__)`, '定義済み関数', {
+                aliases: [fn.name, fn.parameters],
+                kind: 'context',
+                priority: -52
+            }));
+        });
+
+        return completions;
+    }
+
+    getCommonTestLineCompletions(context, analysis) {
+        if (!this.isLineCompletionContext(context)) return [];
+
+        const loopVariable = analysis.numbers[0] ? analysis.numbers[0].name : 'i';
+        return [
+            this.createCompletion(`もし ${loopVariable} == 0 ならば:`, `もし ${loopVariable} == 0 ならば:\n__COMMON_BODY____CURSOR__`, '文脈に合わせた条件分岐', {
+                aliases: ['if', 'もし', '条件'],
+                kind: 'context',
+                priority: -58,
+                replaceMode: 'lineBody'
+            }),
+            this.createCompletion(`${loopVariable} を 1 から 100 まで繰り返す:`, `${loopVariable} を 1 から 100 まで 1 ずつ増やしながら繰り返す:\n__COMMON_BODY____CURSOR__`, '1から100まで繰り返し', {
+                aliases: ['for', 'loop', '繰り返し'],
+                kind: 'context',
+                priority: -54,
+                replaceMode: 'lineBody'
+            }),
+            this.createCompletion('表示する(...)', '表示する(__CURSOR__)', '値を表示', {
+                aliases: ['print', '表示'],
+                kind: 'context',
+                priority: -44,
+                replaceMode: 'lineBody'
+            })
+        ];
+    }
+
+    getVariableDetail(variable) {
+        const labels = {
+            list: 'リスト変数',
+            number: '数値変数',
+            string: '文字列変数',
+            boolean: '真偽値',
+            value: '文脈内の変数'
+        };
+
+        return labels[variable.type] || labels.value;
+    }
+
+    isLineCompletionContext(context) {
+        const body = context.lineBodyBeforeCursor;
+        const trimmed = body.trim();
+
+        if (this.isInsideCallArgument(context)) return false;
+        if (!trimmed) return true;
+        if (trimmed === context.token) return true;
+        return /^(if|elif|else|for|while|def|return|print|import|もし|そうでなくもし|そうでなければ|表示する|関数)\b/.test(trimmed);
+    }
+
+    isInsideCallArgument(context) {
+        const body = context.lineBodyBeforeCursor;
+        return body.lastIndexOf('(') > body.lastIndexOf(')');
+    }
+
+    getPythonExpressionContext(context) {
+        const before = context.lineBeforeCursor;
+
+        if (/print\([^)]*$/.test(before)) return 'print';
+        if (/range\([^)]*$/.test(before)) return 'range';
+        if (/len\([^)]*$/.test(before)) return 'len';
+        if (/[=,(]\s*$/.test(before)) return 'expression';
+        return '';
+    }
+
+    getPreferredLoopVariable(analysis) {
+        const usedNames = new Set(analysis.variables.map((variable) => variable.name));
+        return ['i', 'j', 'k', 'index'].find((name) => !usedNames.has(name)) || 'i';
+    }
+
+    getPreferredItemName(listName) {
+        const singular = listName
+            .replace(/List$/i, '')
+            .replace(/s$/i, '');
+
+        if (singular && singular !== listName) {
+            return singular.charAt(0).toLowerCase() + singular.slice(1);
+        }
+
+        return 'item';
     }
 
     filterAndRankCompletions(completions, context) {
@@ -564,10 +1066,11 @@ class UIManager {
         const seen = new Set();
 
         return completions
+            .filter((completion) => completion.replaceMode !== 'lineBody' || this.isLineCompletionContext(context))
             .map((completion, index) => ({
                 completion,
                 index,
-                score: this.getCompletionScore(completion, token)
+                score: this.getCompletionScore(completion, token, context)
             }))
             .filter((item) => !token || item.score !== null)
             .sort((a, b) => {
@@ -585,9 +1088,11 @@ class UIManager {
             .slice(0, 40);
     }
 
-    getCompletionScore(completion, token) {
+    getCompletionScore(completion, token, context) {
         const priority = completion.priority || 0;
-        if (!token) return 100 + priority;
+        if (!token) {
+            return this.applyLinePrefixScoreBoost(100 + priority, completion, context);
+        }
 
         const fields = [
             completion.displayText,
@@ -596,11 +1101,29 @@ class UIManager {
             ...(completion.aliases || [])
         ].map((value) => value.toLowerCase());
 
-        if (fields.some((field) => field === token)) return priority;
-        if (fields.some((field) => field.startsWith(token))) return 10 + priority;
-        if (fields.some((field) => this.matchesAcronym(field, token))) return 35 + priority;
-        if (fields.some((field) => field.includes(token))) return 70 + priority;
+        if (fields.some((field) => field === token)) return this.applyLinePrefixScoreBoost(priority, completion, context);
+        if (fields.some((field) => field.startsWith(token))) return this.applyLinePrefixScoreBoost(10 + priority, completion, context);
+        if (fields.some((field) => this.matchesAcronym(field, token))) return this.applyLinePrefixScoreBoost(35 + priority, completion, context);
+        if (fields.some((field) => field.includes(token))) return this.applyLinePrefixScoreBoost(70 + priority, completion, context);
+        if (fields.some((field) => this.matchesSubsequence(field, token))) return this.applyLinePrefixScoreBoost(95 + priority, completion, context);
         return null;
+    }
+
+    applyLinePrefixScoreBoost(score, completion, context) {
+        if (!context || !context.lineBodyBeforeCursor) return score;
+
+        const body = context.lineBodyBeforeCursor.trim().toLowerCase();
+        const keywordMatch = body.match(/^(if|elif|else|for|while|def|return|print|import|もし|そうでなくもし|そうでなければ|表示する|関数)\b/);
+        if (!keywordMatch) return score;
+
+        const keyword = keywordMatch[1];
+        const display = completion.displayText.toLowerCase();
+        const aliases = completion.aliases || [];
+        const matchesKeyword = display.startsWith(keyword)
+            || completion.text.toLowerCase().startsWith(keyword)
+            || aliases.some((alias) => String(alias).toLowerCase().startsWith(keyword));
+
+        return matchesKeyword ? score - 70 : score + 25;
     }
 
     matchesAcronym(text, token) {
@@ -613,6 +1136,19 @@ class UIManager {
         return acronym.startsWith(token);
     }
 
+    matchesSubsequence(text, token) {
+        if (!token) return true;
+
+        let tokenIndex = 0;
+        for (let index = 0; index < text.length && tokenIndex < token.length; index += 1) {
+            if (text[index] === token[tokenIndex]) {
+                tokenIndex += 1;
+            }
+        }
+
+        return tokenIndex === token.length;
+    }
+
     createCompletion(displayText, text, detail, options = {}) {
         return {
             text,
@@ -621,11 +1157,19 @@ class UIManager {
             aliases: options.aliases || [],
             priority: options.priority || 0,
             kind: options.kind || 'snippet',
+            replaceMode: options.replaceMode || 'token',
             render: (element) => {
                 const label = document.createElement('span');
                 label.className = 'autocomplete-label';
                 label.textContent = displayText;
                 element.appendChild(label);
+
+                if (options.kind === 'context') {
+                    const kind = document.createElement('span');
+                    kind.className = 'autocomplete-kind';
+                    kind.textContent = '文脈';
+                    element.appendChild(kind);
+                }
 
                 if (detail) {
                     const detailElement = document.createElement('span');
@@ -639,24 +1183,48 @@ class UIManager {
                 const preparedText = this.prepareCompletionText(completion.text, cm, data.completionContext);
                 const markerIndex = preparedText.indexOf(cursorMarker);
                 const insertion = preparedText.replace(cursorMarker, '');
+                const replacementRange = this.getCompletionReplacementRange(completion, data);
 
-                cm.replaceRange(insertion, data.from, data.to, 'complete');
+                cm.replaceRange(insertion, replacementRange.from, replacementRange.to, 'complete');
 
                 if (markerIndex !== -1) {
-                    const beforeMarker = completion.text.slice(0, markerIndex);
+                    const beforeMarker = preparedText.slice(0, markerIndex);
                     const beforeLines = beforeMarker.split('\n');
                     const lineOffset = beforeLines.length - 1;
                     const ch = lineOffset === 0
-                        ? data.from.ch + beforeLines[0].length
+                        ? replacementRange.from.ch + beforeLines[0].length
                         : beforeLines[beforeLines.length - 1].length;
 
                     cm.setCursor({
-                        line: data.from.line + lineOffset,
+                        line: replacementRange.from.line + lineOffset,
                         ch
                     });
                 }
             }
         };
+    }
+
+    getCompletionReplacementRange(completion, data) {
+        const context = data.completionContext;
+        if (!context) {
+            return {from: data.from, to: data.to};
+        }
+
+        if (completion.replaceMode === 'lineBody') {
+            return {
+                from: CodeMirror.Pos(context.cursor.line, context.lineIndent.length),
+                to: CodeMirror.Pos(context.cursor.line, context.cursor.ch)
+            };
+        }
+
+        if (completion.replaceMode === 'line') {
+            return {
+                from: CodeMirror.Pos(context.cursor.line, 0),
+                to: CodeMirror.Pos(context.cursor.line, context.cursor.ch)
+            };
+        }
+
+        return {from: data.from, to: data.to};
     }
 
     prepareCompletionText(text, cm, context) {
