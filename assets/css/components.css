@@ -18,6 +18,14 @@ button:active {
     transform: translateY(1px);
 }
 
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+.nav-link:focus-visible {
+    outline: 3px solid rgba(52, 152, 219, 0.35);
+    outline-offset: 2px;
+}
+
 .convert-button {
     background: #27ae60;
 }
@@ -111,8 +119,8 @@ li.CodeMirror-hint-active .autocomplete-detail {
 }
 
 /* Special handling for bottom panels (flowchart and output) */
-.bottom-left .panel,
-.bottom-right .panel {
+.panel.bottom-left,
+.panel.bottom-right {
     overflow: hidden;
     padding: 16px;
     display: flex;
@@ -121,8 +129,8 @@ li.CodeMirror-hint-active .autocomplete-detail {
 }
 
 /* Ensure all content areas have consistent sizing */
-.bottom-left .panel #flowchart,
-.bottom-right .panel #output {
+.panel.bottom-left #flowchart,
+.panel.bottom-right #output {
     margin-top: 8px;
 }
 

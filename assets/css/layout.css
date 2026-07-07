@@ -126,7 +126,6 @@
 .bottom-right {
     display: flex;
     flex-direction: column;
-    min-height: 0;
     height: 100%;
     width: 100%;
     min-height: 350px;
@@ -278,12 +277,15 @@
 
 /* Mermaid diagram styles */
 #flowchart .mermaid {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     height: auto;
     overflow: visible;
 }
 
 #flowchart svg {
-    max-width: 100%;
+    display: block;
+    max-width: none;
+    width: auto;
     height: auto;
 }

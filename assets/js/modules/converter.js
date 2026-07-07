@@ -798,6 +798,16 @@ class Converter {
             const step = parseInt(forMatchExpression[4]);
             const direction = forMatchExpression[5];
 
+            if (/^\d+$/.test(endExpression)) {
+                const end = parseInt(endExpression);
+                if (direction === '増やし') {
+                    return step === 1
+                        ? `for ${variable} in range(${start}, ${end + 1}):`
+                        : `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
+                }
+                return `for ${variable} in range(${start}, ${end - 1}, -${step}):`;
+            }
+
             if (direction === '増やし') {
                 // Handle 要素数(variable)-1 pattern
                 if (endExpression.includes('要素数(') && endExpression.includes(')-1')) {
