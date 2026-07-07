@@ -44,8 +44,8 @@
     }
 
     /* Bottom panels specific adjustments for mobile */
-    .bottom-left .panel,
-    .bottom-right .panel {
+    .panel.bottom-left,
+    .panel.bottom-right {
         padding: 12px;
         min-height: 350px;
     }

@@ -110,68 +110,10 @@ class FlowchartGenerator {
             nodeText = this.escapeForMermaid(nodeText);
 
             if (line.startsWith('if ')) {
-                // Handle if statement with branching
-                mermaidCode += `    ${currentNode}{"${nodeText}"}\n`;
-                
-                // Connect from previous nodes
-                if (currentLastNodes.length > 0) {
-                    for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
-                    }
-                }
-
-                // Find the if block and else block
-                const ifBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
-                const elseIndex = this.findElseStatement(lines, i, indentLevel);
-                
-                let branchEndNodes = [];
-
-                // Process if block (Yes branch)
-                if (i + 1 < (elseIndex || ifBlockEnd)) {
-                    const ifLines = lines.slice(i + 1, elseIndex || ifBlockEnd);
-                    if (ifLines.length > 0) {
-                        const ifResult = this.parseCodeStructure(ifLines, 0, nodeCounter, true);
-                        mermaidCode += ifResult.mermaidCode;
-                        if (ifResult.firstNode) {
-                            mermaidCode += `    ${currentNode} -->|Yes| ${ifResult.firstNode}\n`;
-                        }
-                        if (ifResult.lastNode) {
-                            branchEndNodes.push(ifResult.lastNode);
-                        }
-                    } else {
-                        // Empty if block - connect directly
-                        branchEndNodes.push(currentNode);
-                    }
-                } else {
-                    // Empty if block
-                    branchEndNodes.push(currentNode);
-                }
-
-                // Process else block (No branch) if exists
-                if (elseIndex && elseIndex < lines.length) {
-                    const elseBlockEnd = this.findBlockEnd(lines, elseIndex + 1, indentLevel);
-                    const elseLines = lines.slice(elseIndex + 1, elseBlockEnd);
-                    if (elseLines.length > 0) {
-                        const elseResult = this.parseCodeStructure(elseLines, 0, nodeCounter, true);
-                        mermaidCode += elseResult.mermaidCode;
-                        if (elseResult.firstNode) {
-                            mermaidCode += `    ${currentNode} -->|No| ${elseResult.firstNode}\n`;
-                        }
-                        if (elseResult.lastNode) {
-                            branchEndNodes.push(elseResult.lastNode);
-                        }
-                    } else {
-                        // Empty else block
-                        branchEndNodes.push(currentNode);
-                    }
-                    i = elseBlockEnd - 1;
-                } else {
-                    // No else block - the No branch continues to next statement
-                    branchEndNodes.push(currentNode);
-                    i = ifBlockEnd - 1;
-                }
-
-                currentLastNodes = branchEndNodes;
+                const ifResult = this.parseIfChain(lines, i, indentLevel, nodeCounter, currentNode, nodeText, currentLastNodes);
+                mermaidCode += ifResult.mermaidCode;
+                currentLastNodes = ifResult.lastNodes;
+                i = ifResult.endIndex - 1;
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
@@ -193,9 +135,8 @@ class FlowchartGenerator {
                     mermaidCode += loopResult.mermaidCode;
                     if (loopResult.firstNode) {
                         mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\n`;
-                        if (loopResult.lastNode) {
-                            // Loop back to condition
-                            mermaidCode += `    ${loopResult.lastNode} --> ${currentNode}\n`;
+                        for (const lastNode of this.getLastNodes(loopResult)) {
+                            mermaidCode += `    ${lastNode} --> ${currentNode}\n`;
                         }
                     }
                 }
@@ -232,6 +173,182 @@ class FlowchartGenerator {
             lastNodes: currentLastNodes, // Return all ending nodes
             nodeId: nodeCounter.value
         };
+    }
+
+    /**
+     * Parse an if / elif / else chain as one branching structure.
+     */
+    parseIfChain(lines, startIndex, indentLevel, nodeCounter, firstNodeId, firstNodeText, previousNodes) {
+        let mermaidCode = '';
+        const branchEndNodes = [];
+        const branches = this.collectIfBranches(lines, startIndex, indentLevel);
+        let currentConditionNode = firstNodeId;
+
+        for (let branchIndex = 0; branchIndex < branches.length; branchIndex++) {
+            const branch = branches[branchIndex];
+            const isFirstBranch = branchIndex === 0;
+
+            if (branch.type !== 'else') {
+                if (!isFirstBranch) {
+                    nodeCounter.value++;
+                    currentConditionNode = 'N' + nodeCounter.value;
+                }
+
+                const rawText = isFirstBranch
+                    ? firstNodeText
+                    : this.escapeForMermaid(this.convertPythonToCommonTestStyle(lines[branch.index].trim(), true, true, false));
+                mermaidCode += `    ${currentConditionNode}{"${rawText}"}\n`;
+
+                if (isFirstBranch) {
+                    mermaidCode += this.connectNodes(previousNodes, currentConditionNode);
+                } else if (branch.previousConditionNode) {
+                    mermaidCode += `    ${branch.previousConditionNode} -->|No| ${currentConditionNode}\n`;
+                }
+
+                const bodyResult = this.parseBranchBody(lines, branch, nodeCounter);
+                mermaidCode += bodyResult.mermaidCode;
+
+                if (bodyResult.firstNode) {
+                    mermaidCode += `    ${currentConditionNode} -->|Yes| ${bodyResult.firstNode}\n`;
+                    branchEndNodes.push(...bodyResult.lastNodes);
+                } else {
+                    branchEndNodes.push(currentConditionNode);
+                }
+
+                const nextBranch = branches[branchIndex + 1];
+                if (!nextBranch) {
+                    branchEndNodes.push(currentConditionNode);
+                } else if (nextBranch.type !== 'else') {
+                    nextBranch.previousConditionNode = currentConditionNode;
+                } else {
+                    nextBranch.previousConditionNode = currentConditionNode;
+                }
+            } else {
+                const bodyResult = this.parseBranchBody(lines, branch, nodeCounter);
+                mermaidCode += bodyResult.mermaidCode;
+
+                if (bodyResult.firstNode) {
+                    mermaidCode += `    ${branch.previousConditionNode} -->|No| ${bodyResult.firstNode}\n`;
+                    branchEndNodes.push(...bodyResult.lastNodes);
+                } else {
+                    branchEndNodes.push(branch.previousConditionNode);
+                }
+            }
+        }
+
+        return {
+            mermaidCode,
+            lastNodes: this.uniqueNodes(branchEndNodes),
+            endIndex: branches.length > 0 ? branches[branches.length - 1].bodyEnd : startIndex + 1
+        };
+    }
+
+    /**
+     * Collect all branches belonging to one if / elif / else chain.
+     */
+    collectIfBranches(lines, startIndex, indentLevel) {
+        const branches = [];
+        let index = startIndex;
+
+        while (index < lines.length) {
+            const line = lines[index].trim();
+            const currentIndent = this.getIndentLevel(lines[index]);
+            const isFirst = index === startIndex;
+            const isElif = line.startsWith('elif ');
+            const isElse = line === 'else:';
+
+            if (currentIndent !== indentLevel || (!isFirst && !isElif && !isElse)) {
+                break;
+            }
+
+            const nextBranchIndex = this.findNextIfBranch(lines, index + 1, indentLevel);
+            const blockEnd = this.findBlockEnd(lines, index + 1, indentLevel);
+            const bodyEnd = nextBranchIndex !== null && nextBranchIndex <= blockEnd ? nextBranchIndex : blockEnd;
+
+            branches.push({
+                type: isElse ? 'else' : (isElif ? 'elif' : 'if'),
+                index,
+                bodyStart: index + 1,
+                bodyEnd
+            });
+
+            if (isElse || nextBranchIndex === null) {
+                break;
+            }
+
+            index = nextBranchIndex;
+        }
+
+        return branches;
+    }
+
+    /**
+     * Find the next elif or else at the same indentation level.
+     */
+    findNextIfBranch(lines, startIndex, indentLevel) {
+        for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line === '') continue;
+
+            const currentIndent = this.getIndentLevel(lines[i]);
+            if (currentIndent < indentLevel) {
+                return null;
+            }
+            if (currentIndent === indentLevel) {
+                if (line.startsWith('elif ') || line === 'else:') {
+                    return i;
+                }
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse the body of one branch and normalize its exit nodes.
+     */
+    parseBranchBody(lines, branch, nodeCounter) {
+        const branchLines = lines.slice(branch.bodyStart, branch.bodyEnd);
+        if (branchLines.length === 0) {
+            return {
+                mermaidCode: '',
+                firstNode: null,
+                lastNodes: []
+            };
+        }
+
+        const result = this.parseCodeStructure(branchLines, 0, nodeCounter, true);
+        return {
+            mermaidCode: result.mermaidCode,
+            firstNode: result.firstNode,
+            lastNodes: this.getLastNodes(result)
+        };
+    }
+
+    /**
+     * Connect a list of previous nodes to a target node.
+     */
+    connectNodes(fromNodes, toNode) {
+        let mermaidCode = '';
+        for (const fromNode of fromNodes) {
+            mermaidCode += `    ${fromNode} --> ${toNode}\n`;
+        }
+        return mermaidCode;
+    }
+
+    /**
+     * Normalize parser results to an array of unique exit nodes.
+     */
+    getLastNodes(result) {
+        if (result.lastNodes && result.lastNodes.length > 0) {
+            return this.uniqueNodes(result.lastNodes);
+        }
+        return result.lastNode ? [result.lastNode] : [];
+    }
+
+    uniqueNodes(nodes) {
+        return [...new Set(nodes.filter(Boolean))];
     }
 
     /**
@@ -317,18 +434,18 @@ class FlowchartGenerator {
             return `${condition} の間繰り返す:`;
         }
         
-        // Convert if statements
-        const ifMatch = converted.match(/if\s+(.+)\s*:/);
-        if (ifMatch) {
-            const condition = ifMatch[1];
-            return `もし ${condition} ならば:`;
-        }
-        
         // Convert elif statements
-        const elifMatch = converted.match(/elif\s+(.+)\s*:/);
+        const elifMatch = converted.match(/^elif\s+(.+)\s*:/);
         if (elifMatch) {
             const condition = elifMatch[1];
             return `そうでなくもし ${condition} ならば:`;
+        }
+
+        // Convert if statements
+        const ifMatch = converted.match(/^if\s+(.+)\s*:/);
+        if (ifMatch) {
+            const condition = ifMatch[1];
+            return `もし ${condition} ならば:`;
         }
         
         // Convert else statements

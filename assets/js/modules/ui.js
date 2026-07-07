@@ -774,19 +774,40 @@ class UIManager {
             text = this.commonTestEditor.getValue();
         }
         
-        try {
-            await navigator.clipboard.writeText(text);
-            
-            // Show feedback
-            if (buttonElement) {
-                const originalText = buttonElement.textContent;
-                buttonElement.textContent = 'コピー済み!';
-                setTimeout(() => {
-                    buttonElement.textContent = originalText;
-                }, 2000);
+        const copied = await this.writeClipboardText(text);
+        this.flashButton(buttonElement, copied ? 'コピー済み!' : 'コピー不可');
+    }
+
+    async writeClipboardText(text) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (_) {
+                // Fall back for browsers or test environments that deny async clipboard access.
             }
-        } catch (error) {
-            console.error('Failed to copy text: ', error);
+        }
+
+        return this.copyTextWithTextarea(text);
+    }
+
+    copyTextWithTextarea(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        textarea.style.left = '-9999px';
+
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            return document.execCommand('copy');
+        } catch (_) {
+            return false;
+        } finally {
+            document.body.removeChild(textarea);
         }
     }
 
@@ -1519,20 +1540,9 @@ else:
             return;
         }
         
-        try {
-            await navigator.clipboard.writeText(pythonTutorUrl.value);
-            
-            const button = buttonElement || document.querySelector('.python-tutor-copy-button');
-            if (button) {
-                const originalText = button.textContent;
-                button.textContent = 'コピー済み!';
-                setTimeout(() => {
-                    button.textContent = originalText;
-                }, 2000);
-            }
-        } catch (error) {
-            console.error('Failed to copy Python Tutor URL: ', error);
-        }
+        const button = buttonElement || document.querySelector('.python-tutor-copy-button');
+        const copied = await this.writeClipboardText(pythonTutorUrl.value);
+        this.flashButton(button, copied ? 'コピー済み!' : 'コピー不可');
     }
 
 
@@ -1542,21 +1552,15 @@ else:
      */
     async copyShareUrl(buttonElement) {
         const shareUrl = document.getElementById('shareUrl');
-        
-        try {
-            await navigator.clipboard.writeText(shareUrl.value);
-            
-            const button = buttonElement || document.querySelector('.share-copy-button');
-            if (button) {
-                const originalText = button.textContent;
-                button.textContent = 'コピー済み!';
-                setTimeout(() => {
-                    button.textContent = originalText;
-                }, 2000);
-            }
-        } catch (error) {
-            console.error('Failed to copy share URL: ', error);
+
+        if (!shareUrl.value) {
+            alert('共有URLが生成されていません');
+            return;
         }
+
+        const button = buttonElement || document.querySelector('.share-copy-button');
+        const copied = await this.writeClipboardText(shareUrl.value);
+        this.flashButton(button, copied ? 'コピー済み!' : 'コピー不可');
     }
 
     /**
