@@ -8,6 +8,8 @@ class UIManager {
         this.samplesConfig = null;
         this.autocompleteDelay = 120;
         this.autocompleteTimers = new WeakMap();
+        this.pythonIndentGuideMarks = [];
+        this.pythonIndentGuideRefreshTimer = null;
     }
 
     /**
@@ -73,6 +75,7 @@ class UIManager {
 
         this.setupEditorAutocomplete(this.pythonEditor);
         this.setupEditorAutocomplete(this.commonTestEditor);
+        this.setupPythonIndentGuides();
 
         // Force line numbers to be visible immediately
         this.forceLineNumbers();
@@ -118,6 +121,7 @@ class UIManager {
         
         // Refresh editors when content changes significantly
         this.pythonEditor.on('change', (cm, change) => {
+            this.schedulePythonIndentGuideRefresh();
             if (change.text.length > 1 || change.removed.length > 1) {
                 setTimeout(() => {
                     this.pythonEditor.refresh();
@@ -181,6 +185,112 @@ class UIManager {
             }, this.autocompleteDelay);
             this.autocompleteTimers.set(cm, timer);
         });
+    }
+
+    setupPythonIndentGuides() {
+        if (!this.pythonEditor) return;
+
+        this.pythonEditor.on('cursorActivity', () => this.schedulePythonIndentGuideRefresh());
+        this.pythonEditor.on('viewportChange', () => this.schedulePythonIndentGuideRefresh());
+        this.schedulePythonIndentGuideRefresh();
+    }
+
+    schedulePythonIndentGuideRefresh() {
+        if (!this.pythonEditor) return;
+
+        if (this.pythonIndentGuideRefreshTimer) {
+            clearTimeout(this.pythonIndentGuideRefreshTimer);
+        }
+
+        this.pythonIndentGuideRefreshTimer = setTimeout(() => {
+            this.pythonIndentGuideRefreshTimer = null;
+            this.refreshPythonIndentGuides();
+        }, 40);
+    }
+
+    refreshPythonIndentGuides() {
+        const editor = this.pythonEditor;
+        if (!editor || typeof editor.markText !== 'function') return;
+
+        const indentUnit = editor.getOption('indentUnit') || 4;
+        const cursor = editor.getCursor();
+        const activeIndentDepth = this.getPythonLineIndentDepth(editor, cursor.line, indentUnit);
+        const viewport = editor.getViewport ? editor.getViewport() : {
+            from: editor.firstLine(),
+            to: editor.lastLine() + 1
+        };
+        const firstLine = Math.max(editor.firstLine(), viewport.from - 8);
+        const lastLine = Math.min(editor.lastLine(), viewport.to + 8);
+
+        editor.operation(() => {
+            this.pythonIndentGuideMarks.forEach((mark) => mark.clear());
+            this.pythonIndentGuideMarks = [];
+
+            for (let lineNo = firstLine; lineNo <= lastLine; lineNo += 1) {
+                const line = editor.getLine(lineNo);
+                const leadingWhitespace = line.match(/^[\t ]*/)[0];
+                if (!leadingWhitespace) continue;
+
+                const guideColumns = this.getPythonIndentGuideColumns(leadingWhitespace, indentUnit);
+                guideColumns.forEach((columnInfo) => {
+                    const isActive = columnInfo.depth <= activeIndentDepth;
+                    const cssClass = isActive
+                        ? 'python-indent-guide python-indent-guide-active'
+                        : 'python-indent-guide';
+                    const mark = editor.markText(
+                        {line: lineNo, ch: columnInfo.ch},
+                        {line: lineNo, ch: columnInfo.ch + 1},
+                        {
+                            className: cssClass,
+                            inclusiveLeft: false,
+                            inclusiveRight: false,
+                            clearWhenEmpty: true
+                        }
+                    );
+                    this.pythonIndentGuideMarks.push(mark);
+                });
+            }
+        });
+    }
+
+    getPythonLineIndentDepth(editor, lineNo, indentUnit) {
+        const line = editor.getLine(lineNo) || '';
+        const leadingWhitespace = line.match(/^[\t ]*/)[0];
+        const columns = this.getIndentColumnWidth(leadingWhitespace, indentUnit);
+
+        return Math.floor(columns / indentUnit);
+    }
+
+    getPythonIndentGuideColumns(leadingWhitespace, indentUnit) {
+        const guideColumns = [];
+        let columns = 0;
+
+        for (let ch = 0; ch < leadingWhitespace.length; ch += 1) {
+            if (columns % indentUnit === 0) {
+                guideColumns.push({
+                    ch,
+                    depth: Math.floor(columns / indentUnit) + 1
+                });
+            }
+
+            columns += leadingWhitespace.charAt(ch) === '\t'
+                ? indentUnit - (columns % indentUnit || 0)
+                : 1;
+        }
+
+        return guideColumns;
+    }
+
+    getIndentColumnWidth(leadingWhitespace, indentUnit) {
+        let columns = 0;
+
+        for (let i = 0; i < leadingWhitespace.length; i += 1) {
+            columns += leadingWhitespace.charAt(i) === '\t'
+                ? indentUnit - (columns % indentUnit || 0)
+                : 1;
+        }
+
+        return columns;
     }
 
     shouldOpenAutocomplete(cm, change) {
