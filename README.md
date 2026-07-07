@@ -63,12 +63,13 @@ python-to-ktph-converter/
 ├── index.html
 ├── python-overview.html
 ├── commontest-overview.html
-├── test-reversibility.html
 ├── README.md
 ├── AGENTS.md
 ├── CLAUDE.md
-├── 共通テスト用プログラム表記.md
 ├── _config.yml
+├── docs/
+│   └── reference/
+│       └── 共通テスト用プログラム表記.md
 ├── Sample/
 │   ├── samples.json
 │   └── <sample-name>/
