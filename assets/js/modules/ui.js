@@ -10,6 +10,7 @@ class UIManager {
         this.autocompleteTimers = new WeakMap();
         this.pythonIndentGuideMarks = [];
         this.pythonIndentGuideRefreshTimer = null;
+        this.editorRefreshTimer = null;
     }
 
     /**
@@ -17,7 +18,7 @@ class UIManager {
      */
     initializeEditors() {
         console.log('Initializing editors...');
-        
+
         const pythonContainer = document.getElementById('pythonEditor');
         const commonTestContainer = document.getElementById('commonTestEditor');
         
@@ -30,116 +31,104 @@ class UIManager {
         }
 
         this.registerAutocompleteHelpers();
-        const hintOptions = this.createHintOptions();
         
         console.log('Creating Python editor...');
-        this.pythonEditor = CodeMirror(pythonContainer, {
-            mode: 'python',
-            theme: 'material-darker',
-            lineNumbers: true,
-            matchBrackets: true,
-            styleActiveLine: true,
-            indentUnit: 4,
-            indentWithTabs: false,
-            lineWrapping: false,
-            placeholder: 'Pythonコードを入力してください...',
-            viewportMargin: 10,
-            scrollbarStyle: 'native',
-            autoCloseBrackets: true,
-            hintOptions,
-            extraKeys: {
-                'Ctrl-Space': (cm) => this.showAutocomplete(cm),
-                'Cmd-Space': (cm) => this.showAutocomplete(cm),
-                'Tab': (cm) => this.handleTabKey(cm)
-            }
-        });
+        this.pythonEditor = CodeMirror(pythonContainer, this.createPythonEditorOptions());
         console.log('Python editor created:', !!this.pythonEditor);
 
         console.log('Creating Common Test editor...');
-        this.commonTestEditor = CodeMirror(commonTestContainer, {
-            mode: 'commontest',
-            theme: 'material-darker',
-            lineNumbers: true,
-            lineWrapping: false,
-            placeholder: '共通テスト用プログラム表記を入力してください...',
-            viewportMargin: 10,
-            scrollbarStyle: 'native',
-            autoCloseBrackets: true,
-            hintOptions,
-            extraKeys: {
-                'Ctrl-Space': (cm) => this.showAutocomplete(cm),
-                'Cmd-Space': (cm) => this.showAutocomplete(cm),
-                'Tab': (cm) => this.handleTabKey(cm)
-            }
-        });
+        this.commonTestEditor = CodeMirror(commonTestContainer, this.createCommonTestEditorOptions());
         console.log('Common Test editor created:', !!this.commonTestEditor);
 
         this.setupEditorAutocomplete(this.pythonEditor);
         this.setupEditorAutocomplete(this.commonTestEditor);
         this.setupPythonIndentGuides();
+        this.setupEditorLifecycle();
 
-        // Force line numbers to be visible immediately
-        this.forceLineNumbers();
-        
-        // Force line numbers multiple times with delays
-        setTimeout(() => {
-            this.forceLineNumbers();
-        }, 50);
-        
-        // Refresh editors to ensure proper sizing
-        setTimeout(() => {
-            this.refreshEditors();
-            this.forceLineNumbers();
-        }, 100);
-        
-        // Additional refresh after layout stabilizes
-        setTimeout(() => {
-            this.refreshEditors();
-            this.forceLineNumbers();
-        }, 500);
-        
-        // Also refresh on window resize
-        window.addEventListener('resize', () => {
-            setTimeout(() => {
-                this.refreshEditors();
-            }, 100);
-        });
-        
-        // Refresh editors when they receive focus
-        this.pythonEditor.on('focus', () => {
-            setTimeout(() => {
-                this.pythonEditor.refresh();
-                this.forceLineNumbers();
-            }, 50);
-        });
-        
-        this.commonTestEditor.on('focus', () => {
-            setTimeout(() => {
-                this.commonTestEditor.refresh();
-                this.forceLineNumbers();
-            }, 50);
-        });
-        
-        // Refresh editors when content changes significantly
-        this.pythonEditor.on('change', (cm, change) => {
-            this.schedulePythonIndentGuideRefresh();
-            if (change.text.length > 1 || change.removed.length > 1) {
-                setTimeout(() => {
-                    this.pythonEditor.refresh();
-                }, 100);
-            }
-        });
-        
-        this.commonTestEditor.on('change', (cm, change) => {
-            if (change.text.length > 1 || change.removed.length > 1) {
-                setTimeout(() => {
-                    this.commonTestEditor.refresh();
-                }, 100);
-            }
-        });
-        
         // Keep startup free of synthetic editor writes. URL restore and sample loading
         // should be the only initialization paths that change user-visible code.
+    }
+
+    createPythonEditorOptions() {
+        return this.createEditorOptions({
+            mode: 'python',
+            placeholder: 'Pythonコードを入力してください...',
+            indentUnit: 4,
+            matchBrackets: true,
+            styleActiveLine: true
+        });
+    }
+
+    createCommonTestEditorOptions() {
+        return this.createEditorOptions({
+            mode: 'commontest',
+            placeholder: '共通テスト用プログラム表記を入力してください...',
+            indentUnit: 2
+        });
+    }
+
+    createEditorOptions(options) {
+        return {
+            mode: options.mode,
+            theme: 'material-darker',
+            lineNumbers: true,
+            gutters: ['CodeMirror-linenumbers'],
+            lineWrapping: false,
+            placeholder: options.placeholder,
+            viewportMargin: 10,
+            scrollbarStyle: 'native',
+            autoCloseBrackets: true,
+            indentUnit: options.indentUnit,
+            indentWithTabs: false,
+            matchBrackets: Boolean(options.matchBrackets),
+            styleActiveLine: Boolean(options.styleActiveLine),
+            hintOptions: this.createHintOptions(),
+            extraKeys: this.createEditorExtraKeys()
+        };
+    }
+
+    createEditorExtraKeys() {
+        return {
+            'Ctrl-Space': (cm) => this.showAutocomplete(cm),
+            'Cmd-Space': (cm) => this.showAutocomplete(cm),
+            'Tab': (cm) => this.handleTabKey(cm)
+        };
+    }
+
+    setupEditorLifecycle() {
+        this.scheduleEditorRefresh(50);
+        this.scheduleEditorRefresh(250);
+
+        window.addEventListener('resize', () => this.scheduleEditorRefresh(100));
+
+        [this.pythonEditor, this.commonTestEditor].forEach((editor) => {
+            if (!editor) return;
+
+            editor.on('focus', () => this.scheduleEditorRefresh(50));
+            editor.on('change', (cm, change) => {
+                if (cm === this.pythonEditor) {
+                    this.schedulePythonIndentGuideRefresh();
+                }
+                if (this.isLargeEditorChange(change)) {
+                    this.scheduleEditorRefresh(100);
+                }
+            });
+        });
+    }
+
+    isLargeEditorChange(change) {
+        return Boolean(change && (change.text.length > 1 || change.removed.length > 1));
+    }
+
+    scheduleEditorRefresh(delay = 100) {
+        if (this.editorRefreshTimer) {
+            clearTimeout(this.editorRefreshTimer);
+        }
+
+        this.editorRefreshTimer = setTimeout(() => {
+            this.editorRefreshTimer = null;
+            this.refreshEditors();
+        }, delay);
     }
 
     /**
@@ -705,159 +694,16 @@ class UIManager {
     }
 
     /**
-     * Force line numbers to be visible
-     */
-    forceLineNumbers() {
-        if (this.pythonEditor) {
-            // Force line numbers option multiple times
-            this.pythonEditor.setOption('lineNumbers', false);
-            setTimeout(() => {
-                this.pythonEditor.setOption('lineNumbers', true);
-                this.pythonEditor.setOption('gutters', ['CodeMirror-linenumbers']);
-                // Force complete refresh
-                this.pythonEditor.refresh();
-                console.log('Python editor line numbers forced');
-            }, 10);
-        }
-        if (this.commonTestEditor) {
-            // Force line numbers option multiple times
-            this.commonTestEditor.setOption('lineNumbers', false);
-            setTimeout(() => {
-                this.commonTestEditor.setOption('lineNumbers', true);
-                this.commonTestEditor.setOption('gutters', ['CodeMirror-linenumbers']);
-                // Force complete refresh
-                this.commonTestEditor.refresh();
-                console.log('Common test editor line numbers forced');
-            }, 10);
-        }
-        
-        // Multiple attempts to force gutters visibility
-        for (let attempt = 0; attempt < 3; attempt++) {
-            setTimeout(() => {
-                const pythonGutters = document.querySelector('#pythonEditor .CodeMirror-gutters');
-                const commonTestGutters = document.querySelector('#commonTestEditor .CodeMirror-gutters');
-                
-                if (pythonGutters) {
-                    pythonGutters.style.display = 'block';
-                    pythonGutters.style.visibility = 'visible';
-                    pythonGutters.style.opacity = '1';
-                    pythonGutters.style.width = '40px';
-                    pythonGutters.style.minWidth = '40px';
-                    pythonGutters.style.backgroundColor = '#263238';
-                    pythonGutters.style.borderRight = '1px solid #37474f';
-                    
-                    // Force line numbers style
-                    const lineNumbers = pythonGutters.querySelectorAll('.CodeMirror-linenumber');
-                    lineNumbers.forEach(line => {
-                        line.style.color = '#90a4ae';
-                        line.style.display = 'inline-block';
-                        line.style.visibility = 'visible';
-                        line.style.opacity = '1';
-                        line.style.fontSize = '13px';
-                        line.style.fontFamily = 'Consolas, Monaco, monospace';
-                    });
-                    
-                    console.log('Python gutters forced visible (attempt', attempt + 1, ')');
-                } else {
-                    console.warn('Python gutters not found (attempt', attempt + 1, ')');
-                    // Try to recreate the editor if gutters are missing
-                    if (attempt === 2 && this.pythonEditor) {
-                        this.pythonEditor.setOption('lineNumbers', true);
-                        this.pythonEditor.refresh();
-                    }
-                }
-                
-                if (commonTestGutters) {
-                    commonTestGutters.style.display = 'block';
-                    commonTestGutters.style.visibility = 'visible';
-                    commonTestGutters.style.opacity = '1';
-                    commonTestGutters.style.width = '40px';
-                    commonTestGutters.style.minWidth = '40px';
-                    commonTestGutters.style.backgroundColor = '#263238';
-                    commonTestGutters.style.borderRight = '1px solid #37474f';
-                    
-                    // Force line numbers style
-                    const lineNumbers = commonTestGutters.querySelectorAll('.CodeMirror-linenumber');
-                    lineNumbers.forEach(line => {
-                        line.style.color = '#90a4ae';
-                        line.style.display = 'inline-block';
-                        line.style.visibility = 'visible';
-                        line.style.opacity = '1';
-                        line.style.fontSize = '13px';
-                        line.style.fontFamily = 'Consolas, Monaco, monospace';
-                    });
-                    
-                    console.log('Common test gutters forced visible (attempt', attempt + 1, ')');
-                } else {
-                    console.warn('Common test gutters not found (attempt', attempt + 1, ')');
-                    // Try to recreate the editor if gutters are missing
-                    if (attempt === 2 && this.commonTestEditor) {
-                        this.commonTestEditor.setOption('lineNumbers', true);
-                        this.commonTestEditor.refresh();
-                    }
-                }
-            }, 100 * (attempt + 1));
-        }
-    }
-
-    /**
-     * Refresh editors for proper sizing and scrolling
+     * Refresh editors after layout changes without moving the user's scroll position.
      */
     refreshEditors() {
-        if (this.pythonEditor) {
-            this.pythonEditor.refresh();
-            // Set size to null for both width and height to use CSS
-            this.pythonEditor.setSize(null, null);
-            // Force scrollbar recalculation
-            this.pythonEditor.getScrollInfo();
-            // Ensure the last line is visible by scrolling to end then back to position
-            const lastLine = this.pythonEditor.lastLine();
-            if (lastLine > 0) {
-                this.pythonEditor.scrollIntoView({line: lastLine, ch: 0}, 50);
-                // Give a moment then scroll back to top for better UX
-                setTimeout(() => {
-                    this.pythonEditor.scrollTo(null, 0);
-                }, 100);
-            }
-            console.log('Python editor refreshed with enhanced scrolling');
-        }
-        if (this.commonTestEditor) {
-            this.commonTestEditor.refresh();
-            // Set size to null for both width and height to use CSS
-            this.commonTestEditor.setSize(null, null);
-            // Force scrollbar recalculation
-            this.commonTestEditor.getScrollInfo();
-            // Ensure the last line is visible by scrolling to end then back to position
-            const lastLine = this.commonTestEditor.lastLine();
-            if (lastLine > 0) {
-                this.commonTestEditor.scrollIntoView({line: lastLine, ch: 0}, 50);
-                // Give a moment then scroll back to top for better UX
-                setTimeout(() => {
-                    this.commonTestEditor.scrollTo(null, 0);
-                }, 100);
-            }
-            console.log('Common test editor refreshed with enhanced scrolling');
-        }
-        
-        // Additional refresh with forced recalculation
-        setTimeout(() => {
-            if (this.pythonEditor) {
-                this.pythonEditor.refresh();
-                this.pythonEditor.setSize(null, null);
-                // Force CodeMirror to recalculate viewport
-                this.pythonEditor.operation(() => {
-                    this.pythonEditor.refresh();
-                });
-            }
-            if (this.commonTestEditor) {
-                this.commonTestEditor.refresh();
-                this.commonTestEditor.setSize(null, null);
-                // Force CodeMirror to recalculate viewport
-                this.commonTestEditor.operation(() => {
-                    this.commonTestEditor.refresh();
-                });
-            }
-        }, 200);
+        [this.pythonEditor, this.commonTestEditor].forEach((editor) => {
+            if (!editor) return;
+
+            editor.refresh();
+            editor.setSize(null, null);
+            editor.getScrollInfo();
+        });
     }
 
     /**
