@@ -44,6 +44,58 @@ button:active {
     background: #7f8c8d;
 }
 
+.panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.format-button {
+    background: #6c5ce7;
+    padding: 5px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.format-button:hover {
+    background: #5548c8;
+}
+
+.CodeMirror-hints {
+    z-index: 20000;
+    border-radius: 6px;
+    border: 1px solid #4b5563;
+    background: #1f2937;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+}
+
+.CodeMirror-hint {
+    color: #f8fafc;
+    padding: 6px 10px;
+    max-width: 520px;
+}
+
+li.CodeMirror-hint-active {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.autocomplete-label {
+    font-weight: 700;
+}
+
+.autocomplete-detail {
+    color: #cbd5e1;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+li.CodeMirror-hint-active .autocomplete-detail {
+    color: #dbeafe;
+}
+
 
 /* Unified panel styling for all areas */
 .panel {
@@ -168,4 +220,3 @@ button:active {
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-

@@ -6,6 +6,8 @@ class UIManager {
         this.pythonEditor = null;
         this.commonTestEditor = null;
         this.samplesConfig = null;
+        this.autocompleteDelay = 120;
+        this.autocompleteTimers = new WeakMap();
     }
 
     /**
@@ -24,6 +26,9 @@ class UIManager {
         if (!commonTestContainer) {
             throw new Error('Common test editor container not found');
         }
+
+        this.registerAutocompleteHelpers();
+        const hintOptions = this.createHintOptions();
         
         console.log('Creating Python editor...');
         this.pythonEditor = CodeMirror(pythonContainer, {
@@ -38,8 +43,11 @@ class UIManager {
             viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
+            hintOptions,
             extraKeys: {
-                'Ctrl-Space': 'autocomplete'
+                'Ctrl-Space': (cm) => this.showAutocomplete(cm),
+                'Cmd-Space': (cm) => this.showAutocomplete(cm),
+                'Tab': (cm) => this.handleTabKey(cm)
             }
         });
         console.log('Python editor created:', !!this.pythonEditor);
@@ -54,11 +62,17 @@ class UIManager {
             viewportMargin: 10,
             scrollbarStyle: 'native',
             autoCloseBrackets: true,
+            hintOptions,
             extraKeys: {
-                'Ctrl-Space': 'autocomplete'
+                'Ctrl-Space': (cm) => this.showAutocomplete(cm),
+                'Cmd-Space': (cm) => this.showAutocomplete(cm),
+                'Tab': (cm) => this.handleTabKey(cm)
             }
         });
         console.log('Common Test editor created:', !!this.commonTestEditor);
+
+        this.setupEditorAutocomplete(this.pythonEditor);
+        this.setupEditorAutocomplete(this.commonTestEditor);
 
         // Force line numbers to be visible immediately
         this.forceLineNumbers();
@@ -119,10 +133,247 @@ class UIManager {
             }
         });
         
-        // Test editors with sample text
-        setTimeout(() => {
-            this.testEditors();
-        }, 200);
+        // Keep startup free of synthetic editor writes. URL restore and sample loading
+        // should be the only initialization paths that change user-visible code.
+    }
+
+    /**
+     * Register CodeMirror completion providers.
+     */
+    registerAutocompleteHelpers() {
+        if (typeof CodeMirror === 'undefined' || !CodeMirror.registerHelper) return;
+
+        CodeMirror.registerHelper('hint', 'python', (cm) => this.getHintResult(cm, 'python'));
+        CodeMirror.registerHelper('hint', 'commontest', (cm) => this.getHintResult(cm, 'commontest'));
+    }
+
+    /**
+     * Shared hint keyboard behavior.
+     */
+    createHintOptions() {
+        return {
+            completeSingle: false,
+            closeOnUnfocus: true,
+            customKeys: {
+                Up: (cm, handle) => handle.moveFocus(-1),
+                Down: (cm, handle) => handle.moveFocus(1),
+                Tab: (cm, handle) => handle.pick(),
+                Enter: (cm, handle) => handle.pick(),
+                Esc: (cm, handle) => handle.close()
+            }
+        };
+    }
+
+    /**
+     * Open completions while typing useful token characters.
+     */
+    setupEditorAutocomplete(editor) {
+        if (!editor || typeof editor.showHint !== 'function') return;
+
+        editor.on('inputRead', (cm, change) => {
+            if (!this.shouldOpenAutocomplete(cm, change)) return;
+
+            const existingTimer = this.autocompleteTimers.get(cm);
+            if (existingTimer) clearTimeout(existingTimer);
+
+            const timer = setTimeout(() => {
+                this.showAutocomplete(cm);
+            }, this.autocompleteDelay);
+            this.autocompleteTimers.set(cm, timer);
+        });
+    }
+
+    shouldOpenAutocomplete(cm, change) {
+        if (cm.state.completionActive) return false;
+        if (!change || change.origin === 'complete') return false;
+        if (!change.text || change.text.length !== 1) return false;
+
+        const inserted = change.text[0];
+        return /^[A-Za-z_ぁ-んァ-ヶ一-龠々ー｜⎿【】]$/.test(inserted);
+    }
+
+    showAutocomplete(cm) {
+        if (!cm || typeof cm.showHint !== 'function') return;
+
+        const mode = cm === this.commonTestEditor ? 'commontest' : 'python';
+        const helper = mode === 'commontest' ? CodeMirror.hint.commontest : CodeMirror.hint.python;
+
+        cm.showHint({
+            hint: helper,
+            completeSingle: false,
+            closeOnUnfocus: true,
+            customKeys: this.createHintOptions().customKeys
+        });
+    }
+
+    handleTabKey(cm) {
+        if (cm.state.completionActive) {
+            return CodeMirror.Pass;
+        }
+
+        if (cm.somethingSelected()) {
+            cm.indentSelection('add');
+            return;
+        }
+
+        const spaces = ' '.repeat(cm.getOption('indentUnit') || 4);
+        cm.replaceSelection(spaces, 'end', '+input');
+    }
+
+    getHintResult(cm, mode) {
+        const context = this.getCompletionContext(cm);
+        const identifiers = this.getEditorIdentifiers(cm);
+        const completions = this.getCompletionList(mode, identifiers);
+        const token = context.token.toLowerCase();
+
+        const filtered = completions.filter((completion) => {
+            if (!token) return true;
+            return completion.displayText.toLowerCase().includes(token)
+                || completion.text.toLowerCase().includes(token);
+        });
+
+        return {
+            list: filtered,
+            from: context.from,
+            to: context.to
+        };
+    }
+
+    getCompletionContext(cm) {
+        const cursor = cm.getCursor();
+        const line = cm.getLine(cursor.line);
+        let start = cursor.ch;
+
+        while (start > 0 && /[A-Za-z0-9_ぁ-んァ-ヶ一-龠々ー｜⎿【】]/.test(line.charAt(start - 1))) {
+            start -= 1;
+        }
+
+        return {
+            from: CodeMirror.Pos(cursor.line, start),
+            to: CodeMirror.Pos(cursor.line, cursor.ch),
+            token: line.slice(start, cursor.ch)
+        };
+    }
+
+    getEditorIdentifiers(cm) {
+        const identifiers = new Set();
+        const code = cm.getValue();
+        const pattern = /\b[A-Za-z_]\w*\b/g;
+        let match;
+
+        while ((match = pattern.exec(code)) !== null) {
+            const value = match[0];
+            if (!this.isReservedIdentifier(value)) {
+                identifiers.add(value);
+            }
+        }
+
+        return Array.from(identifiers).sort();
+    }
+
+    isReservedIdentifier(value) {
+        return [
+            'and', 'or', 'not', 'if', 'elif', 'else', 'for', 'while', 'in',
+            'range', 'print', 'input', 'int', 'float', 'str', 'len', 'def',
+            'return', 'True', 'False', 'None', 'import', 'from'
+        ].includes(value);
+    }
+
+    getCompletionList(mode, identifiers) {
+        const base = mode === 'commontest'
+            ? this.getCommonTestCompletions()
+            : this.getPythonCompletions();
+
+        const identifierCompletions = identifiers.map((identifier) => (
+            this.createCompletion(identifier, identifier, '変数・関数')
+        ));
+
+        return base.concat(identifierCompletions);
+    }
+
+    getPythonCompletions() {
+        return [
+            this.createCompletion('print()', 'print(__CURSOR__)', '出力'),
+            this.createCompletion('input()', 'input(__CURSOR__)', '入力'),
+            this.createCompletion('int(input())', 'int(input(__CURSOR__))', '整数入力'),
+            this.createCompletion('len()', 'len(__CURSOR__)', '要素数'),
+            this.createCompletion('range()', 'range(__CURSOR__)', '範囲'),
+            this.createCompletion('for i in range():', 'for i in range(__CURSOR__):\n    ', '繰り返し'),
+            this.createCompletion('while 条件:', 'while __CURSOR__:\n    ', '条件繰り返し'),
+            this.createCompletion('if 条件:', 'if __CURSOR__:\n    ', '条件分岐'),
+            this.createCompletion('elif 条件:', 'elif __CURSOR__:\n    ', '追加条件'),
+            this.createCompletion('else:', 'else:\n    ', 'その他'),
+            this.createCompletion('def 関数():', 'def __CURSOR__():\n    ', '関数定義'),
+            this.createCompletion('return', 'return ', '戻り値'),
+            this.createCompletion('True', 'True', '真'),
+            this.createCompletion('False', 'False', '偽'),
+            this.createCompletion('import random', 'import random', '乱数モジュール'),
+            this.createCompletion('random.random()', 'random.random()', '乱数'),
+            this.createCompletion('.append()', '.append(__CURSOR__)', 'リストへ追加')
+        ];
+    }
+
+    getCommonTestCompletions() {
+        return [
+            this.createCompletion('表示する()', '表示する(__CURSOR__)', '出力'),
+            this.createCompletion('【外部からの入力】', '【外部からの入力】', '入力'),
+            this.createCompletion('整数()', '整数(__CURSOR__)', '整数変換'),
+            this.createCompletion('実数()', '実数(__CURSOR__)', '実数変換'),
+            this.createCompletion('文字列()', '文字列(__CURSOR__)', '文字列変換'),
+            this.createCompletion('要素数()', '要素数(__CURSOR__)', '要素数'),
+            this.createCompletion('乱数()', '乱数()', '乱数'),
+            this.createCompletion('もし 条件 ならば:', 'もし __CURSOR__ ならば:\n｜ ', '条件分岐'),
+            this.createCompletion('そうでなくもし 条件 ならば:', 'そうでなくもし __CURSOR__ ならば:\n｜ ', '追加条件'),
+            this.createCompletion('そうでなければ:', 'そうでなければ:\n｜ ', 'その他'),
+            this.createCompletion('の間繰り返す:', '__CURSOR__ の間繰り返す:\n｜ ', '条件繰り返し'),
+            this.createCompletion('増やしながら繰り返す:', 'i を 0 から __CURSOR__ まで 1 ずつ増やしながら繰り返す:\n｜ ', 'for相当'),
+            this.createCompletion('減らしながら繰り返す:', 'i を __CURSOR__ から 0 まで 1 ずつ減らしながら繰り返す:\n｜ ', '逆順for相当'),
+            this.createCompletion('関数 関数名():', '関数 __CURSOR__():\n｜ ', '関数定義'),
+            this.createCompletion('を返す', ' を返す', '戻り値'),
+            this.createCompletion('｜', '｜ ', 'ブロック継続'),
+            this.createCompletion('⎿', '⎿ ', 'ブロック終了')
+        ];
+    }
+
+    createCompletion(displayText, text, detail) {
+        return {
+            text,
+            displayText,
+            render: (element) => {
+                const label = document.createElement('span');
+                label.className = 'autocomplete-label';
+                label.textContent = displayText;
+                element.appendChild(label);
+
+                if (detail) {
+                    const detailElement = document.createElement('span');
+                    detailElement.className = 'autocomplete-detail';
+                    detailElement.textContent = detail;
+                    element.appendChild(detailElement);
+                }
+            },
+            hint: (cm, data, completion) => {
+                const cursorMarker = '__CURSOR__';
+                const markerIndex = completion.text.indexOf(cursorMarker);
+                const insertion = completion.text.replace(cursorMarker, '');
+
+                cm.replaceRange(insertion, data.from, data.to, 'complete');
+
+                if (markerIndex !== -1) {
+                    const beforeMarker = completion.text.slice(0, markerIndex);
+                    const beforeLines = beforeMarker.split('\n');
+                    const lineOffset = beforeLines.length - 1;
+                    const ch = lineOffset === 0
+                        ? data.from.ch + beforeLines[0].length
+                        : beforeLines[beforeLines.length - 1].length;
+
+                    cm.setCursor({
+                        line: data.from.line + lineOffset,
+                        ch
+                    });
+                }
+            }
+        };
     }
 
     /**
@@ -462,6 +713,21 @@ class UIManager {
             });
         }
 
+        // Format buttons
+        const pythonFormatBtn = document.querySelector('.python-format-button');
+        if (pythonFormatBtn) {
+            pythonFormatBtn.addEventListener('click', (event) => {
+                this.formatEditor('python', event.target);
+            });
+        }
+
+        const commonFormatBtn = document.querySelector('.common-format-button');
+        if (commonFormatBtn) {
+            commonFormatBtn.addEventListener('click', (event) => {
+                this.formatEditor('commontest', event.target);
+            });
+        }
+
 
         // Enter key in input dialog (remove existing listener first to prevent duplicates)
         const userInput = document.getElementById('userInput');
@@ -522,6 +788,154 @@ class UIManager {
         } catch (error) {
             console.error('Failed to copy text: ', error);
         }
+    }
+
+    /**
+     * Format the selected editor.
+     */
+    formatEditor(kind, buttonElement) {
+        const editor = kind === 'commontest' ? this.commonTestEditor : this.pythonEditor;
+        if (!editor) return;
+
+        const original = editor.getValue();
+        const formatted = kind === 'commontest'
+            ? this.formatCommonTestCode(original)
+            : this.formatPythonCode(original);
+
+        editor.setValue(formatted);
+        this.refreshEditors();
+        this.flashButton(buttonElement, '整形済み');
+    }
+
+    formatPythonCode(code) {
+        const lines = code.replace(/\r\n/g, '\n').split('\n');
+        const formatted = lines.map((line) => {
+            const withoutTrailing = line.replace(/\s+$/g, '');
+            const normalizedTabs = withoutTrailing.replace(/^\t+/, (tabs) => '    '.repeat(tabs.length));
+            return this.normalizeOperatorSpacing(normalizedTabs);
+        });
+
+        return this.limitBlankLines(formatted).join('\n').trimEnd();
+    }
+
+    formatCommonTestCode(code) {
+        const lines = code.replace(/\r\n/g, '\n').split('\n');
+        const formatted = lines.map((line) => {
+            const withoutTrailing = line.replace(/\s+$/g, '');
+            const normalizedPrefix = this.normalizeCommonPrefix(withoutTrailing);
+            return this.normalizeOperatorSpacing(normalizedPrefix);
+        });
+
+        return this.limitBlankLines(formatted).join('\n').trimEnd();
+    }
+
+    normalizeCommonPrefix(line) {
+        const trimmed = line.trimStart();
+        const symbols = [];
+        let index = 0;
+
+        while (index < trimmed.length) {
+            const char = trimmed[index];
+            if (char === '｜' || char === '⎿') {
+                symbols.push(char);
+                index += 1;
+                continue;
+            }
+            if (char === ' ' || char === '　') {
+                index += 1;
+                continue;
+            }
+            break;
+        }
+
+        if (symbols.length === 0) return trimmed;
+
+        const body = trimmed.slice(index).trimStart();
+        return `${symbols.join(' ')} ${body}`;
+    }
+
+    normalizeOperatorSpacing(line) {
+        let result = '';
+        let segment = '';
+        let quote = null;
+
+        const flushSegment = () => {
+            if (!segment) return;
+            result += this.formatCodeSegment(segment);
+            segment = '';
+        };
+
+        for (let index = 0; index < line.length; index++) {
+            const char = line[index];
+            const previous = line[index - 1];
+
+            if ((char === '"' || char === "'") && previous !== '\\') {
+                if (!quote) {
+                    flushSegment();
+                    quote = char;
+                    result += char;
+                    continue;
+                }
+
+                if (quote === char) {
+                    quote = null;
+                    result += char;
+                    continue;
+                }
+            }
+
+            if (quote) {
+                result += char;
+            } else {
+                segment += char;
+            }
+        }
+
+        flushSegment();
+        return result;
+    }
+
+    formatCodeSegment(segment) {
+        let normalized = segment;
+        normalized = normalized.replace(/\s*(==|!=|<=|>=|\+=|-=|\*=|\/=|%=|\/\/|\*\*|=|<|>|\+|-|\*|\/|%|％|÷)\s*/g, ' $1 ');
+        normalized = normalized.replace(/\s*,\s*/g, ', ');
+        normalized = normalized.replace(/\s+([,):\]])/g, '$1');
+        normalized = normalized.replace(/([(\[])\s+/g, '$1');
+        normalized = normalized.replace(/(^|[=(\[:])\s*-\s+(\d+)/g, '$1-$2');
+        normalized = normalized.replace(/(,)\s*-\s+(\d+)/g, '$1 -$2');
+        normalized = normalized.replace(/\s{2,}/g, ' ');
+        const leading = segment.match(/^\s*/)[0];
+        return leading + normalized.trimStart();
+    }
+
+    limitBlankLines(lines) {
+        const result = [];
+        let blankCount = 0;
+
+        for (const line of lines) {
+            if (line.trim() === '') {
+                blankCount += 1;
+                if (blankCount <= 2) {
+                    result.push('');
+                }
+                continue;
+            }
+
+            blankCount = 0;
+            result.push(line);
+        }
+
+        return result;
+    }
+
+    flashButton(buttonElement, message) {
+        if (!buttonElement) return;
+
+        const originalText = buttonElement.textContent;
+        buttonElement.textContent = message;
+        setTimeout(() => {
+            buttonElement.textContent = originalText;
+        }, 1600);
     }
 
     /**

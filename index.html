@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python ⇄ 共通テスト用プログラム表記 変換ツール</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232c3e50'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='24' fill='white' font-family='Arial, sans-serif'%3EPy%3C/text%3E%3C/svg%3E">
     
     <!-- External CSS Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/main.css">
@@ -21,6 +23,9 @@
     <!-- External JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pyodide@0.24.1/pyodide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 </head>
@@ -56,7 +61,10 @@
             <div class="panel top-left">
                 <div class="panel-header">
                     <span>Python</span>
-                    <button class="copy-button python-copy-button">📋</button>
+                    <div class="panel-actions">
+                        <button class="format-button python-format-button" type="button" title="Pythonコードを整形">整形</button>
+                        <button class="copy-button python-copy-button" type="button" title="Pythonコードをコピー">📋</button>
+                    </div>
                 </div>
                 <div id="pythonEditor"></div>
             </div>
@@ -73,7 +81,10 @@
             <div class="panel top-right">
                 <div class="panel-header">
                     <span>共通テスト用プログラム表記</span>
-                    <button class="copy-button common-copy-button">📋</button>
+                    <div class="panel-actions">
+                        <button class="format-button common-format-button" type="button" title="共通テスト用プログラム表記を整形">整形</button>
+                        <button class="copy-button common-copy-button" type="button" title="共通テスト用プログラム表記をコピー">📋</button>
+                    </div>
                 </div>
                 <div id="commonTestEditor"></div>
             </div>
