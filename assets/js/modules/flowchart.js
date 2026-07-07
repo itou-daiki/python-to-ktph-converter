@@ -13,7 +13,9 @@ class FlowchartGenerator {
                     useMaxWidth: false,  // Allow diagram to use natural width
                     htmlLabels: false,  // Use text labels to avoid HTML parsing issues
                     curve: 'basis',
-                    padding: 20
+                    padding: 12,
+                    nodeSpacing: 32,
+                    rankSpacing: 42
                 },
                 fontFamily: 'arial',
                 fontSize: 12,
@@ -106,7 +108,7 @@ class FlowchartGenerator {
             // Convert Python code to Common Test style for display
             const isFirst = (i === startIndex);
             const isLast = (i === lines.length - 1 || (i + 1 < lines.length && this.getIndentLevel(lines[i + 1]) <= indentLevel));
-            let nodeText = this.convertPythonToCommonTestStyle(line, isInBlock, isFirst, isLast);
+            let nodeText = this.getFlowchartNodeText(line, isInBlock, isFirst, isLast);
             nodeText = this.escapeForMermaid(nodeText);
 
             if (line.startsWith('if ')) {
@@ -196,7 +198,7 @@ class FlowchartGenerator {
 
                 const rawText = isFirstBranch
                     ? firstNodeText
-                    : this.escapeForMermaid(this.convertPythonToCommonTestStyle(lines[branch.index].trim(), true, true, false));
+                    : this.escapeForMermaid(this.getFlowchartNodeText(lines[branch.index].trim(), true, true, false));
                 mermaidCode += `    ${currentConditionNode}{"${rawText}"}\n`;
 
                 if (isFirstBranch) {
@@ -349,6 +351,101 @@ class FlowchartGenerator {
 
     uniqueNodes(nodes) {
         return [...new Set(nodes.filter(Boolean))];
+    }
+
+    /**
+     * Use compact labels for decision diamonds so branching nodes stay readable.
+     */
+    getFlowchartNodeText(pythonCode, isInBlock = false, isFirst = false, isLast = false) {
+        const converted = pythonCode.trim();
+
+        if (this.isControlStatement(converted)) {
+            return this.convertControlStatementToCompactLabel(converted);
+        }
+
+        return this.convertPythonToCommonTestStyle(converted, isInBlock, isFirst, isLast);
+    }
+
+    isControlStatement(pythonCode) {
+        return /^(if|elif|for|while)\b/.test(pythonCode);
+    }
+
+    convertControlStatementToCompactLabel(pythonCode) {
+        const ifMatch = pythonCode.match(/^if\s+(.+)\s*:/);
+        if (ifMatch) {
+            return this.truncateFlowchartLabel(ifMatch[1]);
+        }
+
+        const elifMatch = pythonCode.match(/^elif\s+(.+)\s*:/);
+        if (elifMatch) {
+            return this.truncateFlowchartLabel(elifMatch[1]);
+        }
+
+        const whileMatch = pythonCode.match(/^while\s+(.+)\s*:/);
+        if (whileMatch) {
+            return this.truncateFlowchartLabel(whileMatch[1]);
+        }
+
+        const forRangeMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+range\s*\((.*)\)\s*:/);
+        if (forRangeMatch) {
+            return this.truncateFlowchartLabel(this.formatRangeLoopLabel(forRangeMatch[1], forRangeMatch[2]));
+        }
+
+        const forMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+(.+)\s*:/);
+        if (forMatch) {
+            return this.truncateFlowchartLabel(`${forMatch[1]} in ${forMatch[2]}`);
+        }
+
+        return this.truncateFlowchartLabel(pythonCode.replace(/:\s*$/, ''));
+    }
+
+    formatRangeLoopLabel(variable, rangeArguments) {
+        const args = rangeArguments.split(',').map((arg) => arg.trim()).filter(Boolean);
+
+        if (args.length === 1) {
+            const end = this.getInclusiveRangeEnd(args[0], -1);
+            return `${variable}: 0..${end}`;
+        }
+
+        if (args.length === 2) {
+            const end = this.getInclusiveRangeEnd(args[1], -1);
+            return `${variable}: ${args[0]}..${end}`;
+        }
+
+        if (args.length >= 3) {
+            const step = args[2];
+            const endOffset = step.trim().startsWith('-') ? 1 : -1;
+            const end = this.getInclusiveRangeEnd(args[1], endOffset);
+            return `${variable}: ${args[0]}..${end} / ${step}`;
+        }
+
+        return `${variable}: range(${rangeArguments})`;
+    }
+
+    getInclusiveRangeEnd(value, offset) {
+        const numericValue = Number(value);
+        if (Number.isInteger(numericValue)) {
+            return String(numericValue + offset);
+        }
+
+        const compactValue = value.replace(/\s+/g, '');
+        if (offset === -1 && compactValue.endsWith('+1')) {
+            return compactValue.slice(0, -2);
+        }
+        if (offset === 1 && compactValue.endsWith('-1')) {
+            return compactValue.slice(0, -2);
+        }
+
+        return offset > 0 ? `${value} + 1` : `${value} - 1`;
+    }
+
+    truncateFlowchartLabel(label, maxLength = 24) {
+        const normalized = label.replace(/\s+/g, ' ').trim();
+        if (normalized.length <= maxLength) {
+            return normalized;
+        }
+
+        return normalized.substring(0, maxLength - 3) + '...';
     }
 
     /**
