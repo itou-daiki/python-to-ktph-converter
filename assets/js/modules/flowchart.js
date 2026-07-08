@@ -3,6 +3,13 @@
  */
 class FlowchartGenerator {
     constructor() {
+        this.zoom = 1;
+        this.minZoom = 0.5;
+        this.maxZoom = 2.5;
+        this.zoomStep = 0.1;
+        this.renderedSvgElement = null;
+        this.currentSvgMarkup = '';
+
         // Initialize mermaid with proper configuration
         if (typeof mermaid !== 'undefined') {
             mermaid.initialize({ 
@@ -12,13 +19,21 @@ class FlowchartGenerator {
                 flowchart: {
                     useMaxWidth: false,  // Allow diagram to use natural width
                     htmlLabels: false,  // Use text labels to avoid HTML parsing issues
-                    curve: 'basis',
-                    padding: 12,
-                    nodeSpacing: 32,
-                    rankSpacing: 42
+                    curve: 'linear',
+                    padding: 18,
+                    nodeSpacing: 44,
+                    rankSpacing: 58
                 },
                 fontFamily: 'arial',
                 fontSize: 12,
+                themeVariables: {
+                    primaryColor: '#2f73d4',
+                    primaryTextColor: '#ffffff',
+                    primaryBorderColor: '#2f73d4',
+                    lineColor: '#2f73d4',
+                    edgeLabelBackground: '#f7f9fc',
+                    fontFamily: 'arial'
+                },
                 gantt: {
                     useMaxWidth: false
                 }
@@ -27,6 +42,9 @@ class FlowchartGenerator {
         } else {
             console.error('Mermaid not loaded');
         }
+
+        this.setupControls();
+        this.updateControlState();
     }
 
     /**
@@ -52,12 +70,12 @@ class FlowchartGenerator {
 
             let mermaidCode = 'flowchart TD\n';
             
-            mermaidCode += '    Start([開始])\n';
+            mermaidCode += '    Start([開始]):::terminal\n';
             
             const result = this.parseCodeStructure(lines, 0);
             mermaidCode += result.mermaidCode;
             
-            mermaidCode += '    End([終了])\n';
+            mermaidCode += '    End([終了]):::terminal\n';
             
             // Connect start to first node
             if (result.firstNode) {
@@ -68,12 +86,12 @@ class FlowchartGenerator {
             
             // Connect last nodes to end
             if (result.lastNodes && result.lastNodes.length > 0) {
-                for (const lastNode of result.lastNodes) {
-                    mermaidCode += `    ${lastNode} --> End\n`;
-                }
+                mermaidCode += this.connectNodes(result.lastNodes, 'End');
             } else if (result.lastNode) {
-                mermaidCode += `    ${result.lastNode} --> End\n`;
+                mermaidCode += this.connectNodes([result.lastNode], 'End');
             }
+
+            mermaidCode += this.getFlowchartStyles();
             
             console.log('Generated mermaid code:', mermaidCode);
             await this.renderFlowchart(mermaidCode);
@@ -90,12 +108,28 @@ class FlowchartGenerator {
         let i = startIndex;
         let firstNode = null;
         let currentLastNodes = []; // Track current ending nodes
+        let breakNodes = [];
+        let continueNodes = [];
         
         while (i < lines.length) {
             const line = lines[i].trim();
             const indentLevel = this.getIndentLevel(lines[i]);
             
             if (line === '') {
+                i++;
+                continue;
+            }
+
+            if (line === 'break') {
+                breakNodes.push(...currentLastNodes);
+                currentLastNodes = [];
+                i++;
+                continue;
+            }
+
+            if (line === 'continue') {
+                continueNodes.push(...currentLastNodes);
+                currentLastNodes = [];
                 i++;
                 continue;
             }
@@ -115,51 +149,57 @@ class FlowchartGenerator {
                 const ifResult = this.parseIfChain(lines, i, indentLevel, nodeCounter, currentNode, nodeText, currentLastNodes);
                 mermaidCode += ifResult.mermaidCode;
                 currentLastNodes = ifResult.lastNodes;
+                breakNodes.push(...(ifResult.breakNodes || []));
+                continueNodes.push(...(ifResult.continueNodes || []));
                 i = ifResult.endIndex - 1;
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
-                mermaidCode += `    ${currentNode}{"${nodeText}"}\n`;
+                mermaidCode += `    ${currentNode}{"${nodeText}"}:::decision\n`;
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
-                    for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
-                    }
+                    mermaidCode += this.connectNodes(currentLastNodes, currentNode);
                 }
 
                 // Find loop body
                 const loopBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
                 const loopLines = lines.slice(i + 1, loopBlockEnd);
+                let loopBreakNodes = [];
                 
                 if (loopLines.length > 0) {
                     const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
                     mermaidCode += loopResult.mermaidCode;
+                    loopBreakNodes = loopResult.breakNodes || [];
                     if (loopResult.firstNode) {
-                        mermaidCode += `    ${currentNode} -->|継続| ${loopResult.firstNode}\n`;
+                        mermaidCode += `    ${currentNode} -->|YES| ${loopResult.firstNode}\n`;
                         for (const lastNode of this.getLastNodes(loopResult)) {
-                            mermaidCode += `    ${lastNode} --> ${currentNode}\n`;
+                            mermaidCode += `    ${this.getNodeId(lastNode)} --> ${currentNode}\n`;
+                        }
+                        for (const continueNode of loopResult.continueNodes || []) {
+                            mermaidCode += `    ${this.getNodeId(continueNode)} --> ${currentNode}\n`;
                         }
                     }
                 }
                 
                 // Loop exits to next statement
-                currentLastNodes = [currentNode];
+                currentLastNodes = [
+                    this.createEdgeRef(currentNode, 'NO'),
+                    ...loopBreakNodes
+                ];
                 i = loopBlockEnd - 1;
 
             } else {
                 // Regular statement
                 if (line.includes('print(') || line.includes('input(')) {
-                    mermaidCode += `    ${currentNode}[["${nodeText}"]]\n`;  // I/O shape
+                    mermaidCode += `    ${currentNode}[["${nodeText}"]]:::io\n`;  // I/O shape
                 } else {
-                    mermaidCode += `    ${currentNode}["${nodeText}"]\n`;  // Process shape
+                    mermaidCode += `    ${currentNode}["${nodeText}"]:::process\n`;  // Process shape
                 }
                 
                 // Connect from previous nodes
                 if (currentLastNodes.length > 0) {
-                    for (const prevNode of currentLastNodes) {
-                        mermaidCode += `    ${prevNode} --> ${currentNode}\n`;
-                    }
+                    mermaidCode += this.connectNodes(currentLastNodes, currentNode);
                 }
                 
                 currentLastNodes = [currentNode];
@@ -173,6 +213,8 @@ class FlowchartGenerator {
             firstNode: firstNode,
             lastNode: currentLastNodes.length > 0 ? currentLastNodes[0] : null,
             lastNodes: currentLastNodes, // Return all ending nodes
+            breakNodes,
+            continueNodes,
             nodeId: nodeCounter.value
         };
     }
@@ -183,6 +225,8 @@ class FlowchartGenerator {
     parseIfChain(lines, startIndex, indentLevel, nodeCounter, firstNodeId, firstNodeText, previousNodes) {
         let mermaidCode = '';
         const branchEndNodes = [];
+        const breakNodes = [];
+        const continueNodes = [];
         const branches = this.collectIfBranches(lines, startIndex, indentLevel);
         let currentConditionNode = firstNodeId;
 
@@ -199,27 +243,29 @@ class FlowchartGenerator {
                 const rawText = isFirstBranch
                     ? firstNodeText
                     : this.escapeForMermaid(this.getFlowchartNodeText(lines[branch.index].trim(), true, true, false));
-                mermaidCode += `    ${currentConditionNode}{"${rawText}"}\n`;
+                mermaidCode += `    ${currentConditionNode}{"${rawText}"}:::decision\n`;
 
                 if (isFirstBranch) {
                     mermaidCode += this.connectNodes(previousNodes, currentConditionNode);
                 } else if (branch.previousConditionNode) {
-                    mermaidCode += `    ${branch.previousConditionNode} -->|No| ${currentConditionNode}\n`;
+                    mermaidCode += `    ${branch.previousConditionNode} -->|NO| ${currentConditionNode}\n`;
                 }
 
                 const bodyResult = this.parseBranchBody(lines, branch, nodeCounter);
                 mermaidCode += bodyResult.mermaidCode;
+                breakNodes.push(...(bodyResult.breakNodes || []));
+                continueNodes.push(...(bodyResult.continueNodes || []));
 
                 if (bodyResult.firstNode) {
-                    mermaidCode += `    ${currentConditionNode} -->|Yes| ${bodyResult.firstNode}\n`;
+                    mermaidCode += `    ${currentConditionNode} -->|YES| ${bodyResult.firstNode}\n`;
                     branchEndNodes.push(...bodyResult.lastNodes);
                 } else {
-                    branchEndNodes.push(currentConditionNode);
+                    branchEndNodes.push(this.createEdgeRef(currentConditionNode, 'YES'));
                 }
 
                 const nextBranch = branches[branchIndex + 1];
                 if (!nextBranch) {
-                    branchEndNodes.push(currentConditionNode);
+                    branchEndNodes.push(this.createEdgeRef(currentConditionNode, 'NO'));
                 } else if (nextBranch.type !== 'else') {
                     nextBranch.previousConditionNode = currentConditionNode;
                 } else {
@@ -228,12 +274,14 @@ class FlowchartGenerator {
             } else {
                 const bodyResult = this.parseBranchBody(lines, branch, nodeCounter);
                 mermaidCode += bodyResult.mermaidCode;
+                breakNodes.push(...(bodyResult.breakNodes || []));
+                continueNodes.push(...(bodyResult.continueNodes || []));
 
                 if (bodyResult.firstNode) {
-                    mermaidCode += `    ${branch.previousConditionNode} -->|No| ${bodyResult.firstNode}\n`;
+                    mermaidCode += `    ${branch.previousConditionNode} -->|NO| ${bodyResult.firstNode}\n`;
                     branchEndNodes.push(...bodyResult.lastNodes);
                 } else {
-                    branchEndNodes.push(branch.previousConditionNode);
+                    branchEndNodes.push(this.createEdgeRef(branch.previousConditionNode, 'NO'));
                 }
             }
         }
@@ -241,6 +289,8 @@ class FlowchartGenerator {
         return {
             mermaidCode,
             lastNodes: this.uniqueNodes(branchEndNodes),
+            breakNodes: this.uniqueNodes(breakNodes),
+            continueNodes: this.uniqueNodes(continueNodes),
             endIndex: branches.length > 0 ? branches[branches.length - 1].bodyEnd : startIndex + 1
         };
     }
@@ -316,7 +366,9 @@ class FlowchartGenerator {
             return {
                 mermaidCode: '',
                 firstNode: null,
-                lastNodes: []
+                lastNodes: [],
+                breakNodes: [],
+                continueNodes: []
             };
         }
 
@@ -324,7 +376,9 @@ class FlowchartGenerator {
         return {
             mermaidCode: result.mermaidCode,
             firstNode: result.firstNode,
-            lastNodes: this.getLastNodes(result)
+            lastNodes: this.getLastNodes(result),
+            breakNodes: result.breakNodes || [],
+            continueNodes: result.continueNodes || []
         };
     }
 
@@ -334,7 +388,11 @@ class FlowchartGenerator {
     connectNodes(fromNodes, toNode) {
         let mermaidCode = '';
         for (const fromNode of fromNodes) {
-            mermaidCode += `    ${fromNode} --> ${toNode}\n`;
+            const nodeId = this.getNodeId(fromNode);
+            const edgeLabel = this.getEdgeLabel(fromNode);
+            mermaidCode += edgeLabel
+                ? `    ${nodeId} -->|${edgeLabel}| ${toNode}\n`
+                : `    ${nodeId} --> ${toNode}\n`;
         }
         return mermaidCode;
     }
@@ -350,7 +408,35 @@ class FlowchartGenerator {
     }
 
     uniqueNodes(nodes) {
-        return [...new Set(nodes.filter(Boolean))];
+        const unique = new Map();
+        nodes.filter(Boolean).forEach((node) => {
+            const key = `${this.getNodeId(node)}:${this.getEdgeLabel(node)}`;
+            if (!unique.has(key)) {
+                unique.set(key, node);
+            }
+        });
+        return Array.from(unique.values());
+    }
+
+    createEdgeRef(node, label = '') {
+        return {node, label};
+    }
+
+    getNodeId(nodeRef) {
+        return typeof nodeRef === 'string' ? nodeRef : nodeRef.node;
+    }
+
+    getEdgeLabel(nodeRef) {
+        return typeof nodeRef === 'string' ? '' : (nodeRef.label || '');
+    }
+
+    getFlowchartStyles() {
+        return [
+            '    classDef terminal fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
+            '    classDef process fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
+            '    classDef decision fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
+            '    classDef io fill:#2f73d4,stroke:#2f73d4,color:#ffffff;'
+        ].join('\n') + '\n';
     }
 
     /**
@@ -614,23 +700,42 @@ class FlowchartGenerator {
             
             // Clear previous content
             flowchartDiv.innerHTML = '';
+            this.renderedSvgElement = null;
+            this.currentSvgMarkup = '';
             
-            // Create a container for the diagram
+            const viewport = document.createElement('div');
+            viewport.className = 'flowchart-viewport';
+
+            const canvas = document.createElement('div');
+            canvas.className = 'flowchart-canvas';
+
             const diagramContainer = document.createElement('div');
             const diagramId = 'mermaid-diagram-' + Date.now();
-            diagramContainer.id = diagramId;
-            diagramContainer.className = 'mermaid';
-            diagramContainer.textContent = mermaidCode;
-            
-            flowchartDiv.appendChild(diagramContainer);
-            
-            // Use mermaid.init to render the diagram
-            await mermaid.init(undefined, diagramContainer);
+            diagramContainer.className = 'mermaid flowchart-diagram';
+
+            canvas.appendChild(diagramContainer);
+            viewport.appendChild(canvas);
+            flowchartDiv.appendChild(viewport);
+
+            const renderResult = await mermaid.render(diagramId, mermaidCode);
+            diagramContainer.innerHTML = renderResult.svg;
+            if (typeof renderResult.bindFunctions === 'function') {
+                renderResult.bindFunctions(diagramContainer);
+            }
+
+            this.currentSvgMarkup = renderResult.svg;
+            this.renderedSvgElement = diagramContainer.querySelector('svg');
+            this.zoom = 1;
+            this.applyZoom();
+            this.updateControlState();
             
             console.log('Flowchart rendered successfully');
         } catch (error) {
             console.error('Error rendering flowchart:', error);
             flowchartDiv.innerHTML = '';
+            this.renderedSvgElement = null;
+            this.currentSvgMarkup = '';
+            this.updateControlState();
 
             const errorContainer = document.createElement('div');
             errorContainer.className = 'flowchart-error';
@@ -657,6 +762,176 @@ class FlowchartGenerator {
      */
     clearFlowchart() {
         document.getElementById('flowchart').innerHTML = '';
+        this.renderedSvgElement = null;
+        this.currentSvgMarkup = '';
+        this.zoom = 1;
+        this.updateControlState();
+    }
+
+    setupControls() {
+        this.zoomOutButton = document.querySelector('.flowchart-zoom-out-button');
+        this.zoomResetButton = document.querySelector('.flowchart-zoom-reset-button');
+        this.zoomInButton = document.querySelector('.flowchart-zoom-in-button');
+        this.saveButton = document.querySelector('.flowchart-save-button');
+
+        if (this.zoomOutButton) {
+            this.zoomOutButton.addEventListener('click', () => this.zoomOut());
+        }
+        if (this.zoomResetButton) {
+            this.zoomResetButton.addEventListener('click', () => this.resetZoom());
+        }
+        if (this.zoomInButton) {
+            this.zoomInButton.addEventListener('click', () => this.zoomIn());
+        }
+        if (this.saveButton) {
+            this.saveButton.addEventListener('click', () => this.saveAsPng());
+        }
+    }
+
+    zoomIn() {
+        this.setZoom(this.zoom + this.zoomStep);
+    }
+
+    zoomOut() {
+        this.setZoom(this.zoom - this.zoomStep);
+    }
+
+    resetZoom() {
+        this.setZoom(1);
+    }
+
+    setZoom(value) {
+        const nextZoom = Math.min(this.maxZoom, Math.max(this.minZoom, value));
+        this.zoom = Math.round(nextZoom * 100) / 100;
+        this.applyZoom();
+        this.updateControlState();
+    }
+
+    applyZoom() {
+        const svg = this.getRenderedSvg();
+        const canvas = document.querySelector('#flowchart .flowchart-canvas');
+        if (!svg || !canvas) return;
+
+        const size = this.getSvgNaturalSize(svg);
+        svg.style.width = `${size.width}px`;
+        svg.style.height = `${size.height}px`;
+        svg.style.transform = `scale(${this.zoom})`;
+        svg.style.transformOrigin = 'top left';
+        canvas.style.width = `${Math.ceil(size.width * this.zoom)}px`;
+        canvas.style.height = `${Math.ceil(size.height * this.zoom)}px`;
+    }
+
+    updateControlState() {
+        const hasDiagram = Boolean(this.getRenderedSvg());
+        const controls = [this.zoomOutButton, this.zoomResetButton, this.zoomInButton, this.saveButton];
+        controls.forEach((button) => {
+            if (button) button.disabled = !hasDiagram;
+        });
+
+        if (this.zoomOutButton) this.zoomOutButton.disabled = !hasDiagram || this.zoom <= this.minZoom;
+        if (this.zoomInButton) this.zoomInButton.disabled = !hasDiagram || this.zoom >= this.maxZoom;
+        if (this.zoomResetButton) {
+            this.zoomResetButton.textContent = hasDiagram ? `${Math.round(this.zoom * 100)}%` : '100%';
+        }
+    }
+
+    getRenderedSvg() {
+        if (this.renderedSvgElement && this.renderedSvgElement.isConnected) {
+            return this.renderedSvgElement;
+        }
+        this.renderedSvgElement = document.querySelector('#flowchart svg');
+        return this.renderedSvgElement;
+    }
+
+    getSvgNaturalSize(svg) {
+        const viewBox = svg.viewBox && svg.viewBox.baseVal;
+        if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+            return {width: viewBox.width, height: viewBox.height};
+        }
+
+        const width = parseFloat(svg.getAttribute('width')) || svg.getBoundingClientRect().width || 800;
+        const height = parseFloat(svg.getAttribute('height')) || svg.getBoundingClientRect().height || 600;
+        return {width, height};
+    }
+
+    async saveAsPng() {
+        const svg = this.getRenderedSvg();
+        if (!svg) {
+            this.flashButton(this.saveButton, 'なし');
+            return;
+        }
+
+        try {
+            const size = this.getSvgNaturalSize(svg);
+            const clonedSvg = svg.cloneNode(true);
+            clonedSvg.removeAttribute('style');
+            clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            clonedSvg.setAttribute('width', String(size.width));
+            clonedSvg.setAttribute('height', String(size.height));
+
+            const svgText = new XMLSerializer().serializeToString(clonedSvg);
+            const svgBlob = new Blob([svgText], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            const image = new Image();
+
+            await new Promise((resolve, reject) => {
+                image.onload = resolve;
+                image.onerror = reject;
+                image.src = url;
+            });
+
+            const exportScale = 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.ceil(size.width * exportScale);
+            canvas.height = Math.ceil(size.height * exportScale);
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#f7f9fc';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            URL.revokeObjectURL(url);
+
+            const pngBlob = await new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/png');
+            });
+            if (!pngBlob) throw new Error('PNG画像を作成できませんでした');
+
+            this.downloadBlob(pngBlob, this.createDownloadFileName());
+            this.flashButton(this.saveButton, '保存済');
+        } catch (error) {
+            console.error('Failed to save flowchart image:', error);
+            this.flashButton(this.saveButton, '失敗');
+        }
+    }
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    createDownloadFileName() {
+        const timestamp = new Date()
+            .toISOString()
+            .replace(/[:.]/g, '-')
+            .replace('T', '_')
+            .replace('Z', '');
+        return `flowchart_${timestamp}.png`;
+    }
+
+    flashButton(button, text) {
+        if (!button) return;
+        const originalText = button.textContent;
+        button.textContent = text;
+        setTimeout(() => {
+            button.textContent = originalText;
+            this.updateControlState();
+        }, 1200);
     }
 }
 

@@ -14,8 +14,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/main.css?v=20260708-audit">
     <link rel="stylesheet" href="assets/css/components.css?v=20260708-audit">
-    <link rel="stylesheet" href="assets/css/layout.css?v=20260708-audit">
-    <link rel="stylesheet" href="assets/css/editor.css?v=20260708-autocomplete">
+    <link rel="stylesheet" href="assets/css/layout.css?v=20260709-flowchart">
+    <link rel="stylesheet" href="assets/css/editor.css?v=20260708-audit">
     <link rel="stylesheet" href="assets/css/modal.css?v=20260708-audit">
     <link rel="stylesheet" href="assets/css/responsive.css?v=20260708-audit">
     <link rel="stylesheet" href="assets/css/commontest-highlight.css?v=20260708-audit">
@@ -95,6 +95,12 @@
             <div class="panel bottom-left">
                 <div class="panel-header">
                     <span>フローチャート</span>
+                    <div class="flowchart-toolbar" aria-label="フローチャート操作">
+                        <button class="flowchart-tool-button flowchart-zoom-out-button" type="button" title="縮小" aria-label="フローチャートを縮小">−</button>
+                        <button class="flowchart-tool-button flowchart-zoom-reset-button" type="button" title="100%に戻す" aria-label="フローチャートの倍率を100%に戻す">100%</button>
+                        <button class="flowchart-tool-button flowchart-zoom-in-button" type="button" title="拡大" aria-label="フローチャートを拡大">＋</button>
+                        <button class="flowchart-tool-button flowchart-save-button" type="button" title="PNG画像として保存" aria-label="フローチャートをPNG画像として保存">PNG</button>
+                    </div>
                 </div>
                 <div id="flowchart"></div>
             </div>
@@ -289,8 +295,8 @@
     <script src="assets/js/modules/commontest-mode.js?v=20260708-audit"></script>
     <script src="assets/js/modules/converter.js?v=20260708-audit"></script>
     <script src="assets/js/modules/executor.js?v=20260708-audit"></script>
-    <script src="assets/js/modules/flowchart.js?v=20260708-audit"></script>
-    <script src="assets/js/modules/ui.js?v=20260708-autocomplete"></script>
+    <script src="assets/js/modules/flowchart.js?v=20260709-flowchart"></script>
+    <script src="assets/js/modules/ui.js?v=20260708-audit"></script>
     <script src="assets/js/app.js?v=20260708-audit"></script>
 </body>
 </html>
