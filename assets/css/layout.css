@@ -137,7 +137,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     overflow: auto;
-    background: #fafafa;
+    background: #f7f9fc;
     min-height: 0;
     padding: 12px;
     padding-bottom: 20px;
@@ -164,10 +164,65 @@
     font-weight: bold;
 }
 
+.flowchart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.flowchart-tool-button {
+    min-width: 32px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 5px;
+    background: #2f73d4;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flowchart-tool-button:hover:not(:disabled) {
+    background: #245cae;
+}
+
+.flowchart-tool-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.flowchart-zoom-reset-button {
+    min-width: 48px;
+    font-variant-numeric: tabular-nums;
+}
+
+.flowchart-save-button {
+    min-width: 42px;
+}
+
 /* Mermaid diagram styles */
-#flowchart .mermaid {
+#flowchart .flowchart-viewport {
     width: max-content;
     min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#flowchart .flowchart-canvas {
+    position: relative;
+    min-width: 1px;
+    min-height: 1px;
+}
+
+#flowchart .flowchart-diagram {
+    width: max-content;
+    min-width: 0;
     height: auto;
     overflow: visible;
 }
@@ -177,6 +232,23 @@
     max-width: none;
     width: auto;
     height: auto;
+    transform-origin: top left;
+}
+
+#flowchart svg .edgeLabel {
+    color: #34495e;
+    font-weight: 700;
+}
+
+#flowchart svg .edgePath .path,
+#flowchart svg marker path {
+    stroke: #2f73d4 !important;
+}
+
+#flowchart svg .node rect,
+#flowchart svg .node polygon,
+#flowchart svg .node path {
+    filter: drop-shadow(0 1px 1px rgba(31, 41, 55, 0.16));
 }
 
 .flowchart-error {
