@@ -1615,7 +1615,9 @@ class UIManager {
         normalized = normalized.replace(/(,)\s*-\s+(\d+)/g, '$1 -$2');
         normalized = normalized.replace(/\s{2,}/g, ' ');
         const leading = segment.match(/^\s*/)[0];
-        return leading + normalized.trimStart();
+        const trimmed = normalized.trimStart();
+        const keepLeading = !/^[,):\]]/.test(trimmed);
+        return (keepLeading ? leading : '') + trimmed;
     }
 
     limitBlankLines(lines) {

@@ -251,6 +251,16 @@
     filter: drop-shadow(0 1px 1px rgba(31, 41, 55, 0.16));
 }
 
+#flowchart svg .node.junction,
+#flowchart svg .node.junction * {
+    opacity: 0;
+}
+
+#flowchart svg .flowchart-loop-back-path {
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
 .flowchart-error {
     padding: 20px;
     text-align: center;

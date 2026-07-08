@@ -9,6 +9,7 @@ class FlowchartGenerator {
         this.zoomStep = 0.1;
         this.renderedSvgElement = null;
         this.currentSvgMarkup = '';
+        this.loopBackEdges = [];
 
         // Initialize mermaid with proper configuration
         if (typeof mermaid !== 'undefined') {
@@ -59,6 +60,7 @@ class FlowchartGenerator {
 
         try {
             console.log('Generating flowchart for:', pythonCode.substring(0, 100) + '...');
+            this.loopBackEdges = [];
             
             const lines = pythonCode.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
             
@@ -155,38 +157,94 @@ class FlowchartGenerator {
 
             } else if (line.startsWith('for ') || line.startsWith('while ')) {
                 // Handle loops
-                mermaidCode += `    ${currentNode}{"${nodeText}"}:::decision\n`;
-                
-                // Connect from previous nodes
-                if (currentLastNodes.length > 0) {
-                    mermaidCode += this.connectNodes(currentLastNodes, currentNode);
-                }
-
                 // Find loop body
                 const loopBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
                 const loopLines = lines.slice(i + 1, loopBlockEnd);
                 let loopBreakNodes = [];
-                
-                if (loopLines.length > 0) {
-                    const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
-                    mermaidCode += loopResult.mermaidCode;
-                    loopBreakNodes = loopResult.breakNodes || [];
-                    if (loopResult.firstNode) {
-                        mermaidCode += `    ${currentNode} -->|YES| ${loopResult.firstNode}\n`;
-                        for (const lastNode of this.getLastNodes(loopResult)) {
-                            mermaidCode += `    ${this.getNodeId(lastNode)} --> ${currentNode}\n`;
-                        }
-                        for (const continueNode of loopResult.continueNodes || []) {
-                            mermaidCode += `    ${this.getNodeId(continueNode)} --> ${currentNode}\n`;
+
+                const rangeLoop = this.parseRangeLoopStatement(line);
+                if (rangeLoop) {
+                    const setupNode = currentNode;
+                    nodeCounter.value++;
+                    const conditionNode = 'N' + nodeCounter.value;
+
+                    mermaidCode += `    ${setupNode}["${this.escapeForMermaid(rangeLoop.setupLabel)}"]:::process\n`;
+                    mermaidCode += `    ${conditionNode}{"${this.escapeForMermaid(rangeLoop.conditionLabel)}"}:::decision\n`;
+
+                    if (currentLastNodes.length > 0) {
+                        mermaidCode += this.connectNodes(currentLastNodes, setupNode);
+                    }
+                    mermaidCode += `    ${setupNode} --> ${conditionNode}\n`;
+
+                    let repeatNodes = [];
+                    if (loopLines.length > 0) {
+                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
+                        mermaidCode += loopResult.mermaidCode;
+                        loopBreakNodes = loopResult.breakNodes || [];
+                        if (loopResult.firstNode) {
+                            mermaidCode += `    ${conditionNode} -->|YES| ${loopResult.firstNode}\n`;
+                            repeatNodes = this.uniqueNodes([
+                                ...this.getLastNodes(loopResult),
+                                ...(loopResult.continueNodes || [])
+                            ]);
                         }
                     }
+
+                    nodeCounter.value++;
+                    const updateNode = 'N' + nodeCounter.value;
+                    mermaidCode += `    ${updateNode}["${this.escapeForMermaid(rangeLoop.updateLabel)}"]:::process\n`;
+
+                    if (repeatNodes.length > 0) {
+                        mermaidCode += this.connectNodes(repeatNodes, updateNode);
+                    } else {
+                        mermaidCode += `    ${conditionNode} -->|YES| ${updateNode}\n`;
+                    }
+
+                    this.loopBackEdges.push({
+                        from: updateNode,
+                        to: conditionNode
+                    });
+
+                    currentLastNodes = [
+                        this.createEdgeRef(conditionNode, 'NO'),
+                        ...loopBreakNodes
+                    ];
+                } else {
+                    mermaidCode += `    ${currentNode}{"${nodeText}"}:::decision\n`;
+
+                    // Connect from previous nodes
+                    if (currentLastNodes.length > 0) {
+                        mermaidCode += this.connectNodes(currentLastNodes, currentNode);
+                    }
+
+                    if (loopLines.length > 0) {
+                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
+                        mermaidCode += loopResult.mermaidCode;
+                        loopBreakNodes = loopResult.breakNodes || [];
+                        if (loopResult.firstNode) {
+                            mermaidCode += `    ${currentNode} -->|YES| ${loopResult.firstNode}\n`;
+                            const repeatNodes = this.uniqueNodes([
+                                ...this.getLastNodes(loopResult),
+                                ...(loopResult.continueNodes || [])
+                            ]);
+                            const loopBackSource = this.mergeLoopBackNodes(repeatNodes, nodeCounter, (code) => {
+                                mermaidCode += code;
+                            });
+                            if (loopBackSource) {
+                                this.loopBackEdges.push({
+                                    from: loopBackSource,
+                                    to: currentNode
+                                });
+                            }
+                        }
+                    }
+
+                    // Loop exits to next statement
+                    currentLastNodes = [
+                        this.createEdgeRef(currentNode, 'NO'),
+                        ...loopBreakNodes
+                    ];
                 }
-                
-                // Loop exits to next statement
-                currentLastNodes = [
-                    this.createEdgeRef(currentNode, 'NO'),
-                    ...loopBreakNodes
-                ];
                 i = loopBlockEnd - 1;
 
             } else {
@@ -286,9 +344,13 @@ class FlowchartGenerator {
             }
         }
 
+        const mergedLastNodes = this.mergeBranchEndNodes(branchEndNodes, nodeCounter, (code) => {
+            mermaidCode += code;
+        });
+
         return {
             mermaidCode,
-            lastNodes: this.uniqueNodes(branchEndNodes),
+            lastNodes: mergedLastNodes,
             breakNodes: this.uniqueNodes(breakNodes),
             continueNodes: this.uniqueNodes(continueNodes),
             endIndex: branches.length > 0 ? branches[branches.length - 1].bodyEnd : startIndex + 1
@@ -397,6 +459,29 @@ class FlowchartGenerator {
         return mermaidCode;
     }
 
+    mergeBranchEndNodes(endNodes, nodeCounter, appendMermaidCode) {
+        const uniqueEndNodes = this.uniqueNodes(endNodes);
+        if (uniqueEndNodes.length <= 1) {
+            return uniqueEndNodes;
+        }
+
+        const junctionNode = this.createJunctionNode(nodeCounter);
+        appendMermaidCode(`    ${junctionNode}[" "]:::junction\n`);
+        appendMermaidCode(this.connectNodes(uniqueEndNodes, junctionNode));
+        return [junctionNode];
+    }
+
+    mergeLoopBackNodes(fromNodes, nodeCounter, appendMermaidCode) {
+        const uniqueFromNodes = this.uniqueNodes(fromNodes);
+        if (uniqueFromNodes.length === 0) return null;
+        if (uniqueFromNodes.length === 1) return this.getNodeId(uniqueFromNodes[0]);
+
+        const junctionNode = this.createJunctionNode(nodeCounter);
+        appendMermaidCode(`    ${junctionNode}[" "]:::junction\n`);
+        appendMermaidCode(this.connectNodes(uniqueFromNodes, junctionNode));
+        return junctionNode;
+    }
+
     /**
      * Normalize parser results to an array of unique exit nodes.
      */
@@ -418,6 +503,11 @@ class FlowchartGenerator {
         return Array.from(unique.values());
     }
 
+    createJunctionNode(nodeCounter) {
+        nodeCounter.value++;
+        return `J${nodeCounter.value}`;
+    }
+
     createEdgeRef(node, label = '') {
         return {node, label};
     }
@@ -435,7 +525,8 @@ class FlowchartGenerator {
             '    classDef terminal fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
             '    classDef process fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
             '    classDef decision fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
-            '    classDef io fill:#2f73d4,stroke:#2f73d4,color:#ffffff;'
+            '    classDef io fill:#2f73d4,stroke:#2f73d4,color:#ffffff;',
+            '    classDef junction fill:transparent,stroke:transparent,color:transparent;'
         ].join('\n') + '\n';
     }
 
@@ -459,53 +550,147 @@ class FlowchartGenerator {
     convertControlStatementToCompactLabel(pythonCode) {
         const ifMatch = pythonCode.match(/^if\s+(.+)\s*:/);
         if (ifMatch) {
-            return this.truncateFlowchartLabel(ifMatch[1]);
+            return this.truncateFlowchartLabel(ifMatch[1], 40);
         }
 
         const elifMatch = pythonCode.match(/^elif\s+(.+)\s*:/);
         if (elifMatch) {
-            return this.truncateFlowchartLabel(elifMatch[1]);
+            return this.truncateFlowchartLabel(elifMatch[1], 40);
         }
 
         const whileMatch = pythonCode.match(/^while\s+(.+)\s*:/);
         if (whileMatch) {
-            return this.truncateFlowchartLabel(whileMatch[1]);
+            return this.truncateFlowchartLabel(whileMatch[1], 40);
         }
 
         const forRangeMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+range\s*\((.*)\)\s*:/);
         if (forRangeMatch) {
-            return this.truncateFlowchartLabel(this.formatRangeLoopLabel(forRangeMatch[1], forRangeMatch[2]));
+            return this.truncateFlowchartLabel(this.formatRangeLoopLabel(forRangeMatch[1], forRangeMatch[2]), 48);
         }
 
         const forMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+(.+)\s*:/);
         if (forMatch) {
-            return this.truncateFlowchartLabel(`${forMatch[1]} in ${forMatch[2]}`);
+            return this.truncateFlowchartLabel(`${forMatch[1]} を ${forMatch[2]} から順に取り出す`, 48);
         }
 
-        return this.truncateFlowchartLabel(pythonCode.replace(/:\s*$/, ''));
+        return this.truncateFlowchartLabel(pythonCode.replace(/:\s*$/, ''), 48);
+    }
+
+    parseRangeLoopStatement(pythonCode) {
+        const match = pythonCode.match(/^for\s+([A-Za-z_]\w*)\s+in\s+range\s*\((.*)\)\s*:/);
+        if (!match) return null;
+
+        const variable = match[1];
+        const args = this.splitArguments(match[2]);
+        if (args.length === 0) return null;
+
+        const start = args.length === 1 ? '0' : args[0];
+        const stop = args.length === 1 ? args[0] : args[1];
+        const step = args.length >= 3 ? args[2] : '1';
+        const isNegativeStep = this.isNegativeRangeStep(step);
+        const inclusiveEnd = this.getInclusiveRangeEnd(stop, isNegativeStep ? 1 : -1);
+        const comparator = isNegativeStep ? '≥' : '≤';
+
+        return {
+            setupLabel: `${variable} = ${start}`,
+            conditionLabel: `${variable} ${comparator} ${inclusiveEnd}`,
+            updateLabel: this.formatRangeUpdateLabel(variable, step)
+        };
+    }
+
+    splitArguments(argumentText) {
+        const args = [];
+        let current = '';
+        let depth = 0;
+        let quote = null;
+
+        for (const char of argumentText) {
+            if (quote) {
+                current += char;
+                if (char === quote) quote = null;
+                continue;
+            }
+
+            if (char === '"' || char === "'") {
+                quote = char;
+                current += char;
+                continue;
+            }
+
+            if (char === '(' || char === '[' || char === '{') {
+                depth += 1;
+                current += char;
+                continue;
+            }
+
+            if (char === ')' || char === ']' || char === '}') {
+                depth = Math.max(0, depth - 1);
+                current += char;
+                continue;
+            }
+
+            if (char === ',' && depth === 0) {
+                if (current.trim()) args.push(current.trim());
+                current = '';
+                continue;
+            }
+
+            current += char;
+        }
+
+        if (current.trim()) args.push(current.trim());
+        return args;
+    }
+
+    isNegativeRangeStep(step) {
+        const numericStep = Number(step);
+        if (Number.isFinite(numericStep)) {
+            return numericStep < 0;
+        }
+        return step.trim().startsWith('-');
+    }
+
+    formatRangeUpdateLabel(variable, step) {
+        const trimmedStep = step.trim();
+        const numericStep = Number(trimmedStep);
+
+        if (Number.isFinite(numericStep)) {
+            if (numericStep === 1) return `${variable} = ${variable} + 1`;
+            if (numericStep === -1) return `${variable} = ${variable} - 1`;
+            if (numericStep > 0) return `${variable} = ${variable} + ${numericStep}`;
+            return `${variable} = ${variable} - ${Math.abs(numericStep)}`;
+        }
+
+        if (trimmedStep.startsWith('-')) {
+            const stepWithoutSign = trimmedStep.slice(1).trim();
+            return `${variable} = ${variable} - ${stepWithoutSign}`;
+        }
+
+        return `${variable} = ${variable} + ${trimmedStep}`;
     }
 
     formatRangeLoopLabel(variable, rangeArguments) {
-        const args = rangeArguments.split(',').map((arg) => arg.trim()).filter(Boolean);
+        const args = this.splitArguments(rangeArguments);
 
         if (args.length === 1) {
             const end = this.getInclusiveRangeEnd(args[0], -1);
-            return `${variable}: 0..${end}`;
+            return `${variable} を 0 から ${end} まで 1 ずつ増やしながら繰り返す`;
         }
 
         if (args.length === 2) {
             const end = this.getInclusiveRangeEnd(args[1], -1);
-            return `${variable}: ${args[0]}..${end}`;
+            return `${variable} を ${args[0]} から ${end} まで 1 ずつ増やしながら繰り返す`;
         }
 
         if (args.length >= 3) {
             const step = args[2];
             const endOffset = step.trim().startsWith('-') ? 1 : -1;
             const end = this.getInclusiveRangeEnd(args[1], endOffset);
-            return `${variable}: ${args[0]}..${end} / ${step}`;
+            const direction = step.trim().startsWith('-') ? '減らしながら' : '増やしながら';
+            return `${variable} を ${args[0]} から ${end} まで ${step} ずつ${direction}繰り返す`;
         }
 
-        return `${variable}: range(${rangeArguments})`;
+        return `${variable} を range(${rangeArguments}) で繰り返す`;
     }
 
     getInclusiveRangeEnd(value, offset) {
@@ -725,8 +910,11 @@ class FlowchartGenerator {
 
             this.currentSvgMarkup = renderResult.svg;
             this.renderedSvgElement = diagramContainer.querySelector('svg');
+            this.drawLoopBackEdges();
+            this.trimSvgViewBox();
             this.zoom = 1;
             this.applyZoom();
+            this.centerFlowchartViewport();
             this.updateControlState();
             
             console.log('Flowchart rendered successfully');
@@ -821,6 +1009,14 @@ class FlowchartGenerator {
         canvas.style.height = `${Math.ceil(size.height * this.zoom)}px`;
     }
 
+    centerFlowchartViewport() {
+        const flowchart = document.getElementById('flowchart');
+        if (!flowchart) return;
+
+        flowchart.scrollLeft = Math.max(0, (flowchart.scrollWidth - flowchart.clientWidth) / 2);
+        flowchart.scrollTop = 0;
+    }
+
     updateControlState() {
         const hasDiagram = Boolean(this.getRenderedSvg());
         const controls = [this.zoomOutButton, this.zoomResetButton, this.zoomInButton, this.saveButton];
@@ -841,6 +1037,188 @@ class FlowchartGenerator {
         }
         this.renderedSvgElement = document.querySelector('#flowchart svg');
         return this.renderedSvgElement;
+    }
+
+    drawLoopBackEdges() {
+        const svg = this.getRenderedSvg();
+        if (!svg || !this.loopBackEdges.length) return;
+
+        const existingGroup = svg.querySelector('.flowchart-loop-back-edges');
+        if (existingGroup) existingGroup.remove();
+
+        this.ensureLoopArrowMarker(svg);
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'flowchart-loop-back-edges');
+
+        this.loopBackEdges.forEach((edge, index) => {
+            const fromElement = this.getSvgNodeElement(svg, edge.from);
+            const toElement = this.getSvgNodeElement(svg, edge.to);
+            if (!fromElement || !toElement) return;
+
+            const fromBox = this.getSvgNodeBounds(svg, fromElement);
+            const toBox = this.getSvgNodeBounds(svg, toElement);
+            if (!fromBox || !toBox) return;
+            const gap = 44 + (index * 18);
+            const contentBox = this.getSvgContentBounds(svg);
+            const startX = fromBox.x + (fromBox.width / 2);
+            const startY = fromBox.y + fromBox.height;
+            const endX = toBox.x;
+            const endY = toBox.y + (toBox.height / 2);
+            const sideX = (contentBox ? contentBox.x : Math.min(fromBox.x, toBox.x)) - gap;
+            const lowerY = startY + 24;
+            const d = [
+                `M ${startX} ${startY}`,
+                `L ${startX} ${lowerY}`,
+                `L ${sideX} ${lowerY}`,
+                `L ${sideX} ${endY}`,
+                `L ${endX} ${endY}`
+            ].join(' ');
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'flowchart-loop-back-path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#2f73d4');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('marker-end', 'url(#flowchart-loop-arrow)');
+            group.appendChild(path);
+
+            this.expandSvgViewBox(svg, sideX - 8, lowerY + 8);
+        });
+
+        const firstNode = svg.querySelector('.node');
+        if (firstNode && firstNode.parentNode) {
+            firstNode.parentNode.insertBefore(group, firstNode);
+        } else {
+            svg.appendChild(group);
+        }
+    }
+
+    getSvgContentBounds(svg) {
+        const nodes = Array.from(svg.querySelectorAll('.node:not(.junction)'))
+            .map((node) => this.getSvgNodeBounds(svg, node))
+            .filter(Boolean);
+        if (nodes.length === 0) return null;
+
+        const minX = Math.min(...nodes.map((node) => node.x));
+        const minY = Math.min(...nodes.map((node) => node.y));
+        const maxX = Math.max(...nodes.map((node) => node.x + node.width));
+        const maxY = Math.max(...nodes.map((node) => node.y + node.height));
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+
+    getSvgNodeBounds(svg, element) {
+        if (!svg || !element || typeof element.getBBox !== 'function') return null;
+
+        const box = element.getBBox();
+        const matrix = element.getCTM();
+        if (!matrix) return box;
+
+        const corners = [
+            this.transformSvgPoint(svg, matrix, box.x, box.y),
+            this.transformSvgPoint(svg, matrix, box.x + box.width, box.y),
+            this.transformSvgPoint(svg, matrix, box.x, box.y + box.height),
+            this.transformSvgPoint(svg, matrix, box.x + box.width, box.y + box.height)
+        ].filter(Boolean);
+        if (corners.length === 0) return box;
+
+        const xValues = corners.map((point) => point.x);
+        const yValues = corners.map((point) => point.y);
+        const minX = Math.min(...xValues);
+        const maxX = Math.max(...xValues);
+        const minY = Math.min(...yValues);
+        const maxY = Math.max(...yValues);
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+
+    transformSvgPoint(svg, matrix, x, y) {
+        const point = svg.createSVGPoint();
+        point.x = x;
+        point.y = y;
+        return point.matrixTransform(matrix);
+    }
+
+    getSvgNodeElement(svg, nodeId) {
+        const escapedId = typeof CSS !== 'undefined' && CSS.escape
+            ? CSS.escape(nodeId)
+            : nodeId.replace(/[^A-Za-z0-9_-]/g, '\\$&');
+        return svg.querySelector(`#${escapedId}`)
+            || Array.from(svg.querySelectorAll('.node')).find((node) => (
+                node.id === nodeId || node.id.startsWith(`flowchart-${nodeId}-`)
+            ));
+    }
+
+    ensureLoopArrowMarker(svg) {
+        let defs = svg.querySelector('defs');
+        if (!defs) {
+            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svg.insertBefore(defs, svg.firstChild);
+        }
+
+        if (svg.querySelector('#flowchart-loop-arrow')) return;
+
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'flowchart-loop-arrow');
+        marker.setAttribute('viewBox', '0 0 10 10');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '5');
+        marker.setAttribute('markerWidth', '7');
+        marker.setAttribute('markerHeight', '7');
+        marker.setAttribute('orient', 'auto-start-reverse');
+
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+        arrow.setAttribute('fill', '#2f73d4');
+        marker.appendChild(arrow);
+        defs.appendChild(marker);
+    }
+
+    expandSvgViewBox(svg, minX, maxY) {
+        const viewBox = svg.viewBox && svg.viewBox.baseVal;
+        if (!viewBox || !viewBox.width || !viewBox.height) return;
+
+        const currentMinX = viewBox.x;
+        const currentMinY = viewBox.y;
+        const currentMaxX = viewBox.x + viewBox.width;
+        const currentMaxY = viewBox.y + viewBox.height;
+        const nextMinX = Math.min(currentMinX, minX);
+        const nextMaxY = Math.max(currentMaxY, maxY);
+
+        if (nextMinX !== currentMinX || nextMaxY !== currentMaxY) {
+            const nextWidth = currentMaxX - nextMinX;
+            const nextHeight = nextMaxY - currentMinY;
+            svg.setAttribute('viewBox', `${nextMinX} ${currentMinY} ${nextWidth} ${nextHeight}`);
+        }
+    }
+
+    trimSvgViewBox() {
+        const svg = this.getRenderedSvg();
+        if (!svg || typeof svg.getBBox !== 'function') return;
+
+        try {
+            const box = svg.getBBox();
+            if (!box.width || !box.height) return;
+
+            const padding = 16;
+            svg.setAttribute(
+                'viewBox',
+                `${box.x - padding} ${box.y - padding} ${box.width + (padding * 2)} ${box.height + (padding * 2)}`
+            );
+        } catch (_) {
+            // Some browsers can fail getBBox while fonts are settling; the original viewBox is still usable.
+        }
     }
 
     getSvgNaturalSize(svg) {
