@@ -9,7 +9,9 @@
       "description": "文字列を表示し、入力した整数を使う最初のプログラム",
       "category": "1. 入出力と変数",
       "difficulty": "入門",
-      "learningPoints": ["表示", "文字列", "入力"]
+      "learningPoints": ["表示", "文字列", "入力"],
+      "tryInput": "7",
+      "checkpoint": "数値を文字列につなぐとき、strが必要なのはなぜか"
     },
     {
       "id": "basic-calculation",
@@ -20,7 +22,9 @@
       "description": "二つの整数を入力し、計算結果とゼロ除算の扱いを確認",
       "category": "1. 入出力と変数",
       "difficulty": "基礎",
-      "learningPoints": ["整数入力", "四則演算", "剰余"]
+      "learningPoints": ["整数入力", "四則演算", "剰余"],
+      "tryInput": "17 → 5、続けて17 → 0",
+      "checkpoint": "0で割る前に分岐する理由を説明できるか"
     },
     {
       "id": "conditional",
@@ -31,7 +35,9 @@
       "description": "入力範囲を確かめてから、得点を段階的に判定",
       "category": "2. 条件分岐",
       "difficulty": "基礎",
-      "learningPoints": ["if", "elif", "else", "論理演算"]
+      "learningPoints": ["if", "elif", "else", "論理演算"],
+      "tryInput": "59、60、90、101",
+      "checkpoint": "境界値ごとに通る分岐を予想できるか"
     },
     {
       "id": "fizzbuzz",
@@ -42,7 +48,8 @@
       "description": "1から100までを調べ、条件の優先順位を確認",
       "category": "2. 条件分岐",
       "difficulty": "標準",
-      "learningPoints": ["複合分岐", "剰余", "条件の順序"]
+      "learningPoints": ["複合分岐", "剰余", "条件の順序"],
+      "checkpoint": "15の倍数を最初に判定する理由を説明できるか"
     },
     {
       "id": "loop",
@@ -53,7 +60,32 @@
       "description": "for文で合計を求め、while文で値を減らして反復",
       "category": "3. 繰り返し",
       "difficulty": "基礎",
-      "learningPoints": ["for", "while", "累積"]
+      "learningPoints": ["for", "while", "累積"],
+      "checkpoint": "各ループが何回実行されるか数えられるか"
+    },
+    {
+      "id": "reverse-loop",
+      "title": "逆順の繰り返し",
+      "folder": "reverse-loop",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "10から2まで2ずつ減らし、rangeの終了値と負の刻みを確認",
+      "category": "3. 繰り返し",
+      "difficulty": "基礎",
+      "learningPoints": ["range", "負の刻み", "終了値"],
+      "checkpoint": "range(10, 0, -2)で0が表示されない理由を説明できるか"
+    },
+    {
+      "id": "multiplication-table",
+      "title": "九九の表",
+      "folder": "multiplication-table",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "二重ループで行と列の組合せをすべて処理",
+      "category": "3. 繰り返し",
+      "difficulty": "標準",
+      "learningPoints": ["二重ループ", "反復回数", "文字列結合"],
+      "checkpoint": "掛け算は全部で何回実行されるか"
     },
     {
       "id": "list-basic",
@@ -64,7 +96,8 @@
       "description": "添字で配列を順に調べ、合計と平均を計算",
       "category": "4. 配列",
       "difficulty": "基礎",
-      "learningPoints": ["配列", "添字", "要素数"]
+      "learningPoints": ["配列", "添字", "要素数"],
+      "checkpoint": "最後の添字が要素数-1になる理由を説明できるか"
     },
     {
       "id": "score-analysis",
@@ -75,7 +108,32 @@
       "description": "得点配列から平均、合格者数、最高点を一度に集計",
       "category": "4. 配列",
       "difficulty": "標準",
-      "learningPoints": ["集計", "カウンタ", "最大値"]
+      "learningPoints": ["集計", "カウンタ", "最大値"],
+      "checkpoint": "最高点の初期値を0ではなく先頭要素にする利点は何か"
+    },
+    {
+      "id": "filter-list",
+      "title": "条件に合う要素の抽出",
+      "folder": "filter-list",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "80点以上の値だけを新しい配列へ追加",
+      "category": "4. 配列",
+      "difficulty": "標準",
+      "learningPoints": ["条件抽出", "append", "配列の作成"],
+      "checkpoint": "元の配列と新しい配列の役割を区別できるか"
+    },
+    {
+      "id": "frequency-table",
+      "title": "回答の度数分布",
+      "folder": "frequency-table",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "1から5の回答を添字へ対応させ、回答数を集計",
+      "category": "4. 配列",
+      "difficulty": "発展",
+      "learningPoints": ["度数分布", "添字変換", "カウンタ配列"],
+      "checkpoint": "回答値から1を引いて添字にする理由を説明できるか"
     },
     {
       "id": "linear-search",
@@ -86,7 +144,9 @@
       "description": "配列を先頭から調べ、見つかった位置を記録",
       "category": "5. 探索と整列",
       "difficulty": "標準",
-      "learningPoints": ["探索", "番兵値", "break"]
+      "learningPoints": ["探索", "番兵値", "break"],
+      "tryInput": "8、続けて7",
+      "checkpoint": "position=-1が表す状態を説明できるか"
     },
     {
       "id": "binary-search",
@@ -97,7 +157,9 @@
       "description": "整列済み配列の探索範囲を半分ずつ狭める",
       "category": "5. 探索と整列",
       "difficulty": "発展",
-      "learningPoints": ["二分探索", "while", "探索範囲"]
+      "learningPoints": ["二分探索", "while", "探索範囲"],
+      "tryInput": "46、続けて50",
+      "checkpoint": "探索前に配列が整列済みである必要はなぜか"
     },
     {
       "id": "bubble-sort",
@@ -108,7 +170,20 @@
       "description": "隣り合う要素を比較・交換して昇順に整列",
       "category": "5. 探索と整列",
       "difficulty": "発展",
-      "learningPoints": ["二重ループ", "比較交換", "整列"]
+      "learningPoints": ["二重ループ", "比較交換", "整列"],
+      "checkpoint": "外側のループが進むと比較回数が減る理由は何か"
+    },
+    {
+      "id": "selection-sort",
+      "title": "選択ソート",
+      "folder": "selection-sort",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "未整列部分の最小値を探し、先頭と交換",
+      "category": "5. 探索と整列",
+      "difficulty": "発展",
+      "learningPoints": ["最小値探索", "比較交換", "整列済み範囲"],
+      "checkpoint": "バブルソートとの交換回数の違いを比べられるか"
     },
     {
       "id": "function-basic",
@@ -119,7 +194,9 @@
       "description": "面積を返す関数と、結果を表示する関数を利用",
       "category": "6. 関数",
       "difficulty": "標準",
-      "learningPoints": ["関数", "引数", "戻り値"]
+      "learningPoints": ["関数", "引数", "戻り値"],
+      "tryInput": "8 → 5",
+      "checkpoint": "returnする関数と表示する関数の違いは何か"
     },
     {
       "id": "prime-check",
@@ -130,7 +207,47 @@
       "description": "約数を順に調べる処理を関数としてまとめる",
       "category": "6. 関数",
       "difficulty": "発展",
-      "learningPoints": ["真偽値", "早期return", "計算量"]
+      "learningPoints": ["真偽値", "早期return", "計算量"],
+      "tryInput": "29、続けて35",
+      "checkpoint": "numberの平方根まで調べればよい理由を考えられるか"
+    },
+    {
+      "id": "dice-frequency",
+      "title": "さいころの度数実験",
+      "folder": "dice-frequency",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "乱数でさいころを30回再現し、各目の回数を集計",
+      "category": "7. シミュレーション",
+      "difficulty": "標準",
+      "learningPoints": ["乱数", "度数", "シミュレーション"],
+      "checkpoint": "実行するたび結果が変わる理由と、合計が30になる理由を確認できるか"
+    },
+    {
+      "id": "euclidean-algorithm",
+      "title": "最大公約数",
+      "folder": "euclidean-algorithm",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "余りを繰り返し使うユークリッドの互除法",
+      "category": "8. 数のアルゴリズム",
+      "difficulty": "標準",
+      "learningPoints": ["最大公約数", "剰余", "while"],
+      "tryInput": "48 → 18",
+      "checkpoint": "bが0になったときaが答えになる流れを追えるか"
+    },
+    {
+      "id": "decimal-to-binary",
+      "title": "10進数から2進数へ変換",
+      "folder": "decimal-to-binary",
+      "pythonFile": "python.md",
+      "commonTestFile": "common-test.md",
+      "description": "2で割った余りを逆順に並べ、2進数を作成",
+      "category": "8. 数のアルゴリズム",
+      "difficulty": "発展",
+      "learningPoints": ["進数変換", "剰余", "配列", "逆順走査"],
+      "tryInput": "13、続けて0",
+      "checkpoint": "余りを逆順に読む必要がある理由を説明できるか"
     }
   ]
 }

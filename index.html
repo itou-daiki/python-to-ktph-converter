@@ -12,13 +12,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/main.css?v=20260711-samples">
-    <link rel="stylesheet" href="assets/css/components.css?v=20260711-css-cleanup">
-    <link rel="stylesheet" href="assets/css/layout.css?v=20260709-flowchart-range">
+    <link rel="stylesheet" href="assets/css/main.css?v=20260711-samples-20">
+    <link rel="stylesheet" href="assets/css/components.css?v=20260711-classroom-a11y">
+    <link rel="stylesheet" href="assets/css/layout.css?v=20260711-classroom-a11y">
     <link rel="stylesheet" href="assets/css/editor.css?v=20260711-panel-controls">
     <link rel="stylesheet" href="assets/css/modal.css?v=20260711-classroom">
-    <link rel="stylesheet" href="assets/css/responsive.css?v=20260711-samples">
-    <link rel="stylesheet" href="assets/css/commontest-highlight.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/responsive.css?v=20260711-mobile-panel-heights">
+    <link rel="stylesheet" href="assets/css/commontest-highlight.css?v=20260711-classroom-a11y">
     <link rel="stylesheet" href="assets/css/info-sections.css?v=20260711-css-cleanup">
     
     <!-- External JavaScript Libraries -->
@@ -32,9 +32,11 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 </head>
 <body>
+    <div class="visually-hidden" id="appStatus" role="status" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Header -->
     <header>
-        <h1><a class="header-title-link" href="https://itou-daiki.github.io/python-to-ktph-converter/">Python ⇄ 共通テスト用プログラム表記 変換ツール</a></h1>
+        <h1><a class="header-title-link" href="./">Python ⇄ 共通テスト用プログラム表記 変換ツール</a></h1>
         <p>Created by Dit-Lab.(Daiki ITO)・Shinichi UEGAKI・Takumi MATSUSHIMA・Yuki AKIYOSHI</p>
     </header>
 
@@ -265,7 +267,7 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-label="Python実行環境を準備中">
         <div class="loading-spinner"></div>
         <p>Pyodideを初期化中...</p>
     </div>
@@ -301,10 +303,10 @@
 
     <!-- JavaScript Modules -->
     <script src="assets/js/modules/commontest-mode.js?v=20260708-audit"></script>
-    <script src="assets/js/modules/converter.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/converter.js?v=20260711-samples-20"></script>
     <script src="assets/js/modules/executor.js?v=20260711-classroom"></script>
-    <script src="assets/js/modules/flowchart.js?v=20260711-compact-decisions"></script>
-    <script src="assets/js/modules/ui.js?v=20260711-samples"></script>
-    <script src="assets/js/app.js?v=20260711-classroom"></script>
+    <script src="assets/js/modules/flowchart.js?v=20260711-clean-flow-labels"></script>
+    <script src="assets/js/modules/ui.js?v=20260711-samples-20"></script>
+    <script src="assets/js/app.js?v=20260711-lazy-pyodide"></script>
 </body>
 </html>

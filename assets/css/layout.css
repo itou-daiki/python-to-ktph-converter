@@ -31,7 +31,7 @@
 
 .convert-button-right,
 .convert-button-left {
-    background: #27ae60;
+    background: #187a3f;
     color: white;
     border: none;
     border-radius: 50%;
@@ -49,7 +49,7 @@
 
 .convert-button-right:hover,
 .convert-button-left:hover {
-    background: #229954;
+    background: #125f31;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
@@ -63,7 +63,7 @@
 /* Conversion Controls Action Buttons */
 .conversion-controls .run-button,
 .conversion-controls .clear-button {
-    background: #3498db;
+    background: #1f5fae;
     color: white;
     border: none;
     border-radius: 6px;
@@ -83,17 +83,17 @@
 }
 
 .conversion-controls .run-button {
-    background: #e74c3c;
+    background: #b8322a;
 }
 
 .conversion-controls .run-button:hover {
-    background: #c0392b;
+    background: #92261f;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .conversion-controls .clear-button:hover {
-    background: #2980b9;
+    background: #174c8c;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
@@ -160,7 +160,7 @@
 }
 
 .execution-input-marker {
-    color: #e74c3c;
+    color: #b8322a;
     font-weight: bold;
 }
 

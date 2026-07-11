@@ -105,7 +105,7 @@ class FlowchartGenerator {
     /**
      * Parse code structure and generate proper branching flowchart
      */
-    parseCodeStructure(lines, startIndex = 0, nodeCounter = { value: 0 }, isInBlock = false) {
+    parseCodeStructure(lines, startIndex = 0, nodeCounter = { value: 0 }) {
         let mermaidCode = '';
         let i = startIndex;
         let firstNode = null;
@@ -136,15 +136,30 @@ class FlowchartGenerator {
                 continue;
             }
 
+            if (/^(?:async\s+)?def\s+/.test(line)) {
+                nodeCounter.value++;
+                const definitionNode = 'N' + nodeCounter.value;
+                const definitionLabel = this.escapeForMermaid(this.getFunctionDefinitionLabel(line));
+                const functionBlockEnd = this.findBlockEnd(lines, i + 1, indentLevel);
+
+                if (!firstNode) firstNode = definitionNode;
+                mermaidCode += `    ${definitionNode}["${definitionLabel}"]:::process\n`;
+                if (currentLastNodes.length > 0) {
+                    mermaidCode += this.connectNodes(currentLastNodes, definitionNode);
+                }
+
+                currentLastNodes = [definitionNode];
+                i = functionBlockEnd;
+                continue;
+            }
+
             nodeCounter.value++;
             const currentNode = 'N' + nodeCounter.value;
             
             if (!firstNode) firstNode = currentNode;
 
             // Convert Python code to Common Test style for display
-            const isFirst = (i === startIndex);
-            const isLast = (i === lines.length - 1 || (i + 1 < lines.length && this.getIndentLevel(lines[i + 1]) <= indentLevel));
-            let nodeText = this.getFlowchartNodeText(line, isInBlock, isFirst, isLast);
+            let nodeText = this.getFlowchartNodeText(line);
             nodeText = this.escapeForMermaid(nodeText);
 
             if (line.startsWith('if ')) {
@@ -181,7 +196,7 @@ class FlowchartGenerator {
 
                     let repeatNodes = [];
                     if (loopLines.length > 0) {
-                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
+                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter);
                         mermaidCode += loopResult.mermaidCode;
                         loopBreakNodes = loopResult.breakNodes || [];
                         if (loopResult.firstNode) {
@@ -221,7 +236,7 @@ class FlowchartGenerator {
                     }
 
                     if (loopLines.length > 0) {
-                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter, true);
+                        const loopResult = this.parseCodeStructure(loopLines, 0, nodeCounter);
                         mermaidCode += loopResult.mermaidCode;
                         loopBreakNodes = loopResult.breakNodes || [];
                         if (loopResult.firstNode) {
@@ -303,7 +318,7 @@ class FlowchartGenerator {
 
                 const rawText = isFirstBranch
                     ? firstNodeText
-                    : this.escapeForMermaid(this.getFlowchartNodeText(lines[branch.index].trim(), true, true, false));
+                    : this.escapeForMermaid(this.getFlowchartNodeText(lines[branch.index].trim()));
                 mermaidCode += `    ${currentConditionNode}{"${this.wrapDecisionLabel(rawText)}"}:::decision\n`;
 
                 if (isFirstBranch) {
@@ -437,7 +452,7 @@ class FlowchartGenerator {
             };
         }
 
-        const result = this.parseCodeStructure(branchLines, 0, nodeCounter, true);
+        const result = this.parseCodeStructure(branchLines, 0, nodeCounter);
         return {
             mermaidCode: result.mermaidCode,
             firstNode: result.firstNode,
@@ -533,17 +548,24 @@ class FlowchartGenerator {
         ].join('\n') + '\n';
     }
 
+    getFunctionDefinitionLabel(pythonCode) {
+        const match = pythonCode.match(/^(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:/);
+        if (!match) return '関数を定義';
+
+        return `関数 ${match[1]}(${match[2].trim()}) を定義`;
+    }
+
     /**
      * Use compact labels for decision diamonds so branching nodes stay readable.
      */
-    getFlowchartNodeText(pythonCode, isInBlock = false, isFirst = false, isLast = false) {
+    getFlowchartNodeText(pythonCode) {
         const converted = pythonCode.trim();
 
         if (this.isControlStatement(converted)) {
             return this.convertControlStatementToCompactLabel(converted);
         }
 
-        return this.convertPythonToCommonTestStyle(converted, isInBlock, isFirst, isLast);
+        return this.convertPythonToCommonTestStyle(converted);
     }
 
     isControlStatement(pythonCode) {
@@ -784,27 +806,9 @@ class FlowchartGenerator {
     }
 
     /**
-     * Add control symbols to code blocks for Common Test style
-     */
-    addControlSymbols(nodeText, isFirst, isLast, isInBlock) {
-        if (!isInBlock) {
-            return nodeText;
-        }
-        
-        let prefix = '';
-        if (isLast) {
-            prefix = '⎿ ';  // End of control block
-        } else {
-            prefix = '｜ ';  // Inside control block
-        }
-        
-        return prefix + nodeText;
-    }
-
-    /**
      * Convert Python code to Common Test style notation for flowchart display
      */
-    convertPythonToCommonTestStyle(pythonCode, isInBlock = false, isFirst = false, isLast = false) {
+    convertPythonToCommonTestStyle(pythonCode) {
         let converted = pythonCode.trim();
         
         // Convert for loops to Common Test style
@@ -864,9 +868,6 @@ class FlowchartGenerator {
             const value = assignMatch[2];
             return `${variable} = ${value}`;
         }
-        
-        // Add control symbols if in a block
-        converted = this.addControlSymbols(converted, isFirst, isLast, isInBlock);
         
         return converted;
     }

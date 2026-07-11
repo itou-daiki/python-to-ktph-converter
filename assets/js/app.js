@@ -12,9 +12,6 @@ let uiManager;
  * Initialize the application
  */
 window.addEventListener('load', async function() {
-    // Show loading overlay during initialization
-    document.getElementById('loadingOverlay').style.display = 'flex';
-    
     try {
         // Initialize all modules
         console.log('Initializing modules...');
@@ -35,23 +32,17 @@ window.addEventListener('load', async function() {
         uiManager.initializeEditors();
         await uiManager.initializeSamples();
         uiManager.setupEventListeners();
-        
-        // Initialize Pyodide during startup
-        console.log('Initializing Pyodide...');
-        await executor.initPyodide();
-        console.log('Pyodide initialized successfully');
-        
-        // Load from URL if hash exists (with slight delay to ensure editors are ready)
-        setTimeout(async () => {
-            await uiManager.loadFromUrl();
-        }, 200);
-        
-        // Make instances globally available immediately after initialization
+
         window.converter = converter;
         window.executor = executor;
         window.flowchartGenerator = flowchartGenerator;
         window.uiManager = uiManager;
-        
+
+        // URL restoration only needs the editors and flowchart; Pyodide loads on first execution.
+        setTimeout(async () => {
+            await uiManager.loadFromUrl();
+        }, 200);
+
         console.log('Application initialized successfully');
         console.log('Global variables verified:');
         console.log('- window.converter:', !!window.converter);
@@ -59,17 +50,9 @@ window.addEventListener('load', async function() {
         console.log('- window.flowchartGenerator:', !!window.flowchartGenerator);
         console.log('- window.uiManager:', !!window.uiManager);
         
-        // Check external libraries
-        console.log('External libraries verified:');
-        console.log('- mermaid:', typeof mermaid !== 'undefined');
-        console.log('- pyodide:', typeof pyodide !== 'undefined');
-        
     } catch (error) {
         console.error('Failed to initialize application:', error);
         document.getElementById('output').textContent = 'アプリケーションの初期化に失敗しました: ' + error.message;
-    } finally {
-        // Hide loading overlay
-        document.getElementById('loadingOverlay').style.display = 'none';
     }
 });
 
@@ -154,6 +137,14 @@ async function runCode() {
         return;
     }
     
+    const runButton = document.querySelector('.run-button');
+    const originalButtonText = runButton ? runButton.textContent : '';
+
+    if (runButton) {
+        runButton.disabled = true;
+        runButton.textContent = '実行中';
+    }
+
     try {
         // Always run Python code using Pyodide
         const pythonCode = uiManager.getPythonCode();
@@ -163,80 +154,16 @@ async function runCode() {
     } catch (error) {
         console.error('Execution failed:', error);
         outputDiv.textContent = 'エラー: ' + error.message;
-        alert('Execution failed: ' + error.message);
+        alert('実行に失敗しました: ' + error.message);
+    } finally {
+        if (runButton) {
+            runButton.disabled = false;
+            runButton.textContent = originalButtonText;
+        }
     }
-}
-
-// Clear all content
-function clearAll() {
-    uiManager.clearAll();
-}
-
-// Clear output only
-function clearOutput() {
-    uiManager.clearOutput();
-}
-
-// Load example code (backwards compatibility)
-function loadExample() {
-    uiManager.loadExample();
-}
-
-// Load specific sample code
-function loadSampleCode(sampleKey) {
-    uiManager.loadSampleCode(sampleKey);
-}
-
-// Copy to clipboard
-function copyToClipboard(elementId, buttonElement) {
-    uiManager.copyToClipboard(elementId, buttonElement);
-}
-
-// Generate share URL
-function shareCode() {
-    uiManager.shareCode();
-}
-
-// Copy share URL
-function copyShareUrl(buttonElement) {
-    uiManager.copyShareUrl(buttonElement);
 }
 
 // Make global functions available
 window.convertPythonToCommon = convertPythonToCommon;
 window.convertCommonToPython = convertCommonToPython;
 window.runCode = runCode;
-window.clearAll = clearAll;
-window.clearOutput = clearOutput;
-window.loadExample = loadExample;
-window.loadSampleCode = loadSampleCode;
-window.copyToClipboard = copyToClipboard;
-window.shareCode = shareCode;
-window.copyShareUrl = copyShareUrl;
-// Global variables are already set during initialization
-
-// Test function to check if everything is working
-function testApplication() {
-    console.log('=== Application Test ===');
-    console.log('converter:', !!window.converter);
-    console.log('executor:', !!window.executor);
-    console.log('flowchartGenerator:', !!window.flowchartGenerator);
-    console.log('uiManager:', !!window.uiManager);
-    
-    if (window.uiManager) {
-        console.log('pythonEditor:', !!window.uiManager.pythonEditor);
-        console.log('commonTestEditor:', !!window.uiManager.commonTestEditor);
-    }
-    
-    const convertRightBtn = document.querySelector('.convert-button-right');
-    const convertLeftBtn = document.querySelector('.convert-button-left');
-    const runBtn = document.querySelector('.run-button');
-    console.log('Convert right button found:', !!convertRightBtn);
-    console.log('Convert left button found:', !!convertLeftBtn);
-    console.log('Run button found:', !!runBtn);
-    
-    return 'Test completed - check console for details';
-}
-
-// Make test function globally available
-window.testApplication = testApplication;

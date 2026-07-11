@@ -58,7 +58,7 @@
 
 /* Comments */
 .cm-s-material-darker .cm-comment {
-    color: #546E7A !important; /* Gray for comments */
+    color: #90A4AE !important; /* Readable gray for comments */
     font-style: italic;
 }
 

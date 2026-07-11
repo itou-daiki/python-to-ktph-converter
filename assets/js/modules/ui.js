@@ -6,7 +6,7 @@ class UIManager {
         this.pythonEditor = null;
         this.commonTestEditor = null;
         this.samplesConfig = null;
-        this.sampleAssetVersion = '20260711-samples';
+        this.sampleAssetVersion = '20260711-samples-20';
         this.autocompleteDelay = 120;
         this.autocompleteTimers = new WeakMap();
         this.pythonIndentGuideMarks = [];
@@ -27,6 +27,7 @@ class UIManager {
         this.expandedPanelKind = null;
         this.panelExpansionKeydownHandler = null;
         this.panelFocusReturnElement = null;
+        this.buttonFeedbackStates = new WeakMap();
     }
 
     /**
@@ -1617,29 +1618,6 @@ class UIManager {
     }
 
     /**
-     * Test if editors are working properly
-     */
-    testEditors() {
-        console.log('Testing editors...');
-        
-        if (this.pythonEditor) {
-            this.pythonEditor.setValue('# Test Python editor');
-            const testValue = this.pythonEditor.getValue();
-            console.log('Python editor test result:', testValue);
-            this.pythonEditor.setValue('');
-        }
-        
-        if (this.commonTestEditor) {
-            this.commonTestEditor.setValue('# Test Common Test editor');
-            const testValue = this.commonTestEditor.getValue();
-            console.log('Common test editor test result:', testValue);
-            this.commonTestEditor.setValue('');
-        }
-        
-        console.log('Editor testing completed');
-    }
-
-    /**
      * Initialize sample configuration
      */
     async initializeSamples() {
@@ -1690,7 +1668,9 @@ class UIManager {
 
             const option = document.createElement('option');
             option.value = sample.id;
-            option.textContent = sample.title;
+            option.textContent = sample.difficulty
+                ? `${sample.title}（${sample.difficulty}）`
+                : sample.title;
             option.title = [sample.difficulty, sample.description].filter(Boolean).join(' - ');
             group.appendChild(option);
         });
@@ -1726,7 +1706,9 @@ class UIManager {
         descriptionElement.textContent = [
             sample.difficulty,
             sample.description,
-            learningPoints ? `学習: ${learningPoints}` : ''
+            learningPoints ? `学習: ${learningPoints}` : '',
+            sample.tryInput ? `入力例: ${sample.tryInput}` : '',
+            sample.checkpoint ? `確認: ${sample.checkpoint}` : ''
         ].filter(Boolean).join(' | ');
         descriptionElement.hidden = false;
     }
@@ -1916,6 +1898,14 @@ class UIManager {
             const char = line[index];
             const previous = line[index - 1];
 
+            if (!quote && char === '#') {
+                flushSegment();
+                const hasCodeBeforeComment = line.slice(0, index).trim().length > 0;
+                result = hasCodeBeforeComment ? result.trimEnd() + '  ' : result;
+                result += line.slice(index);
+                return result;
+            }
+
             if ((char === '"' || char === "'") && previous !== '\\') {
                 if (!quote) {
                     flushSegment();
@@ -1948,8 +1938,10 @@ class UIManager {
         normalized = normalized.replace(/\s*,\s*/g, ', ');
         normalized = normalized.replace(/\s+([,):\]])/g, '$1');
         normalized = normalized.replace(/([(\[])\s+/g, '$1');
-        normalized = normalized.replace(/(^|[=(\[:])\s*-\s+(\d+)/g, '$1-$2');
-        normalized = normalized.replace(/(,)\s*-\s+(\d+)/g, '$1 -$2');
+        normalized = normalized.replace(/(^|[(\[])\s*-\s+([A-Za-z_]\w*|\d+(?:\.\d+)?)/g, '$1-$2');
+        normalized = normalized.replace(/([=<>!+\-*/%])\s*-\s+([A-Za-z_]\w*|\d+(?:\.\d+)?)/g, '$1 -$2');
+        normalized = normalized.replace(/([,:])\s*-\s+([A-Za-z_]\w*|\d+(?:\.\d+)?)/g, '$1 -$2');
+        normalized = normalized.replace(/\b(return|yield)\s+-\s+([A-Za-z_]\w*|\d+(?:\.\d+)?)/g, '$1 -$2');
         normalized = normalized.replace(/\s{2,}/g, ' ');
         const leading = segment.match(/^\s*/)[0];
         const trimmed = normalized.trimStart();
@@ -1980,10 +1972,45 @@ class UIManager {
     flashButton(buttonElement, message) {
         if (!buttonElement) return;
 
-        const originalText = buttonElement.textContent;
-        buttonElement.textContent = message;
-        setTimeout(() => {
-            buttonElement.textContent = originalText;
+        let state = this.buttonFeedbackStates.get(buttonElement);
+        if (!state) {
+            state = {
+                originalText: buttonElement.textContent,
+                originalTitle: buttonElement.getAttribute('title'),
+                originalAriaLabel: buttonElement.getAttribute('aria-label'),
+                timer: null
+            };
+            this.buttonFeedbackStates.set(buttonElement, state);
+        }
+
+        if (state.timer) clearTimeout(state.timer);
+
+        const failed = /不可|失敗|エラー/.test(message);
+        buttonElement.textContent = failed ? '!' : '✓';
+        buttonElement.title = message;
+        buttonElement.setAttribute('aria-label', message);
+
+        const statusElement = document.getElementById('appStatus');
+        if (statusElement) {
+            statusElement.textContent = '';
+            requestAnimationFrame(() => {
+                statusElement.textContent = message;
+            });
+        }
+
+        state.timer = setTimeout(() => {
+            buttonElement.textContent = state.originalText;
+            if (state.originalTitle === null) {
+                buttonElement.removeAttribute('title');
+            } else {
+                buttonElement.setAttribute('title', state.originalTitle);
+            }
+            if (state.originalAriaLabel === null) {
+                buttonElement.removeAttribute('aria-label');
+            } else {
+                buttonElement.setAttribute('aria-label', state.originalAriaLabel);
+            }
+            this.buttonFeedbackStates.delete(buttonElement);
         }, 1600);
     }
 
@@ -2045,13 +2072,6 @@ class UIManager {
      */
     clearOutput() {
         document.getElementById('output').textContent = '';
-    }
-
-    /**
-     * Load example code
-     */
-    loadExample() {
-        this.loadSampleCode('hello-world');
     }
 
     async requestSampleLoad(sampleKey) {

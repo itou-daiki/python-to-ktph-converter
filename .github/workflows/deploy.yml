@@ -26,15 +26,16 @@ jobs:
     - name: Setup Pages
       uses: actions/configure-pages@v4
       
-    - name: Build
+    - name: Prepare static site
       run: |
-        # No build step needed for static site
-        echo "Static site - no build required"
+        mkdir _site
+        cp index.html python-overview.html commontest-overview.html _site/
+        cp -R assets Sample _site/
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: '.'
+        path: '_site'
 
   deploy:
     environment:

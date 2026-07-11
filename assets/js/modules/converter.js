@@ -60,6 +60,12 @@ class Converter {
             
             // Convert the line
             const converted = this.convertLine(trimmed);
+
+            // Imports that have a direct Common Test equivalent are omitted.
+            // Do not leave an additional blank line in their place.
+            if (converted === '' && trimmed.startsWith('import random')) {
+                continue;
+            }
             
             // Add appropriate prefix for indented content
             if (this.indentStack.length > 1) {
@@ -494,7 +500,7 @@ class Converter {
         this.commonToPythonArrayNames = this.collectCommonArrayNames(lines);
         
         // Check if random function is used in the code
-        const needsRandomImport = commonTestCode.includes('乱数()');
+        const needsRandomImport = /乱数\s*\(/.test(commonTestCode);
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -790,10 +796,10 @@ class Converter {
         };
         
         // For loop - handle expression-based ranges like 要素数(numbers)-1
-        const forMatchExpression = line.match(/(\w+)\s*を\s*(\d+)\s*から\s*([^まで]+)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
+        const forMatchExpression = line.match(/(\w+)\s*を\s*(.+?)\s*から\s*(.+?)\s*まで\s*(\d+)\s*ずつ(増やし|減らし)ながら繰り返す:/);
         if (forMatchExpression) {
             const variable = forMatchExpression[1];
-            const start = parseInt(forMatchExpression[2]);
+            const startExpression = this.convertCommonExpression(forMatchExpression[2].trim());
             let endExpression = forMatchExpression[3].trim();
             const step = parseInt(forMatchExpression[4]);
             const direction = forMatchExpression[5];
@@ -802,10 +808,10 @@ class Converter {
                 const end = parseInt(endExpression);
                 if (direction === '増やし') {
                     return step === 1
-                        ? `for ${variable} in range(${start}, ${end + 1}):`
-                        : `for ${variable} in range(${start}, ${end + 1}, ${step}):`;
+                        ? `for ${variable} in range(${startExpression}, ${end + 1}):`
+                        : `for ${variable} in range(${startExpression}, ${end + 1}, ${step}):`;
                 }
-                return `for ${variable} in range(${start}, ${end - 1}, -${step}):`;
+                return `for ${variable} in range(${startExpression}, ${end - 1}, -${step}):`;
             }
 
             if (direction === '増やし') {
@@ -815,27 +821,29 @@ class Converter {
                     const varMatch = endExpression.match(/要素数\(([^)]+)\)-1/);
                     if (varMatch) {
                         const arrayVar = this.replaceIdentifiersOutsideStrings(varMatch[1], this.commonToPythonArrayNames);
-                        return `for ${variable} in range(len(${arrayVar})):`;
+                        return startExpression === '0'
+                            ? `for ${variable} in range(len(${arrayVar})):`
+                            : `for ${variable} in range(${startExpression}, len(${arrayVar})):`;
                     }
                 }
                 // Handle other expressions
-                else if (endExpression.includes('-1')) {
+                else if (/\s*-\s*1\s*$/.test(endExpression)) {
                     // Remove -1 and add +1 to convert back to Python range
-                    const baseExpression = endExpression.replace('-1', '');
-                    return `for ${variable} in range(${start}, ${baseExpression}):`;
+                    const baseExpression = endExpression.replace(/\s*-\s*1\s*$/, '').trim();
+                    return `for ${variable} in range(${startExpression}, ${this.convertCommonExpression(baseExpression)}):`;
                 } else {
                     // Add +1 to the end expression and simplify
-                    let pythonEndExpr = endExpression + ' + 1';
+                    let pythonEndExpr = this.convertCommonExpression(endExpression) + ' + 1';
                     pythonEndExpr = reverseSimplifyExpression(pythonEndExpr);
                     
                     if (step === 1) {
-                        return `for ${variable} in range(${start}, ${pythonEndExpr}):`;
+                        return `for ${variable} in range(${startExpression}, ${pythonEndExpr}):`;
                     } else {
-                        return `for ${variable} in range(${start}, ${pythonEndExpr}, ${step}):`;
+                        return `for ${variable} in range(${startExpression}, ${pythonEndExpr}, ${step}):`;
                     }
                 }
             } else {
-                return `for ${variable} in range(${start}, ${endExpression} - 1, -${step}):`;
+                return `for ${variable} in range(${startExpression}, ${this.convertCommonExpression(endExpression)} - 1, -${step}):`;
             }
         }
 
@@ -873,8 +881,9 @@ class Converter {
         const appendMatch = line.match(/(\w+)配列に要素を追加する\(([^)]+)\)/);
         if (appendMatch) {
             const arrayName = appendMatch[1];
-            const value = appendMatch[2];
-            const lowercaseName = arrayName[0].toLowerCase() + arrayName.slice(1);
+            const value = this.convertCommonExpression(appendMatch[2]);
+            const lowercaseName = this.commonToPythonArrayNames.get(arrayName)
+                || arrayName[0].toLowerCase() + arrayName.slice(1);
             return `${lowercaseName}.append(${value})`;
         }
 
