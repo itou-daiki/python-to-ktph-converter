@@ -1,17 +1,20 @@
-# 基本計算
+# 四則演算
 
-入力と出力、四則演算の基本
+難易度: 基礎
+学習ポイント: 整数入力、四則演算、ゼロ除算の回避
 
 ```python
-# 基本的な計算のサンプル
-print("二つの数を入力してください")
-a = int(input("1つ目の数: "))
-b = int(input("2つ目の数: "))
+# 二つの整数を使った計算
+a = int(input("1つ目の整数: "))
+b = int(input("2つ目の整数: "))
 
-print("a = " + str(a) + ", b = " + str(b))
 print("和: " + str(a + b))
 print("差: " + str(a - b))
 print("積: " + str(a * b))
-print("商: " + str(a // b))
-print("余り: " + str(a % b))
+
+if b != 0:
+    print("商: " + str(a // b))
+    print("余り: " + str(a % b))
+else:
+    print("0では割れません")
 ```

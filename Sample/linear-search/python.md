@@ -1,24 +1,21 @@
 # 線形探索
 
-配列から値を順番に探す
+難易度: 標準
+学習ポイント: 探索、番兵値、break
 
 ```python
-# 線形探索のサンプル
-Data = [5, 2, 8, 1, 9, 3]
-print("配列:", Data)
+# 配列を先頭から順に探索
+data = [5, 2, 8, 1, 9, 3]
 target = int(input("探す値を入力してください: "))
-
-found = False
 position = -1
 
-for i in range(len(Data)):
-    if Data[i] == target:
-        found = True
+for i in range(len(data)):
+    if data[i] == target:
         position = i
         break
 
-if found:
-    print("値 " + str(target) + " は位置 " + str(position) + " にあります")
+if position == -1:
+    print("見つかりませんでした")
 else:
-    print("値 " + str(target) + " は見つかりませんでした")
+    print("位置 " + str(position) + " にあります")
 ```

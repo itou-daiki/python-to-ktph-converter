@@ -6,11 +6,27 @@ class UIManager {
         this.pythonEditor = null;
         this.commonTestEditor = null;
         this.samplesConfig = null;
+        this.sampleAssetVersion = '20260711-samples';
         this.autocompleteDelay = 120;
         this.autocompleteTimers = new WeakMap();
         this.pythonIndentGuideMarks = [];
         this.pythonIndentGuideRefreshTimer = null;
         this.editorRefreshTimer = null;
+        this.contentZoomSteps = [80, 90, 100, 110, 125, 140, 160];
+        this.contentZoomScales = {
+            python: 100,
+            commontest: 100,
+            output: 100
+        };
+        this.contentBaseFontSizes = {
+            python: 14.5,
+            commontest: 14,
+            output: 14
+        };
+        this.editorGutterBaseFontSize = 13;
+        this.expandedPanelKind = null;
+        this.panelExpansionKeydownHandler = null;
+        this.panelFocusReturnElement = null;
     }
 
     /**
@@ -44,6 +60,7 @@ class UIManager {
         this.setupEditorAutocomplete(this.commonTestEditor);
         this.setupPythonIndentGuides();
         this.setupEditorLifecycle();
+        this.initializeContentZoomSettings();
 
         // Keep startup free of synthetic editor writes. URL restore and sample loading
         // should be the only initialization paths that change user-visible code.
@@ -129,6 +146,331 @@ class UIManager {
             this.editorRefreshTimer = null;
             this.refreshEditors();
         }, delay);
+    }
+
+    initializeContentZoomSettings() {
+        Object.keys(this.contentZoomScales).forEach((kind) => {
+            const savedScale = this.readSavedContentZoom(kind);
+            this.applyContentZoom(kind, savedScale, {persist: false, refresh: false});
+        });
+    }
+
+    setupPanelDisplayControls() {
+        document.querySelectorAll('[data-content-zoom-action][data-content-kind]').forEach((button) => {
+            if (button.dataset.contentZoomBound === 'true') return;
+
+            button.dataset.contentZoomBound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                const kind = button.dataset.contentKind;
+                const action = button.dataset.contentZoomAction;
+
+                if (action === 'reset') {
+                    this.applyContentZoom(kind, 100);
+                    return;
+                }
+
+                this.adjustContentZoom(kind, action === 'increase' ? 1 : -1);
+            });
+        });
+
+        document.querySelectorAll('.panel-expand-button[data-panel-kind]').forEach((button) => {
+            if (button.dataset.panelExpandBound === 'true') return;
+
+            button.dataset.panelExpandBound = 'true';
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.togglePanelExpansion(button.dataset.panelKind);
+            });
+        });
+
+        if (!this.panelExpansionKeydownHandler) {
+            this.panelExpansionKeydownHandler = (event) => {
+                if (!this.expandedPanelKind) return;
+
+                if (event.key === 'Escape') {
+                    this.togglePanelExpansion(this.expandedPanelKind);
+                    return;
+                }
+
+                if (event.key === 'Tab') {
+                    this.trapFocusInExpandedPanel(event);
+                }
+            };
+            document.addEventListener('keydown', this.panelExpansionKeydownHandler);
+        }
+    }
+
+    adjustContentZoom(kind, direction) {
+        const currentScale = this.contentZoomScales[kind] || 100;
+        const currentIndex = this.contentZoomSteps.indexOf(currentScale);
+        const safeIndex = currentIndex === -1 ? this.contentZoomSteps.indexOf(100) : currentIndex;
+        const nextIndex = Math.min(
+            this.contentZoomSteps.length - 1,
+            Math.max(0, safeIndex + direction)
+        );
+
+        this.applyContentZoom(kind, this.contentZoomSteps[nextIndex]);
+    }
+
+    applyContentZoom(kind, requestedScale, options = {}) {
+        const config = this.getContentZoomConfig(kind);
+        if (!config) return;
+
+        const {persist = true, refresh = true} = options;
+        const scale = this.normalizeContentZoom(requestedScale);
+        const fontSize = config.baseFontSize * scale / 100;
+        this.contentZoomScales[kind] = scale;
+
+        if (config.editor) {
+            config.element.style.setProperty('--editor-font-size', `${fontSize.toFixed(2)}px`);
+            config.element.style.setProperty(
+                '--editor-gutter-font-size',
+                `${(this.editorGutterBaseFontSize * scale / 100).toFixed(2)}px`
+            );
+        } else {
+            config.element.style.fontSize = `${fontSize.toFixed(2)}px`;
+        }
+
+        this.updateContentZoomControls(kind);
+        if (persist) this.saveContentZoom(kind, scale);
+        if (refresh && config.editor) this.refreshEditorAfterDisplayChange(config.editor, kind);
+    }
+
+    getContentZoomConfig(kind) {
+        const configs = {
+            python: {
+                label: 'Python',
+                element: document.getElementById('pythonEditor'),
+                editor: this.pythonEditor,
+                baseFontSize: this.contentBaseFontSizes.python
+            },
+            commontest: {
+                label: '共通テスト用プログラム表記',
+                element: document.getElementById('commonTestEditor'),
+                editor: this.commonTestEditor,
+                baseFontSize: this.contentBaseFontSizes.commontest
+            },
+            output: {
+                label: '実行結果',
+                element: document.getElementById('output'),
+                editor: null,
+                baseFontSize: this.contentBaseFontSizes.output
+            }
+        };
+
+        const config = configs[kind];
+        return config && config.element ? config : null;
+    }
+
+    normalizeContentZoom(requestedScale) {
+        if (requestedScale === null || requestedScale === '' || !Number.isFinite(Number(requestedScale))) {
+            return 100;
+        }
+
+        const numericScale = Number(requestedScale);
+        return this.contentZoomSteps.reduce((closest, scale) => (
+            Math.abs(scale - numericScale) < Math.abs(closest - numericScale) ? scale : closest
+        ), 100);
+    }
+
+    updateContentZoomControls(kind) {
+        const config = this.getContentZoomConfig(kind);
+        if (!config) return;
+
+        const scale = this.contentZoomScales[kind] || 100;
+        const decreaseButton = document.querySelector(
+            `[data-content-kind="${kind}"][data-content-zoom-action="decrease"]`
+        );
+        const resetButton = document.querySelector(
+            `[data-content-kind="${kind}"][data-content-zoom-action="reset"]`
+        );
+        const increaseButton = document.querySelector(
+            `[data-content-kind="${kind}"][data-content-zoom-action="increase"]`
+        );
+
+        if (decreaseButton) decreaseButton.disabled = scale === this.contentZoomSteps[0];
+        if (increaseButton) increaseButton.disabled = scale === this.contentZoomSteps[this.contentZoomSteps.length - 1];
+        if (resetButton) {
+            resetButton.textContent = `${scale}%`;
+            resetButton.title = `${config.label}の文字サイズを100%に戻す`;
+            resetButton.setAttribute('aria-label', `${config.label}の文字サイズは${scale}%。100%に戻す`);
+        }
+    }
+
+    getContentZoomStorageKey(kind) {
+        return `python-to-ktph:content-zoom:${kind}`;
+    }
+
+    readSavedContentZoom(kind) {
+        try {
+            return localStorage.getItem(this.getContentZoomStorageKey(kind)) || 100;
+        } catch (error) {
+            return 100;
+        }
+    }
+
+    saveContentZoom(kind, scale) {
+        try {
+            localStorage.setItem(this.getContentZoomStorageKey(kind), String(scale));
+        } catch (error) {
+            // The controls still work when storage is unavailable.
+        }
+    }
+
+    refreshEditorAfterDisplayChange(editor, kind, scrollPosition = null) {
+        if (!editor) return;
+
+        const scroll = scrollPosition || editor.getScrollInfo();
+        requestAnimationFrame(() => {
+            editor.setSize(null, null);
+            editor.refresh();
+            editor.scrollTo(scroll.left, scroll.top);
+            if (kind === 'python') this.schedulePythonIndentGuideRefresh();
+        });
+    }
+
+    getExpandablePanelConfig(kind) {
+        const configs = {
+            python: {
+                label: 'Pythonエディタ',
+                panel: document.querySelector('.panel.top-left'),
+                content: document.getElementById('pythonEditor'),
+                editor: this.pythonEditor
+            },
+            commontest: {
+                label: '共通テスト用プログラム表記エディタ',
+                panel: document.querySelector('.panel.top-right'),
+                content: document.getElementById('commonTestEditor'),
+                editor: this.commonTestEditor
+            },
+            flowchart: {
+                label: 'フローチャート',
+                panel: document.querySelector('.panel.bottom-left'),
+                content: document.getElementById('flowchart'),
+                editor: null
+            },
+            output: {
+                label: '実行結果',
+                panel: document.querySelector('.panel.bottom-right'),
+                content: document.getElementById('output'),
+                editor: null
+            }
+        };
+
+        const config = configs[kind];
+        return config && config.panel && config.content ? config : null;
+    }
+
+    togglePanelExpansion(kind) {
+        const shouldExpand = this.expandedPanelKind !== kind;
+
+        if (this.expandedPanelKind) {
+            const currentKind = this.expandedPanelKind;
+            const currentConfig = this.getExpandablePanelConfig(currentKind);
+            if (currentConfig) this.setPanelExpandedState(currentKind, currentConfig, false);
+        }
+
+        if (shouldExpand) {
+            const nextConfig = this.getExpandablePanelConfig(kind);
+            if (nextConfig) this.setPanelExpandedState(kind, nextConfig, true);
+        }
+    }
+
+    setPanelExpandedState(kind, config, expanded) {
+        const scrollPosition = this.capturePanelScroll(config);
+
+        if (expanded) {
+            this.panelFocusReturnElement = document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+            config.panel.setAttribute('role', 'dialog');
+            config.panel.setAttribute('aria-modal', 'true');
+            config.panel.setAttribute('aria-label', `${config.label}の拡大表示`);
+        } else {
+            config.panel.removeAttribute('role');
+            config.panel.removeAttribute('aria-modal');
+            config.panel.removeAttribute('aria-label');
+        }
+
+        config.panel.classList.toggle('panel-expanded', expanded);
+        this.expandedPanelKind = expanded ? kind : null;
+        document.body.classList.toggle('panel-expanded-open', expanded);
+        this.updatePanelExpansionButton(kind, expanded, config.label);
+        this.restorePanelAfterResize(kind, config, scrollPosition);
+
+        if (!expanded && this.panelFocusReturnElement) {
+            const focusReturnElement = this.panelFocusReturnElement;
+            this.panelFocusReturnElement = null;
+            requestAnimationFrame(() => focusReturnElement.focus());
+        }
+    }
+
+    capturePanelScroll(config) {
+        if (config.editor) {
+            const scroll = config.editor.getScrollInfo();
+            return {left: scroll.left, top: scroll.top};
+        }
+
+        return {
+            left: config.content.scrollLeft,
+            top: config.content.scrollTop
+        };
+    }
+
+    restorePanelAfterResize(kind, config, scrollPosition) {
+        if (config.editor) {
+            this.refreshEditorAfterDisplayChange(config.editor, kind, scrollPosition);
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            config.content.scrollLeft = scrollPosition.left;
+            config.content.scrollTop = scrollPosition.top;
+        });
+    }
+
+    updatePanelExpansionButton(kind, expanded, label) {
+        const button = document.querySelector(`.panel-expand-button[data-panel-kind="${kind}"]`);
+        if (!button) return;
+
+        button.textContent = expanded ? '⤡' : '⤢';
+        button.title = expanded ? `${label}を元の大きさに戻す (Esc)` : `${label}の表示領域を拡大`;
+        button.setAttribute(
+            'aria-label',
+            expanded ? `${label}を元の大きさに戻す` : `${label}の表示領域を拡大`
+        );
+        button.setAttribute('aria-pressed', String(expanded));
+    }
+
+    trapFocusInExpandedPanel(event) {
+        const config = this.getExpandablePanelConfig(this.expandedPanelKind);
+        if (!config) return;
+
+        const focusableElements = Array.from(config.panel.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), '
+            + 'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter((element) => element.getClientRects().length > 0);
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const activeElement = document.activeElement;
+
+        if (!config.panel.contains(activeElement)) {
+            event.preventDefault();
+            firstElement.focus();
+            return;
+        }
+
+        if (event.shiftKey && activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+        } else if (!event.shiftKey && activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+        }
     }
 
     /**
@@ -1302,14 +1644,23 @@ class UIManager {
      */
     async initializeSamples() {
         try {
-            const response = await fetch('Sample/samples.json');
-            this.samplesConfig = await response.json();
+            const response = await fetch(`Sample/samples.json?v=${this.sampleAssetVersion}`);
+            if (!response.ok) {
+                throw new Error(`サンプル一覧の取得に失敗しました (${response.status})`);
+            }
+
+            const config = await response.json();
+            if (!config || !Array.isArray(config.samples) || config.samples.length === 0) {
+                throw new Error('サンプル一覧の形式が正しくありません');
+            }
+
+            this.samplesConfig = config;
             this.populateSampleDropdown();
         } catch (error) {
             console.error('Failed to load samples configuration:', error);
-            // Fallback to inline samples if JSON loading fails
-            this.samplesConfig = this.getFallbackSamplesConfig();
-            this.populateSampleDropdown();
+            this.samplesConfig = {samples: []};
+            this.setSampleControlsAvailable(false);
+            this.updateSampleDescription(null, 'サンプル一覧を読み込めませんでした。ページを再読み込みしてください。');
         }
     }
 
@@ -1320,19 +1671,64 @@ class UIManager {
         const sampleSelect = document.getElementById('sampleSelect');
         if (!sampleSelect || !this.samplesConfig) return;
         
-        // Clear existing options except the first one
-        while (sampleSelect.children.length > 1) {
-            sampleSelect.removeChild(sampleSelect.lastChild);
-        }
-        
-        // Add options from configuration
-        this.samplesConfig.samples.forEach(sample => {
+        sampleSelect.replaceChildren();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'サンプルを選択';
+        sampleSelect.appendChild(placeholder);
+
+        const categoryGroups = new Map();
+        this.samplesConfig.samples.forEach((sample) => {
+            const category = sample.category || 'その他';
+            let group = categoryGroups.get(category);
+            if (!group) {
+                group = document.createElement('optgroup');
+                group.label = category;
+                categoryGroups.set(category, group);
+                sampleSelect.appendChild(group);
+            }
+
             const option = document.createElement('option');
             option.value = sample.id;
             option.textContent = sample.title;
-            option.title = sample.description;
-            sampleSelect.appendChild(option);
+            option.title = [sample.difficulty, sample.description].filter(Boolean).join(' - ');
+            group.appendChild(option);
         });
+
+        this.setSampleControlsAvailable(true);
+        this.updateSampleDescription('');
+    }
+
+    setSampleControlsAvailable(available) {
+        const sampleSelect = document.getElementById('sampleSelect');
+        const loadButton = document.querySelector('.load-sample-button');
+        if (sampleSelect) sampleSelect.disabled = !available;
+        if (loadButton) loadButton.disabled = !available;
+    }
+
+    updateSampleDescription(sampleKey, fallbackMessage = '') {
+        const descriptionElement = document.getElementById('sampleDescription');
+        if (!descriptionElement) return;
+
+        const sample = this.samplesConfig && this.samplesConfig.samples
+            ? this.samplesConfig.samples.find((item) => item.id === sampleKey)
+            : null;
+
+        if (!sample) {
+            descriptionElement.textContent = fallbackMessage;
+            descriptionElement.hidden = !fallbackMessage;
+            return;
+        }
+
+        const learningPoints = Array.isArray(sample.learningPoints)
+            ? sample.learningPoints.join('・')
+            : '';
+        descriptionElement.textContent = [
+            sample.difficulty,
+            sample.description,
+            learningPoints ? `学習: ${learningPoints}` : ''
+        ].filter(Boolean).join(' | ');
+        descriptionElement.hidden = false;
     }
 
     /**
@@ -1341,24 +1737,12 @@ class UIManager {
     setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Check if the old direction selector exists (for backward compatibility)
-        const directionSelector = document.getElementById('conversionDirection');
-        if (directionSelector) {
-            // Set initial panel labels based on default direction
-            const defaultDirection = directionSelector.value;
-            this.updatePanelLabels(defaultDirection);
-            
-            // Direction selector
-            directionSelector.addEventListener('change', (e) => {
-                this.updatePanelLabels(e.target.value);
-            });
-        }
-
         this.bindClick('.convert-button-right', () => window.convertPythonToCommon());
         this.bindClick('.convert-button-left', () => window.convertCommonToPython());
         this.bindClick('.run-button', () => window.runCode());
         this.bindClick('.clear-button', () => this.clearAll());
         this.bindClick('.output-clear-button', () => this.clearOutput());
+        this.setupPanelDisplayControls();
 
         // Load sample button
         this.bindClick('.load-sample-button', () => {
@@ -1366,20 +1750,17 @@ class UIManager {
             const selectedSample = sampleSelect ? sampleSelect.value : '';
 
             if (selectedSample) {
-                this.loadSampleCode(selectedSample);
+                return this.requestSampleLoad(selectedSample);
             } else {
                 alert('サンプルを選択してください');
             }
         });
 
-        // Sample selector change event
         const sampleSelect = document.getElementById('sampleSelect');
-        if (sampleSelect) {
-            sampleSelect.addEventListener('change', (e) => {
-                const selectedSample = e.target.value;
-                if (selectedSample) {
-                    this.loadSampleCode(selectedSample);
-                }
+        if (sampleSelect && sampleSelect.dataset.descriptionBound !== 'true') {
+            sampleSelect.dataset.descriptionBound = 'true';
+            sampleSelect.addEventListener('change', () => {
+                this.updateSampleDescription(sampleSelect.value);
             });
         }
 
@@ -1392,30 +1773,6 @@ class UIManager {
         this.bindClick('.common-copy-button', (event) => this.copyToClipboard('commonTestCode', event.currentTarget));
         this.bindClick('.python-format-button', (event) => this.formatEditor('python', event.currentTarget));
         this.bindClick('.common-format-button', (event) => this.formatEditor('commontest', event.currentTarget));
-        this.bindClick('.input-submit-button', () => window.executor && window.executor.submitInput());
-        this.bindClick('.input-cancel-button', () => window.executor && window.executor.closeInputDialog());
-        this.bindClick('#overlay', () => window.executor && window.executor.closeInputDialog());
-
-        // Enter key in input dialog (remove existing listener first to prevent duplicates)
-        const userInput = document.getElementById('userInput');
-        if (userInput) {
-            userInput.removeEventListener('keydown', this.handleUserInputKeydown);
-            this.handleUserInputKeydown = (e) => {
-                if (e.key === 'Enter') {
-                    if (window.executor) {
-                        window.executor.submitInput();
-                    }
-                    return;
-                }
-                if (e.key === 'Escape') {
-                    if (window.executor) {
-                        window.executor.closeInputDialog();
-                    }
-                }
-            };
-            userInput.addEventListener('keydown', this.handleUserInputKeydown);
-        }
-
         // Hash change event listener for URL sharing
         window.addEventListener('hashchange', () => {
             this.loadFromUrl();
@@ -1430,26 +1787,6 @@ class UIManager {
             event.preventDefault();
             await handler(event);
         });
-    }
-
-    /**
-     * Update panel labels based on conversion direction
-     */
-    updatePanelLabels(direction) {
-        const leftLabel = document.getElementById('leftPanelLabel');
-        const rightLabel = document.getElementById('rightPanelLabel');
-
-        if (!leftLabel || !rightLabel) {
-            return;
-        }
-
-        if (direction === 'pythonToCommon') {
-            leftLabel.textContent = 'Python';
-            rightLabel.textContent = '共通テスト用プログラム表記';
-        } else {
-            leftLabel.textContent = '共通テスト用プログラム表記';
-            rightLabel.textContent = 'Python';
-        }
     }
 
     /**
@@ -1654,27 +1991,53 @@ class UIManager {
      * Clear all content
      */
     clearAll() {
+        if (this.hasWorkspaceContent()) {
+            const confirmed = window.confirm('入力内容、フローチャート、実行結果、生成URLをすべて消去します。よろしいですか？');
+            if (!confirmed) return false;
+        }
+
         this.pythonEditor.setValue('');
         this.commonTestEditor.setValue('');
         if (window.flowchartGenerator) {
             window.flowchartGenerator.clearFlowchart();
         }
-        document.getElementById('output').textContent = '';
+        this.clearOutput();
+        this.clearGeneratedUrls();
+
+        return true;
+    }
+
+    clearGeneratedUrls() {
         document.getElementById('shareUrl').value = '';
         document.getElementById('pythonTutorUrl').value = '';
-        
-        // Hide the share URL link
+
         const shareUrlLink = document.getElementById('shareUrlLink');
         if (shareUrlLink) {
             shareUrlLink.hidden = true;
         }
-        
-        // Hide the Python Tutor URL link
+
         const pythonTutorLink = document.getElementById('pythonTutorLink');
         if (pythonTutorLink) {
             pythonTutorLink.hidden = true;
         }
-        
+    }
+
+    hasWorkspaceContent() {
+        const pythonCode = this.pythonEditor ? this.pythonEditor.getValue().trim() : '';
+        const commonCode = this.commonTestEditor ? this.commonTestEditor.getValue().trim() : '';
+        const flowchart = document.getElementById('flowchart');
+        const output = document.getElementById('output');
+        const shareUrl = document.getElementById('shareUrl');
+        const pythonTutorUrl = document.getElementById('pythonTutorUrl');
+
+        return Boolean(
+            pythonCode
+            || commonCode
+            || (flowchart && flowchart.childElementCount > 0)
+            || (output && output.textContent.trim())
+            || (shareUrl && shareUrl.value)
+            || (pythonTutorUrl && pythonTutorUrl.value)
+        );
     }
 
     /**
@@ -1685,200 +2048,24 @@ class UIManager {
     }
 
     /**
-     * Get fallback samples configuration
-     */
-    getFallbackSamplesConfig() {
-        return {
-            samples: [
-                {
-                    id: 'binary-search',
-                    title: '二分探索',
-                    file: 'binary-search.md',
-                    description: 'ソート済み配列から特定の値を効率的に検索'
-                },
-                {
-                    id: 'bubble-sort',
-                    title: 'バブルソート',
-                    file: 'bubble-sort.md',
-                    description: '隣接する要素を比較して交換を繰り返すソートアルゴリズム'
-                },
-                {
-                    id: 'linear-search',
-                    title: '線形探索',
-                    file: 'linear-search.md',
-                    description: '配列を先頭から順に検索するアルゴリズム'
-                },
-                {
-                    id: 'factorial',
-                    title: '階乗計算',
-                    file: 'factorial.md',
-                    description: '再帰を使った階乗計算'
-                },
-                {
-                    id: 'fibonacci',
-                    title: 'フィボナッチ数列',
-                    file: 'fibonacci.md',
-                    description: 'フィボナッチ数列を生成するアルゴリズム'
-                },
-                {
-                    id: 'prime-check',
-                    title: '素数判定',
-                    file: 'prime-check.md',
-                    description: '効率的な素数判定アルゴリズム'
-                }
-            ]
-        };
-    }
-
-    /**
-     * Get sample codes collection (fallback)
-     */
-    getSampleCodes() {
-        return {
-            'binary-search': {
-                title: '二分探索',
-                code: `# 二分探索の例
-data = [3, 18, 29, 33, 48, 52, 62, 77, 89, 97]
-kazu = len(data)
-print("0～99の数字を入力してください")
-atai = int(input())
-hidari = 0
-migi = kazu - 1
-owari = 0
-
-while hidari <= migi and owari == 0:
-    aida = (hidari + migi) // 2
-    if data[aida] == atai:
-        print(atai, "は", aida, "番目にありました")
-        owari = 1
-    elif data[aida] < atai:
-        hidari = aida + 1
-    else:
-        migi = aida - 1
-
-if owari == 0:
-    print(atai, "は見つかりませんでした")
-
-print("添字", " ", "要素")
-for i in range(0, kazu):
-    print(i, " ", data[i])`
-            },
-            'bubble-sort': {
-                title: 'バブルソート',
-                code: `# バブルソートの例
-data = [64, 34, 25, 12, 22, 11, 90]
-n = len(data)
-
-print("ソート前のデータ:")
-for i in range(n):
-    print(data[i], end=" ")
-print()
-
-# バブルソート
-for i in range(n):
-    for j in range(0, n - i - 1):
-        if data[j] > data[j + 1]:
-            # 要素を交換
-            data[j], data[j + 1] = data[j + 1], data[j]
-
-print("ソート後のデータ:")
-for i in range(n):
-    print(data[i], end=" ")
-print()`
-            },
-            'linear-search': {
-                title: '線形探索',
-                code: `# 線形探索の例
-data = [2, 3, 4, 10, 40]
-print("検索する値を入力してください")
-x = int(input())
-
-# 線形探索
-found = False
-for i in range(len(data)):
-    if data[i] == x:
-        print(f"値 {x} は位置 {i} にあります")
-        found = True
-        break
-
-if not found:
-    print(f"値 {x} は見つかりませんでした")`
-            },
-            'factorial': {
-                title: '階乗計算',
-                code: `# 階乗計算の例
-def factorial(n):
-    if n == 0 or n == 1:
-        return 1
-    else:
-        return n * factorial(n - 1)
-
-print("階乗を計算する数を入力してください")
-num = int(input())
-
-if num < 0:
-    print("負の数の階乗は定義されません")
-else:
-    result = factorial(num)
-    print(f"{num}! = {result}")`
-            },
-            'fibonacci': {
-                title: 'フィボナッチ数列',
-                code: `# フィボナッチ数列の例
-print("フィボナッチ数列の項数を入力してください")
-n = int(input())
-
-# 最初の2項
-a, b = 0, 1
-
-print("フィボナッチ数列:")
-if n >= 1:
-    print(a, end=" ")
-if n >= 2:
-    print(b, end=" ")
-
-for i in range(2, n):
-    c = a + b
-    print(c, end=" ")
-    a, b = b, c
-
-print()`
-            },
-            'prime-check': {
-                title: '素数判定',
-                code: `# 素数判定の例
-def is_prime(n):
-    if n <= 1:
-        return False
-    if n <= 3:
-        return True
-    if n % 2 == 0 or n % 3 == 0:
-        return False
-    
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
-            return False
-        i += 6
-    return True
-
-print("素数かどうか調べる数を入力してください")
-num = int(input())
-
-if is_prime(num):
-    print(f"{num} は素数です")
-else:
-    print(f"{num} は素数ではありません")`
-            }
-        };
-    }
-
-    /**
      * Load example code
      */
     loadExample() {
-        // デフォルトで二分探索を読み込み
-        this.loadSampleCode('binary-search');
+        this.loadSampleCode('hello-world');
+    }
+
+    async requestSampleLoad(sampleKey) {
+        const hasEditorContent = Boolean(
+            (this.pythonEditor && this.pythonEditor.getValue().trim())
+            || (this.commonTestEditor && this.commonTestEditor.getValue().trim())
+        );
+
+        if (hasEditorContent) {
+            const confirmed = window.confirm('現在の入力内容を、選択したサンプルで置き換えます。よろしいですか？');
+            if (!confirmed) return false;
+        }
+
+        return this.loadSampleCode(sampleKey);
     }
 
     /**
@@ -1887,210 +2074,56 @@ else:
     async loadSampleCode(sampleKey) {
         if (!this.samplesConfig) {
             console.error('Samples configuration not loaded');
-            return;
+            return false;
         }
-        
+
         const sample = this.samplesConfig.samples.find(s => s.id === sampleKey);
         if (!sample) {
             console.error('Sample not found:', sampleKey);
-            return;
+            return false;
         }
-        
+
         try {
             console.log('Loading sample:', sample.title);
-            
-            if (sample.folder && sample.pythonFile && sample.commonTestFile) {
-                // New folder-based structure
-                const [pythonResponse, commonTestResponse] = await Promise.all([
-                    fetch(`Sample/${sample.folder}/${sample.pythonFile}`),
-                    fetch(`Sample/${sample.folder}/${sample.commonTestFile}`)
-                ]);
-                
-                const pythonContent = await pythonResponse.text();
-                const commonTestContent = await commonTestResponse.text();
-                
-                // Extract code from markdown files
-                const pythonCodeMatch = pythonContent.match(/```python\n([\s\S]*?)\n```/);
-                const commonTestCodeMatch = commonTestContent.match(/```\n([\s\S]*?)\n```/);
-                
-                if (pythonCodeMatch && pythonCodeMatch[1]) {
-                    this.pythonEditor.setValue(pythonCodeMatch[1]);
-                }
-                
-                if (commonTestCodeMatch && commonTestCodeMatch[1]) {
-                    this.commonTestEditor.setValue(commonTestCodeMatch[1]);
-                }
-                
-                console.log('Sample loaded successfully from folder structure:', sample.title);
-            } else if (sample.file && sample.file.endsWith('.json')) {
-                // Legacy JSON format (backward compatibility)
-                const response = await fetch(`Sample/${sample.file}`);
-                const sampleData = await response.json();
-                
-                // Load both Python and Common Test code
-                if (sampleData.python) {
-                    this.pythonEditor.setValue(sampleData.python);
-                }
-                if (sampleData.commonTest) {
-                    this.commonTestEditor.setValue(sampleData.commonTest);
-                }
-                
-                console.log('Sample loaded successfully from JSON format:', sample.title);
-            } else {
-                // Old markdown format (backward compatibility)
-                const response = await fetch(`Sample/${sample.file}`);
-                const markdownContent = await response.text();
-                
-                // Extract code from markdown (try Python first, then plain code blocks)
-                let codeMatch = markdownContent.match(/```python\n([\s\S]*?)\n```/);
-                let isPythonCode = true;
-                
-                if (!codeMatch) {
-                    // Try plain code block (for Common Test notation)
-                    codeMatch = markdownContent.match(/```\n([\s\S]*?)\n```/);
-                    isPythonCode = false;
-                }
-                
-                if (codeMatch && codeMatch[1]) {
-                    const code = codeMatch[1];
-                    
-                    if (isPythonCode) {
-                        // Set Python code
-                        this.pythonEditor.setValue(code);
-                        // Auto-convert to Common Test
-                        setTimeout(async () => {
-                            if (window.convertPythonToCommon) {
-                                await window.convertPythonToCommon();
-                            }
-                        }, 100);
-                    } else {
-                        // Set Common Test code
-                        this.commonTestEditor.setValue(code);
-                        // Auto-convert to Python
-                        setTimeout(async () => {
-                            if (window.convertCommonToPython) {
-                                await window.convertCommonToPython();
-                            }
-                        }, 100);
-                    }
-                } else {
-                    console.error('No code found in markdown file');
-                }
+
+            if (!sample.folder || !sample.pythonFile || !sample.commonTestFile) {
+                throw new Error('サンプル設定に必要なファイル情報がありません');
             }
+
+            const [pythonResponse, commonTestResponse] = await Promise.all([
+                fetch(`Sample/${sample.folder}/${sample.pythonFile}?v=${this.sampleAssetVersion}`),
+                fetch(`Sample/${sample.folder}/${sample.commonTestFile}?v=${this.sampleAssetVersion}`)
+            ]);
+            if (!pythonResponse.ok || !commonTestResponse.ok) {
+                throw new Error(`サンプルファイルの取得に失敗しました (${pythonResponse.status}/${commonTestResponse.status})`);
+            }
+
+            const [pythonContent, commonTestContent] = await Promise.all([
+                pythonResponse.text(),
+                commonTestResponse.text()
+            ]);
+            const pythonCodeMatch = pythonContent.match(/```python\r?\n([\s\S]*?)\r?\n```/);
+            const commonTestCodeMatch = commonTestContent.match(/```\r?\n([\s\S]*?)\r?\n```/);
+            if (!pythonCodeMatch || !commonTestCodeMatch) {
+                throw new Error('サンプル内のコードブロックを読み取れませんでした');
+            }
+
+            const pythonCode = pythonCodeMatch[1];
+            this.pythonEditor.setValue(pythonCode);
+            this.commonTestEditor.setValue(commonTestCodeMatch[1]);
+            this.clearOutput();
+            this.clearGeneratedUrls();
+
+            if (window.flowchartGenerator) {
+                await window.flowchartGenerator.generateFlowchart(pythonCode);
+            }
+
+            console.log('Sample loaded successfully:', sample.title);
+            return true;
         } catch (error) {
             console.error('Failed to load sample file:', error);
-            // Fallback to inline samples
-            this.loadFallbackSampleCode(sampleKey);
-        }
-    }
-
-    /**
-     * Fallback method to load samples from inline code
-     */
-    loadFallbackSampleCode(sampleKey) {
-        const samples = this.getSampleCodes();
-        const sample = samples[sampleKey];
-        
-        if (!sample) {
-            console.error('Sample not found:', sampleKey);
-            return;
-        }
-        
-        console.log('Loading fallback sample:', sample.title);
-        this.pythonEditor.setValue(sample.code);
-        
-        // Auto-convert after loading sample
-        setTimeout(async () => {
-            if (window.converter) {
-                await this.convert();
-            }
-        }, 100);
-    }
-
-    /**
-     * Convert code based on selected direction
-     */
-    async convert() {
-        console.log('=== Convert function called ===');
-        
-        try {
-            const direction = document.getElementById('conversionDirection').value;
-            console.log('Direction:', direction);
-            
-            // Check if converter is available
-            if (!window.converter) {
-                throw new Error('Converter not initialized');
-            }
-            
-            // Check if editors are available
-            if (!this.pythonEditor) {
-                throw new Error('Python editor not initialized');
-            }
-            
-            if (!this.commonTestEditor) {
-                throw new Error('Common test editor not initialized');
-            }
-            
-            if (direction === 'pythonToCommon') {
-                // Python → Common Test: pythonEditor → commonTestEditor
-                const pythonCode = this.pythonEditor.getValue();
-                console.log('Python code length:', pythonCode.length);
-                console.log('Python code preview:', pythonCode.substring(0, 100));
-                
-                if (!pythonCode.trim()) {
-                    console.log('No Python code to convert');
-                    return;
-                }
-                
-                console.log('Converting Python to Common Test...');
-                const converted = window.converter.pythonToCommonTest(pythonCode);
-                console.log('Conversion successful, result length:', converted.length);
-                console.log('Conversion result preview:', converted.substring(0, 100));
-                
-                this.commonTestEditor.setValue(converted);
-                console.log('Set converted text to common test editor');
-                
-            } else {
-                // Common Test → Python: commonTestEditor → pythonEditor
-                const commonTestCode = this.commonTestEditor.getValue();
-                console.log('Common test code length:', commonTestCode.length);
-                console.log('Common test code preview:', commonTestCode.substring(0, 100));
-                
-                if (!commonTestCode.trim()) {
-                    console.log('No common test code to convert');
-                    return;
-                }
-                
-                console.log('Converting Common Test to Python...');
-                const converted = window.converter.commonTestToPython(commonTestCode);
-                console.log('Conversion successful, result length:', converted.length);
-                console.log('Conversion result preview:', converted.substring(0, 100));
-                
-                this.pythonEditor.setValue(converted);
-                console.log('Set converted text to python editor');
-            }
-            
-            // Generate flowchart using Python code
-            try {
-                if (window.flowchartGenerator) {
-                    console.log('Generating flowchart...');
-                    // Always use the current Python code in the Python editor
-                    const pythonCodeForFlowchart = this.pythonEditor.getValue();
-                    await window.flowchartGenerator.generateFlowchart(pythonCodeForFlowchart);
-                    console.log('Flowchart generated successfully');
-                }
-            } catch (flowchartError) {
-                console.error('Flowchart generation error:', flowchartError);
-                // Don't stop conversion process for flowchart errors
-            }
-            
-            console.log('=== Convert function completed successfully ===');
-            
-        } catch (error) {
-            console.error('Conversion error:', error);
-            const errorMsg = '変換エラー: ' + error.message;
-            document.getElementById('output').textContent = errorMsg;
-            alert(errorMsg);
+            alert(`サンプル「${sample.title}」を読み込めませんでした。ページを再読み込みしてお試しください。`);
+            return false;
         }
     }
 
@@ -2105,7 +2138,7 @@ else:
         console.log('Python code length:', pythonCode.length);
         console.log('Common test code length:', commonTestCode.length);
         
-        // Since conversionDirection element doesn't exist, determine direction based on content
+        // Determine the initial direction from the populated editor.
         let direction = 'python-to-common';
         if (commonTestCode && !pythonCode) {
             direction = 'common-to-python';

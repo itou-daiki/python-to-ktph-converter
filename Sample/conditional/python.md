@@ -1,19 +1,20 @@
-# 条件分岐
+# 得点の判定
 
-if文を使った条件分岐の基本
+難易度: 基礎
+学習ポイント: if、elif、else、論理演算
 
 ```python
-# 条件分岐のサンプル
+# 0点から100点までの得点を判定
 score = int(input("点数を入力してください: "))
 
-if score >= 90:
-    print("優秀です！")
+if score < 0 or score > 100:
+    print("0から100までの点数を入力してください")
+elif score >= 90:
+    print("評価はAです")
 elif score >= 70:
-    print("よくできました")
+    print("評価はBです")
 elif score >= 60:
-    print("合格です")
+    print("評価はCです")
 else:
-    print("もう少し頑張りましょう")
-
-print("判定終了")
+    print("もう一度復習しましょう")
 ```

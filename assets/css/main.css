@@ -1,17 +1,4 @@
 /* Main Styles */
-:root {
-    /* Color Variables */
-    --primary-color: #3498db;
-    --secondary-bg: #ffffff;
-    --panel-bg: #ffffff;
-    --header-bg: #f8f9fa;
-    --border-color: #e1e8ed;
-    --text-color: #333333;
-    --code-bg: #f8f9fa;
-    --code-color: #e74c3c;
-    --accent-bg: #e8f4fd;
-    --dark-secondary-bg: #2a2a2a;
-}
 
 * {
     box-sizing: border-box;
@@ -61,13 +48,6 @@ h1 {
     flex-wrap: wrap;
 }
 
-.direction-selector {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.direction-selector select,
 .sample-selector select {
     padding: 8px 15px;
     border: 1px solid #ddd;
@@ -92,6 +72,13 @@ h1 {
 
 .sample-selector select {
     min-width: 150px;
+}
+
+.sample-description {
+    max-width: 560px;
+    color: #526474;
+    font-size: 13px;
+    line-height: 1.45;
 }
 
 .load-sample-button {

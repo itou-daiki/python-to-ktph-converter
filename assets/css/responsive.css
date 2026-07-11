@@ -1,4 +1,23 @@
 /* Responsive Design */
+@media (max-width: 1100px) {
+    .editor-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .editor-toolbar,
+    .output-toolbar {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .panel.bottom-left .panel-header,
+    .panel.bottom-right .panel-header {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
 @media (max-width: 768px) {
     .main-content {
         grid-template-columns: 1fr;
@@ -6,7 +25,7 @@
         height: auto;
         gap: 15px;
     }
-    
+
     .top-left { 
         grid-column: 1; 
         grid-row: 1; 
@@ -21,6 +40,14 @@
         gap: 15px;
         flex-wrap: wrap;
         margin: 0;
+    }
+
+    .conversion-icon-horizontal {
+        display: none;
+    }
+
+    .conversion-icon-vertical {
+        display: inline;
     }
     
     .top-right { 
@@ -40,24 +67,10 @@
     
     .panel {
         padding: 12px;
-        min-height: 350px;
-    }
-
-    /* Bottom panels specific adjustments for mobile */
-    .panel.bottom-left,
-    .panel.bottom-right {
-        padding: 12px;
-        min-height: 350px;
-    }
-
-    #pythonEditor .CodeMirror,
-    #commonTestEditor .CodeMirror {
-        min-height: 0;
     }
 
     #flowchart,
     #output {
-        min-height: 0;
         padding-bottom: 16px;
     }
 
@@ -66,7 +79,6 @@
         align-items: center;
     }
 
-    .direction-selector,
     .sample-selector {
         margin-bottom: 10px;
         width: 100%;
@@ -80,6 +92,12 @@
 
     .sample-selector label {
         font-size: 13px;
+    }
+
+    .sample-description {
+        width: 100%;
+        max-width: 520px;
+        text-align: center;
     }
 
     .load-sample-button {
@@ -98,15 +116,14 @@
         text-align: center;
     }
 
-    .url-label {
-        font-size: 14px;
-        margin-bottom: 5px;
-    }
-
     .url-generate-button,
     .url-copy-button {
         width: 100%;
         min-width: auto;
+    }
+
+    .panel.panel-expanded {
+        min-height: 0;
     }
 }
 
@@ -115,19 +132,20 @@
         padding: 10px;
     }
 
-    .panel {
-        padding: 12px;
-        min-height: 350px;
+    .editor-toolbar,
+    .output-toolbar {
+        width: 100%;
     }
-    
-    #pythonEditor .CodeMirror,
-    #commonTestEditor .CodeMirror {
+
+    .panel.panel-expanded {
+        inset: 0;
         min-height: 0;
+        padding: 12px;
+        border-radius: 0;
     }
 
     #flowchart,
     #output {
-        min-height: 0;
         padding: 10px;
         padding-bottom: 16px;
     }
@@ -152,7 +170,6 @@
     .conversion-controls {
         gap: 12px;
         padding: 10px;
-        flex-wrap: wrap;
     }
 
     .conversion-controls .run-button,
@@ -160,15 +177,6 @@
         width: 55px;
         height: 28px;
         font-size: 11px;
-    }
-
-    .input-dialog {
-        width: 90%;
-        max-width: 400px;
-    }
-
-    .input-dialog input {
-        width: 100%;
     }
 
     .sample-selector {
@@ -183,7 +191,6 @@
 
     /* URL sharing mobile responsive design */
     .url-row {
-        grid-template-columns: 1fr;
         gap: 6px;
         padding: 15px;
     }

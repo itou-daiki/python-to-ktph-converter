@@ -12,14 +12,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/main.css?v=20260708-audit">
-    <link rel="stylesheet" href="assets/css/components.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/main.css?v=20260711-samples">
+    <link rel="stylesheet" href="assets/css/components.css?v=20260711-css-cleanup">
     <link rel="stylesheet" href="assets/css/layout.css?v=20260709-flowchart-range">
-    <link rel="stylesheet" href="assets/css/editor.css?v=20260708-autocomplete">
-    <link rel="stylesheet" href="assets/css/modal.css?v=20260708-audit">
-    <link rel="stylesheet" href="assets/css/responsive.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/editor.css?v=20260711-panel-controls">
+    <link rel="stylesheet" href="assets/css/modal.css?v=20260711-classroom">
+    <link rel="stylesheet" href="assets/css/responsive.css?v=20260711-samples">
     <link rel="stylesheet" href="assets/css/commontest-highlight.css?v=20260708-audit">
-    <link rel="stylesheet" href="assets/css/info-sections.css?v=20260708-audit">
+    <link rel="stylesheet" href="assets/css/info-sections.css?v=20260711-css-cleanup">
     
     <!-- External JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -46,14 +46,9 @@
                 <label for="sampleSelect">サンプル:</label>
                 <select id="sampleSelect">
                     <option value="">サンプルを選択</option>
-                    <option value="binary-search">二分探索</option>
-                    <option value="bubble-sort">バブルソート</option>
-                    <option value="linear-search">線形探索</option>
-                    <option value="factorial">階乗計算</option>
-                    <option value="fibonacci">フィボナッチ数列</option>
-                    <option value="prime-check">素数判定</option>
                 </select>
-                <button class="load-sample-button" type="button">読込</button>
+                <button class="load-sample-button" type="button" title="選択したサンプルを読み込む">読込</button>
+                <span class="sample-description" id="sampleDescription" aria-live="polite" hidden></span>
             </div>
         </div>
 
@@ -61,11 +56,17 @@
         <div class="main-content">
             <!-- Top Left: Python Code -->
             <div class="panel top-left">
-                <div class="panel-header">
-                    <span>Python</span>
-                    <div class="panel-actions">
+                <div class="panel-header editor-panel-header">
+                    <span class="panel-title">Python</span>
+                    <div class="panel-actions editor-toolbar" role="group" aria-label="Pythonエディタ操作">
+                        <div class="content-zoom-controls" role="group" aria-label="Python文字サイズ">
+                            <button class="content-zoom-button" type="button" data-content-kind="python" data-content-zoom-action="decrease" title="Pythonの文字を縮小" aria-label="Pythonの文字を縮小">−</button>
+                            <button class="content-zoom-button content-zoom-level-button" type="button" data-content-kind="python" data-content-zoom-action="reset" title="Pythonの文字サイズを100%に戻す" aria-label="Pythonの文字サイズを100%に戻す" aria-live="polite">100%</button>
+                            <button class="content-zoom-button" type="button" data-content-kind="python" data-content-zoom-action="increase" title="Pythonの文字を拡大" aria-label="Pythonの文字を拡大">＋</button>
+                        </div>
                         <button class="format-button python-format-button" type="button" title="Pythonコードを整形">整形</button>
-                        <button class="copy-button python-copy-button" type="button" title="Pythonコードをコピー">📋</button>
+                        <button class="copy-button python-copy-button" type="button" title="Pythonコードをコピー" aria-label="Pythonコードをコピー">📋</button>
+                        <button class="panel-action-button panel-expand-button" type="button" data-panel-kind="python" title="Pythonエディタの編集領域を拡大" aria-label="Pythonエディタの編集領域を拡大" aria-pressed="false">⤢</button>
                     </div>
                 </div>
                 <div id="pythonEditor"></div>
@@ -73,19 +74,31 @@
             
             <!-- Conversion Controls -->
             <div class="conversion-controls">
-                <button class="convert-button-right" type="button" title="Pythonから共通テスト用プログラム表記へ変換">→</button>
-                <button class="convert-button-left" type="button" title="共通テスト用プログラム表記からPythonへ変換">←</button>
-                <button class="run-button" type="button">実行</button>
-                <button class="clear-button" type="button">クリア</button>
+                <button class="convert-button-right" type="button" title="Pythonから共通テスト用プログラム表記へ変換" aria-label="Pythonから共通テスト用プログラム表記へ変換">
+                    <span class="conversion-icon conversion-icon-horizontal" aria-hidden="true">→</span>
+                    <span class="conversion-icon conversion-icon-vertical" aria-hidden="true">↓</span>
+                </button>
+                <button class="convert-button-left" type="button" title="共通テスト用プログラム表記からPythonへ変換" aria-label="共通テスト用プログラム表記からPythonへ変換">
+                    <span class="conversion-icon conversion-icon-horizontal" aria-hidden="true">←</span>
+                    <span class="conversion-icon conversion-icon-vertical" aria-hidden="true">↑</span>
+                </button>
+                <button class="run-button" type="button" title="Pythonコードを実行">実行</button>
+                <button class="clear-button" type="button" title="入力・フローチャート・実行結果をすべて消去">全消去</button>
             </div>
             
             <!-- Top Right: Common Test Notation -->
             <div class="panel top-right">
-                <div class="panel-header">
-                    <span>共通テスト用プログラム表記</span>
-                    <div class="panel-actions">
+                <div class="panel-header editor-panel-header">
+                    <span class="panel-title">共通テスト用プログラム表記</span>
+                    <div class="panel-actions editor-toolbar" role="group" aria-label="共通テスト用プログラム表記エディタ操作">
+                        <div class="content-zoom-controls" role="group" aria-label="共通テスト用プログラム表記の文字サイズ">
+                            <button class="content-zoom-button" type="button" data-content-kind="commontest" data-content-zoom-action="decrease" title="共通テスト用プログラム表記の文字を縮小" aria-label="共通テスト用プログラム表記の文字を縮小">−</button>
+                            <button class="content-zoom-button content-zoom-level-button" type="button" data-content-kind="commontest" data-content-zoom-action="reset" title="共通テスト用プログラム表記の文字サイズを100%に戻す" aria-label="共通テスト用プログラム表記の文字サイズを100%に戻す" aria-live="polite">100%</button>
+                            <button class="content-zoom-button" type="button" data-content-kind="commontest" data-content-zoom-action="increase" title="共通テスト用プログラム表記の文字を拡大" aria-label="共通テスト用プログラム表記の文字を拡大">＋</button>
+                        </div>
                         <button class="format-button common-format-button" type="button" title="共通テスト用プログラム表記を整形">整形</button>
-                        <button class="copy-button common-copy-button" type="button" title="共通テスト用プログラム表記をコピー">📋</button>
+                        <button class="copy-button common-copy-button" type="button" title="共通テスト用プログラム表記をコピー" aria-label="共通テスト用プログラム表記をコピー">📋</button>
+                        <button class="panel-action-button panel-expand-button" type="button" data-panel-kind="commontest" title="共通テスト用プログラム表記エディタの編集領域を拡大" aria-label="共通テスト用プログラム表記エディタの編集領域を拡大" aria-pressed="false">⤢</button>
                     </div>
                 </div>
                 <div id="commonTestEditor"></div>
@@ -94,12 +107,13 @@
             <!-- Bottom Left: Flowchart -->
             <div class="panel bottom-left">
                 <div class="panel-header">
-                    <span>フローチャート</span>
-                    <div class="flowchart-toolbar" aria-label="フローチャート操作">
+                    <span class="panel-title">フローチャート</span>
+                    <div class="flowchart-toolbar" role="group" aria-label="フローチャート操作">
                         <button class="flowchart-tool-button flowchart-zoom-out-button" type="button" title="縮小" aria-label="フローチャートを縮小">−</button>
                         <button class="flowchart-tool-button flowchart-zoom-reset-button" type="button" title="100%に戻す" aria-label="フローチャートの倍率を100%に戻す">100%</button>
                         <button class="flowchart-tool-button flowchart-zoom-in-button" type="button" title="拡大" aria-label="フローチャートを拡大">＋</button>
                         <button class="flowchart-tool-button flowchart-save-button" type="button" title="PNG画像として保存" aria-label="フローチャートをPNG画像として保存">PNG</button>
+                        <button class="flowchart-tool-button panel-expand-button" type="button" data-panel-kind="flowchart" title="フローチャートの表示領域を拡大" aria-label="フローチャートの表示領域を拡大" aria-pressed="false">⤢</button>
                     </div>
                 </div>
                 <div id="flowchart"></div>
@@ -108,8 +122,16 @@
             <!-- Bottom Right: Execution Output -->
             <div class="panel bottom-right">
                 <div class="panel-header">
-                    <span>実行結果</span>
-                    <button class="copy-button output-clear-button" type="button">クリア</button>
+                    <span class="panel-title">実行結果</span>
+                    <div class="panel-actions output-toolbar" role="group" aria-label="実行結果操作">
+                        <div class="content-zoom-controls" role="group" aria-label="実行結果の文字サイズ">
+                            <button class="content-zoom-button" type="button" data-content-kind="output" data-content-zoom-action="decrease" title="実行結果の文字を縮小" aria-label="実行結果の文字を縮小">−</button>
+                            <button class="content-zoom-button content-zoom-level-button" type="button" data-content-kind="output" data-content-zoom-action="reset" title="実行結果の文字サイズを100%に戻す" aria-label="実行結果の文字サイズを100%に戻す" aria-live="polite">100%</button>
+                            <button class="content-zoom-button" type="button" data-content-kind="output" data-content-zoom-action="increase" title="実行結果の文字を拡大" aria-label="実行結果の文字を拡大">＋</button>
+                        </div>
+                        <button class="copy-button output-clear-button" type="button" title="実行結果をクリア">クリア</button>
+                        <button class="panel-action-button panel-expand-button" type="button" data-panel-kind="output" title="実行結果の表示領域を拡大" aria-label="実行結果の表示領域を拡大" aria-pressed="false">⤢</button>
+                    </div>
                 </div>
                 <div id="output"></div>
             </div>
@@ -120,13 +142,13 @@
             <div class="panel-header">共有URL</div>
             <div class="url-row">
                 <button class="url-generate-button share-generate-button" type="button">URL生成</button>
-                <input type="text" id="shareUrl" readonly placeholder="easyCode用URLをここに表示します">
+                <input type="text" id="shareUrl" readonly aria-label="共有URL" placeholder="easyCode用URLをここに表示します">
                 <a class="url-open-link" href="#" id="shareUrlLink" target="_blank" hidden>🔗開く</a>
                 <button class="url-copy-button share-copy-button" type="button">📋 コピー</button>
             </div>
             <div class="url-row">
                 <button class="url-generate-button python-tutor-generate-button" type="button">PythonTutor</button>
-                <input type="text" id="pythonTutorUrl" readonly placeholder="Python Tutor用URLをここに表示します">
+                <input type="text" id="pythonTutorUrl" readonly aria-label="Python Tutor URL" placeholder="Python Tutor用URLをここに表示します">
                 <a class="url-open-link" href="#" id="pythonTutorLink" target="_blank" hidden>🔗開く</a>
                 <button class="url-copy-button python-tutor-copy-button" type="button">📋 コピー</button>
             </div>
@@ -242,20 +264,6 @@
 
     </div>
 
-    <!-- Modals and Overlays -->
-    <!-- Input Dialog Overlay -->
-    <div class="overlay" id="overlay"></div>
-    
-    <!-- Input Dialog -->
-    <div class="input-dialog" id="inputDialog">
-        <h3>入力</h3>
-        <input type="text" id="userInput" placeholder="値を入力してください">
-        <div class="input-dialog-actions">
-            <button class="input-submit-button" type="button">OK</button>
-            <button class="input-cancel-button" type="button">キャンセル</button>
-        </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
@@ -294,9 +302,9 @@
     <!-- JavaScript Modules -->
     <script src="assets/js/modules/commontest-mode.js?v=20260708-audit"></script>
     <script src="assets/js/modules/converter.js?v=20260708-audit"></script>
-    <script src="assets/js/modules/executor.js?v=20260708-audit"></script>
-    <script src="assets/js/modules/flowchart.js?v=20260709-flowchart-range"></script>
-    <script src="assets/js/modules/ui.js?v=20260709-format-flowchart"></script>
-    <script src="assets/js/app.js?v=20260708-audit"></script>
+    <script src="assets/js/modules/executor.js?v=20260711-classroom"></script>
+    <script src="assets/js/modules/flowchart.js?v=20260711-compact-decisions"></script>
+    <script src="assets/js/modules/ui.js?v=20260711-samples"></script>
+    <script src="assets/js/app.js?v=20260711-classroom"></script>
 </body>
 </html>

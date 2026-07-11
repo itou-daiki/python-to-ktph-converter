@@ -26,14 +26,6 @@ input:focus-visible,
     outline-offset: 2px;
 }
 
-.run-button {
-    background: #e74c3c;
-}
-
-.run-button:hover {
-    background: #c0392b;
-}
-
 .copy-button {
     background: #95a5a6;
     padding: 5px 10px;
@@ -48,6 +40,109 @@ input:focus-visible,
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.panel-title {
+    min-width: 0;
+}
+
+.editor-panel-header {
+    gap: 12px;
+}
+
+.editor-toolbar,
+.output-toolbar {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.content-zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #9aa8b5;
+    border-radius: 5px;
+    background: #ffffff;
+}
+
+.content-zoom-button,
+.panel-action-button {
+    min-width: 30px;
+    height: 28px;
+    padding: 0 7px;
+    border-radius: 5px;
+    background: #3f5366;
+    color: #ffffff;
+    font-size: 13px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content-zoom-controls .content-zoom-button {
+    border-radius: 0;
+}
+
+.content-zoom-controls .content-zoom-button + .content-zoom-button {
+    border-left: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.content-zoom-button:hover:not(:disabled),
+.panel-action-button:hover:not(:disabled) {
+    background: #293d50;
+}
+
+.content-zoom-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+}
+
+.content-zoom-level-button {
+    min-width: 50px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.panel-expand-button {
+    font-size: 17px;
+}
+
+.conversion-icon {
+    line-height: 1;
+}
+
+.conversion-icon-vertical {
+    display: none;
+}
+
+body.panel-expanded-open {
+    overflow: hidden;
+}
+
+body.panel-expanded-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 11999;
+    background: rgba(24, 35, 46, 0.62);
+}
+
+.panel.panel-expanded {
+    position: fixed;
+    inset: 16px;
+    z-index: 12000;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 18px 56px rgba(13, 25, 36, 0.34);
+}
+
+.panel.panel-expanded .panel-header {
+    flex: 0 0 auto;
 }
 
 .format-button {
@@ -74,17 +169,7 @@ input:focus-visible,
     height: 100%;
 }
 
-/* Special handling for bottom panels (flowchart and output) */
-.panel.bottom-left,
-.panel.bottom-right {
-    overflow: hidden;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    min-height: 350px;
-}
-
-/* Ensure all content areas have consistent sizing */
+/* Keep bottom-panel content aligned below its toolbar. */
 .panel.bottom-left #flowchart,
 .panel.bottom-right #output {
     margin-top: 8px;
@@ -122,13 +207,6 @@ input:focus-visible,
     background: #f8f9fa;
     border-radius: 6px;
     border: 1px solid #e1e8ed;
-}
-
-.url-label {
-    font-weight: 600;
-    color: #495057;
-    font-size: 13px;
-    text-align: center;
 }
 
 .url-open-link {

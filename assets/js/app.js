@@ -202,15 +202,6 @@ function copyShareUrl(buttonElement) {
     uiManager.copyShareUrl(buttonElement);
 }
 
-// Input dialog functions
-function submitInput() {
-    executor.submitInput();
-}
-
-function closeInputDialog() {
-    executor.closeInputDialog();
-}
-
 // Make global functions available
 window.convertPythonToCommon = convertPythonToCommon;
 window.convertCommonToPython = convertCommonToPython;
@@ -222,9 +213,6 @@ window.loadSampleCode = loadSampleCode;
 window.copyToClipboard = copyToClipboard;
 window.shareCode = shareCode;
 window.copyShareUrl = copyShareUrl;
-window.submitInput = submitInput;
-window.closeInputDialog = closeInputDialog;
-
 // Global variables are already set during initialization
 
 // Test function to check if everything is working

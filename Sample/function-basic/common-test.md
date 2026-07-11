@@ -1,24 +1,20 @@
-# 関数の基本
+# 関数の定義と戻り値
 
-関数の定義と呼び出し
+難易度: 標準
+学習ポイント: 関数、引数、戻り値
 
 ```
-# 関数のサンプル
-関数 greet(name):
-⎿ 表示する("こんにちは、" + name + "さん！")
+# 長方形の面積を返す関数
+関数 rectangle_area(width, height):
+｜ area = width * height
+⎿ area を返す
 
-関数 add_numbers(x, y):
-｜ result = x + y
-⎿ result を返す
+# 計算結果を表示する関数
+関数 show_area(area):
+⎿ 表示する("長方形の面積: " + 文字列(area))
 
-# 関数の呼び出し
-greet("太郎")
-greet("花子")
-
-# 戻り値のある関数の呼び出し
-sum_result = add_numbers(5, 3)
-表示する("5 + 3 = " + 文字列(sum_result))
-
-# 直接値を表示
-表示する("10 + 20 = " + 文字列(add_numbers(10, 20)))
+width = 【外部からの入力】
+height = 【外部からの入力】
+result = rectangle_area(width, height)
+show_area(result)
 ```

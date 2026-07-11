@@ -1,24 +1,20 @@
-# 関数の基本
+# 関数の定義と戻り値
 
-関数の定義と呼び出し
+難易度: 標準
+学習ポイント: 関数、引数、戻り値
 
 ```python
-# 関数のサンプル
-def greet(name):
-    print("こんにちは、" + name + "さん！")
+# 長方形の面積を返す関数
+def rectangle_area(width, height):
+    area = width * height
+    return area
 
-def add_numbers(x, y):
-    result = x + y
-    return result
+# 計算結果を表示する関数
+def show_area(area):
+    print("長方形の面積: " + str(area))
 
-# 関数の呼び出し
-greet("太郎")
-greet("花子")
-
-# 戻り値のある関数の呼び出し
-sum_result = add_numbers(5, 3)
-print("5 + 3 = " + str(sum_result))
-
-# 直接値を表示
-print("10 + 20 = " + str(add_numbers(10, 20)))
+width = int(input("横の長さ: "))
+height = int(input("縦の長さ: "))
+result = rectangle_area(width, height)
+show_area(result)
 ```

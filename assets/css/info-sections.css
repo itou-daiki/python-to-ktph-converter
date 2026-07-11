@@ -41,6 +41,7 @@
     border: 1px solid #e1e8ed;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     min-width: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .note-item:hover {
@@ -137,6 +138,7 @@
     border-bottom: 1px solid #f1f3f4;
     vertical-align: top;
     background: #ffffff;
+    color: #4a5568;
 }
 
 .comparison-category td:first-child {
@@ -186,66 +188,4 @@
     .comparison-category td:last-child {
         width: auto;
     }
-}
-
-/* Enhanced styling with gradients and modern design */
-.info-section,
-.info-section * {
-    color-scheme: light;
-}
-
-/* Smooth animations */
-.note-item,
-.comparison-category {
-    transition: all 0.2s ease;
-}
-
-.note-item:hover {
-    transform: translateY(-2px);
-}
-
-/* Ensure consistent styling across browsers */
-.info-section .panel-header {
-    background: #2c3e50 !important;
-    color: #ffffff !important;
-}
-
-.info-content {
-    background: #ffffff !important;
-}
-
-.note-item {
-    background: #f8f9fa !important;
-}
-
-.comparison-category {
-    background: #f8f9fa !important;
-}
-
-.comparison-category th {
-    background: #2c3e50 !important;
-    color: #ffffff !important;
-}
-
-.comparison-category td:first-child {
-    background: #f8f9fa !important;
-}
-
-/* Text colors with better contrast */
-.info-section h4 {
-    color: #4a5568 !important;
-}
-
-.info-section p {
-    color: #4a5568 !important;
-}
-
-.info-section code {
-    background: #e9ecef !important;
-    color: #2c3e50 !important;
-    border: 1px solid #dee2e6 !important;
-}
-
-.comparison-category td {
-    color: #4a5568 !important;
 }

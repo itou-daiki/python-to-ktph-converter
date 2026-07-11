@@ -8,12 +8,26 @@
     flex-direction: column;
 }
 
+#pythonEditor {
+    --editor-font-size: 14.5px;
+    --editor-gutter-font-size: 13px;
+}
+
+#commonTestEditor {
+    --editor-font-size: 14px;
+    --editor-gutter-font-size: 13px;
+}
+
+#output {
+    line-height: 1.55;
+}
+
 .CodeMirror {
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
+    font-size: var(--editor-font-size, 14px);
     min-height: 0;
     overflow: visible;
 }
@@ -76,7 +90,7 @@
 #commonTestEditor .CodeMirror-linenumber {
     color: #90a4ae;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 13px;
+    font-size: var(--editor-gutter-font-size, 13px);
     padding: 0 8px 0 5px;
 }
 
@@ -189,7 +203,6 @@ li.CodeMirror-hint-active .autocomplete-kind {
 
 /* Python indentation readability */
 #pythonEditor .CodeMirror {
-    font-size: 14.5px;
     line-height: 1.55;
 }
 

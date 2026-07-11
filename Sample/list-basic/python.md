@@ -1,20 +1,18 @@
-# 配列の基本
+# 配列の走査と平均
 
-配列の作成と要素の操作
+難易度: 基礎
+学習ポイント: 配列、添字、要素数、累積処理
 
 ```python
-# 配列操作のサンプル
+# 配列を添字で順に調べる
 numbers = [10, 20, 30, 40, 50]
-print("配列の内容:", numbers)
-print("配列の長さ:", len(numbers))
-
-print("\n各要素を表示:")
-for i in range(len(numbers)):
-    print("numbers[" + str(i) + "] = " + str(numbers[i]))
-
-print("\n要素の合計を計算:")
 total = 0
-for num in numbers:
-    total = total + num
-print("合計:", total)
+
+for i in range(len(numbers)):
+    print("位置 " + str(i) + ": " + str(numbers[i]))
+    total = total + numbers[i]
+
+average = total // len(numbers)
+print("合計: " + str(total))
+print("平均: " + str(average))
 ```

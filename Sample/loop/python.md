@@ -1,18 +1,19 @@
-# 繰り返し処理
+# 合計とカウントダウン
 
-for文とwhile文を使った繰り返し
+難易度: 基礎
+学習ポイント: for、while、累積処理
 
 ```python
-# 繰り返し処理のサンプル
-print("=== for文の例 ===")
-for i in range(5):
-    print(str(i + 1) + "回目の処理")
+# 1から10までの合計
+total = 0
+for i in range(1, 11):
+    total = total + i
+print("1から10までの合計: " + str(total))
 
-print("\n=== while文の例 ===")
-count = 1
-while count <= 3:
-    print("カウント: " + str(count))
-    count = count + 1
-
-print("処理完了")
+# 3から1までのカウントダウン
+count = 3
+while count >= 1:
+    print(count)
+    count = count - 1
+print("スタート")
 ```

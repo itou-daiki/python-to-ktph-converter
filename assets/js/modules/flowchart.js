@@ -26,14 +26,14 @@ class FlowchartGenerator {
                     rankSpacing: 58
                 },
                 fontFamily: 'arial',
-                fontSize: 12,
                 themeVariables: {
                     primaryColor: '#2f73d4',
                     primaryTextColor: '#ffffff',
                     primaryBorderColor: '#2f73d4',
                     lineColor: '#2f73d4',
                     edgeLabelBackground: '#f7f9fc',
-                    fontFamily: 'arial'
+                    fontFamily: 'arial',
+                    fontSize: '12px'
                 },
                 gantt: {
                     useMaxWidth: false
@@ -169,7 +169,10 @@ class FlowchartGenerator {
                     const conditionNode = 'N' + nodeCounter.value;
 
                     mermaidCode += `    ${setupNode}["${this.escapeForMermaid(rangeLoop.setupLabel)}"]:::process\n`;
-                    mermaidCode += `    ${conditionNode}{"${this.escapeForMermaid(rangeLoop.conditionLabel)}"}:::decision\n`;
+                    const conditionLabel = this.wrapDecisionLabel(
+                        this.escapeForMermaid(rangeLoop.conditionLabel)
+                    );
+                    mermaidCode += `    ${conditionNode}{"${conditionLabel}"}:::decision\n`;
 
                     if (currentLastNodes.length > 0) {
                         mermaidCode += this.connectNodes(currentLastNodes, setupNode);
@@ -210,7 +213,7 @@ class FlowchartGenerator {
                         ...loopBreakNodes
                     ];
                 } else {
-                    mermaidCode += `    ${currentNode}{"${nodeText}"}:::decision\n`;
+                    mermaidCode += `    ${currentNode}{"${this.wrapDecisionLabel(nodeText)}"}:::decision\n`;
 
                     // Connect from previous nodes
                     if (currentLastNodes.length > 0) {
@@ -301,7 +304,7 @@ class FlowchartGenerator {
                 const rawText = isFirstBranch
                     ? firstNodeText
                     : this.escapeForMermaid(this.getFlowchartNodeText(lines[branch.index].trim(), true, true, false));
-                mermaidCode += `    ${currentConditionNode}{"${rawText}"}:::decision\n`;
+                mermaidCode += `    ${currentConditionNode}{"${this.wrapDecisionLabel(rawText)}"}:::decision\n`;
 
                 if (isFirstBranch) {
                     mermaidCode += this.connectNodes(previousNodes, currentConditionNode);
@@ -550,30 +553,30 @@ class FlowchartGenerator {
     convertControlStatementToCompactLabel(pythonCode) {
         const ifMatch = pythonCode.match(/^if\s+(.+)\s*:/);
         if (ifMatch) {
-            return this.truncateFlowchartLabel(ifMatch[1], 40);
+            return this.normalizeFlowchartLabel(ifMatch[1]);
         }
 
         const elifMatch = pythonCode.match(/^elif\s+(.+)\s*:/);
         if (elifMatch) {
-            return this.truncateFlowchartLabel(elifMatch[1], 40);
+            return this.normalizeFlowchartLabel(elifMatch[1]);
         }
 
         const whileMatch = pythonCode.match(/^while\s+(.+)\s*:/);
         if (whileMatch) {
-            return this.truncateFlowchartLabel(whileMatch[1], 40);
+            return this.normalizeFlowchartLabel(whileMatch[1]);
         }
 
         const forRangeMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+range\s*\((.*)\)\s*:/);
         if (forRangeMatch) {
-            return this.truncateFlowchartLabel(this.formatRangeLoopLabel(forRangeMatch[1], forRangeMatch[2]), 48);
+            return this.normalizeFlowchartLabel(this.formatRangeLoopLabel(forRangeMatch[1], forRangeMatch[2]));
         }
 
         const forMatch = pythonCode.match(/^for\s+(\w+)\s+in\s+(.+)\s*:/);
         if (forMatch) {
-            return this.truncateFlowchartLabel(`${forMatch[1]} を ${forMatch[2]} から順に取り出す`, 48);
+            return this.normalizeFlowchartLabel(`${forMatch[1]} を ${forMatch[2]} から順に取り出す`);
         }
 
-        return this.truncateFlowchartLabel(pythonCode.replace(/:\s*$/, ''), 48);
+        return this.normalizeFlowchartLabel(pythonCode.replace(/:\s*$/, ''));
     }
 
     parseRangeLoopStatement(pythonCode) {
@@ -710,13 +713,32 @@ class FlowchartGenerator {
         return offset > 0 ? `${value} + 1` : `${value} - 1`;
     }
 
-    truncateFlowchartLabel(label, maxLength = 24) {
-        const normalized = label.replace(/\s+/g, ' ').trim();
-        if (normalized.length <= maxLength) {
-            return normalized;
+    normalizeFlowchartLabel(label) {
+        return label.replace(/\s+/g, ' ').trim();
+    }
+
+    wrapDecisionLabel(label, maxLineLength = 18) {
+        const normalized = this.normalizeFlowchartLabel(label);
+        if (normalized.length <= maxLineLength) return normalized;
+
+        const midpoint = normalized.length / 2;
+        const logicalOperators = Array.from(normalized.matchAll(/\s+(and|or)\s+/g));
+        if (logicalOperators.length > 0) {
+            const bestOperator = logicalOperators.reduce((best, match) => (
+                Math.abs(match.index - midpoint) < Math.abs(best.index - midpoint) ? match : best
+            ));
+            const left = normalized.slice(0, bestOperator.index).trim();
+            const right = normalized.slice(bestOperator.index).trim();
+            if (left && right) return `${left}<br/>${right}`;
         }
 
-        return normalized.substring(0, maxLength - 3) + '...';
+        const breakPositions = Array.from(normalized.matchAll(/\s+/g)).map((match) => match.index);
+        if (breakPositions.length === 0) return normalized;
+
+        const breakPosition = breakPositions.reduce((best, position) => (
+            Math.abs(position - midpoint) < Math.abs(best - midpoint) ? position : best
+        ));
+        return `${normalized.slice(0, breakPosition).trim()}<br/>${normalized.slice(breakPosition).trim()}`;
     }
 
     /**
@@ -828,8 +850,8 @@ class FlowchartGenerator {
             return `表示する(${content})`;
         }
         
-        // Convert input statements
-        const inputMatch = converted.match(/(\w+)\s*=\s*input\s*\((.*)\)/);
+        // Keep prompts out of process nodes so input labels remain compact.
+        const inputMatch = converted.match(/^([A-Za-z_]\w*)\s*=.*\binput\s*\(/);
         if (inputMatch) {
             const variable = inputMatch[1];
             return `${variable} = 【外部からの入力】`;
@@ -843,11 +865,6 @@ class FlowchartGenerator {
             return `${variable} = ${value}`;
         }
         
-        // Truncate if still too long
-        if (converted.length > 50) {
-            converted = converted.substring(0, 47) + '...';
-        }
-        
         // Add control symbols if in a block
         converted = this.addControlSymbols(converted, isFirst, isLast, isInBlock);
         
@@ -858,9 +875,13 @@ class FlowchartGenerator {
      * Escape special characters for Mermaid while preserving Japanese text
      */
     escapeForMermaid(text) {
-        // For Mermaid, we need to be more careful with special characters
-        // Use quotes to wrap the text and escape internal quotes
+        // Mermaid can expose comparison operators as HTML entities in SVG text.
         return text
+            .replace(/<=/g, '≤')
+            .replace(/>=/g, '≥')
+            .replace(/!=/g, '≠')
+            .replace(/</g, '＜')
+            .replace(/>/g, '＞')
             .replace(/"/g, "'")         // Replace double quotes with single quotes
             .replace(/\r?\n/g, ' ')     // Replace newlines with space
             .replace(/\s+/g, ' ')       // Normalize whitespace
